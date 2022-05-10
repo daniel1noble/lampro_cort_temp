@@ -5,17 +5,17 @@ date: "`r Sys.Date()`"
 bibliography: ./bib/refs.bib
 csl: ./bib/the-journal-of-experimental-biology.csl
 output: 
+  bookdown::word_document2:
+    toc: no
+    toc_depth: 6
+    number_sections: false
+    reference_docx: template.docx
   bookdown::html_document2:
     code_folding: hide
     number_sections: no
     toc: yes
     toc_depth: 6
     toc_float: yes
-  bookdown::word_document2:
-    toc: no
-    toc_depth: 6
-    number_sections: false
-    reference_docx: template.docx
 editor_options: 
   chunk_output_type: console
 ---
