@@ -23,6 +23,7 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache = FALSE, tidy = TRUE)
 options(digits=2)
+library(tidyverse)
 ```
 
 #### R Chunks where code can go
@@ -70,6 +71,13 @@ flextable(tab_dat)
 
 Flextable is amazing. Have a good read of the documentation [here](https://ardata-fr.github.io/flextable-book/) if you need it as LOTS can be modified. We know that the vaue is `r tab_dat[1,1]`.
 
+```{r}
+# This is me playing around with GitHub
+str(mtcars)
+ggplot(mtcars, aes(x = gear, y = mpg, group = cyl)) +
+  geom_boxplot()
+```
+
 #### Adjusting the look of Table and Figure Legends
 
 This can be done! It's not quite as easy as it should be but to do this you just need to adjust a special type of file for bookdown called `_bookdown_yaml`, which I have added here but not modified. I can show you more if you need to see how that works.
@@ -102,3 +110,4 @@ One point here. Writing in Rstudio is not as "elegant" looking as Word, but it's
 I know it's a lot to take in, and it WILL be a little more work to get your head around some stuff, but as you start to use it more things will be easier and easier. It will ultimately end up saving you a TONNE of time down the road. Keep that in mind while you use it. Again, the only way you'll learn is to use it.
 
 #### References
+
