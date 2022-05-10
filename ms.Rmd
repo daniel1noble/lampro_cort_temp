@@ -39,28 +39,19 @@ pacman::p_load(devtools, png, jpeg, pander, cowplot, flextable, formatR, magick,
 
 Here's an example with some modelling code:
 
-```{r, models, eval = FALSE, echo = TRUE, results = "hide", messages = FALSE}
+```{r, models, eval = TRUE, echo = TRUE, results = "hide", messages = FALSE}
 
-# Multi-level meta-analytic model
-model_CS1a_MLMA <- metafor::rma.mv(ARR ~ 1, V = Var_ARR, 
-                   method="REML",
-                   random=list(~1|species_ID,
-                               ~1|es_ID), 
-                   test="t",
-                   data=data_CS1a)
-print(model_CS1a_MLMA)
-B <- coef(model_CS1a_MLMA)
-# Calculate Prediction Intervals
-PI_CS1a_MLMA <- predict(model_CS1a_MLMA)
-print(PI_CS1a_MLMA)
+# data load
+data <- read.csv("./data/data_21_22.csv")
 
-# Calculate I2
-I2_CS1a <- orchaRd::i2_ml(model_CS1a_MLMA)
-print(I2_CS1a)
+head(data)
 
-# Plot the results
-orchard_plot(model_CS1a_MLMA, mod="Int", xlab="ARR")
+model <- lm(egg_mass ~ trt, data = data)
+summary(model)
+coef <- coef(model)
 ```
+
+The intercept is `r coef[1]`. 
 
 #### Figures and Tables
 
@@ -77,7 +68,7 @@ tab_dat <- data.frame(col1 = 3, col2= 23, col3 = 86)
 flextable(tab_dat)
 ```
 
-Flextable is amazing. Have a good read of the documentation [here](https://ardata-fr.github.io/flextable-book/) if you need it as LOTS can be modified.
+Flextable is amazing. Have a good read of the documentation [here](https://ardata-fr.github.io/flextable-book/) if you need it as LOTS can be modified. We know that the vaue is `r tab_dat[1,1]`.
 
 #### Adjusting the look of Table and Figure Legends
 
@@ -108,6 +99,6 @@ Now you're armed with everything that you need to write you papers. It's also no
 
 One point here. Writing in Rstudio is not as "elegant" looking as Word, but it's much more flexible and it WILL not crash on you. However, a new function they have introduced to make writing a little prettier is in the top left corner. Beside `Source` you can click `Visual` and this will render the document nicely for you. You can also continue writing as normal.
 
-I know it's a lot to take in, and it WILL be a little more work to get your head around some stuff, but as you start to use it more things will be easier and easier. It will ultimately end up saving you a TONNE of time down the road. Keep that in mind while you use it. Again, the only way you'll learn is to use it. 
+I know it's a lot to take in, and it WILL be a little more work to get your head around some stuff, but as you start to use it more things will be easier and easier. It will ultimately end up saving you a TONNE of time down the road. Keep that in mind while you use it. Again, the only way you'll learn is to use it.
 
 #### References
