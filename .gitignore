@@ -28,3 +28,6 @@ vignettes/*.pdf
 .Renviron
 ms.html
 ms.docx
+.Rproj.user
+.Rdata
+.DS_Store
