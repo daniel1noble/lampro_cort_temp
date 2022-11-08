@@ -1,0 +1,13 @@
+Type,Sample,Dilution number,T4_ng/ml,DilutionFactor
+Para,127,1,NA,1
+Para,127,2,19.292,2
+Para,127,3,9.283,4
+Para,127,4,4.278,8
+Para,127,5,2.131,16
+Para,127,6,1.116,32
+Stan,1,1,22.038,1
+Stan,2,2,9.616,2
+Stan,3,3,4.983,4
+Stan,4,3,2.483,8
+Stan,5,4,1.318,16
+Stan,6,5,0.541,32
