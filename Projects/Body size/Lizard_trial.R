@@ -23,6 +23,35 @@ Liz$condition_juv <- Liz$remeasure_mass / Liz$remeasure_SVL
 Liz$condition_hatch <- Liz$bd_mass_orig / Liz$bd_svl_orig_mm
 
 
+#Scaled mass calculations
+##Ln transform data
+Liz$lnbd_mass_orig <- log(Liz$bd_mass_orig)
+Liz$lnbd_svl_orig_mm <- log(Liz$bd_svl_orig_mm)
+
+#OLS regression of ln transformed data
+fit <- lm(lnbd_mass_orig ~ lnbd_svl_orig_mm, data=Liz)
+summary (fit)
+plot(lnbd_mass_orig ~ lnbd_svl_orig_mm, data=Liz)
+abline(fit)
+
+##Pearsons correlation coefficient
+PCor <- cor(Liz$lnbd_mass_orig, Liz$lnbd_svl_orig_mm)
+mod1 <- lm(lnbd_mass_orig~lnbd_svl_orig_mm, data=Liz)
+
+##OLS coefficient from summary
+summary(mod1)
+
+##Calculates mean tarsus for scaled mass equation
+MeanSVL_orig <- mean(Liz$bd_svl_orig_mm)
+
+SMCof <- 1.4234/PCor
+
+##calculates scaled mass; plots scaled mass to residual mass
+Liz$ScaledMass_orig <- Liz$bd_mass_orig * (MeanSVL_orig/Liz$bd_svl_orig_mm) ^ (SMCof)
+plot (ScaledMass_orig ~ condition_hatch, data=Liz)
+
+
+
 ###treatments on body condition
 conhatch_mod <- lm (condition_hatch ~ temp + hormone  + egg_mass, data = Liz)
 Anova(conhatch_mod)
