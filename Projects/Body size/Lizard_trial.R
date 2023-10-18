@@ -10,7 +10,7 @@ library(installr)
 updateR()
 
 
-Liz <- read.csv ("C:/Users/U1115575/Documents/remeasure.csv")
+Liz <- read.csv ("C:/Users/U1115575/Documents/lampro_cort_temp/Projects/Body Size/Pilot.csv")
 View(Liz)
 
 Liz$trt <- as.factor(Liz$trt)
