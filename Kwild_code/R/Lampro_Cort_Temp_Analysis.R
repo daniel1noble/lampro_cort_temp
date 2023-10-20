@@ -4,7 +4,7 @@ pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, MuMIn, gl
 
 
 #########################
-# Bring in data and merge
+# Bring in data from samples and merge together
 #########################
 # 1) bring in data base data that has morphology and mortality data on across life stage: hatch, juv_1, juv_2
 dat_hatch_juv1_2 <- read.csv ("Kwild_code/data/Cort_hatch_juv1_2.csv")
@@ -19,11 +19,10 @@ merged_data <- merge(dat_hatch_juv1_2, dat_juv3, by.x = "Lizard_ID",
 
 
 #########################
-# "Issue data" from merge
+# Merge checks
 #########################
-# 1) find "new" values in Juv3: 
+# 1) find "new" values in Juv3: # LD745_21???
 new_ids_juv3 <- dat_juv3$juv3_Lizard_ID[!dat_juv3$juv3_Lizard_ID %in% dat_hatch_juv1_2$Lizard_ID]
-new_ids_juv3 # LD745_21???
 
 # 2) Get IDs from dat_hatch_juv1_2 that are not in dat_juv3
 missing_ids_juv3 <- dat_hatch_juv1_2$Lizard_ID[!dat_hatch_juv1_2$Lizard_ID %in% dat_juv3$juv3_Lizard_ID]
@@ -44,57 +43,53 @@ merged_data$juv2_measure_date <- dmy(merged_data$juv2_measure_date_dmy) # juv2
 merged_data$juv3_measure_date <- dmy(merged_data$juv3_date) # juv3
 merged_data$mortality_date <- dmy(merged_data$mortality_date_dmy) # mortality date - missing final
 
-# days post hatch used to scale in models
-# juv 1 days post hatch
-merged_data$days_post_hatch_juv1 <- difftime(merged_data$juv1_measure_date,
-                                           merged_data$hatch_date, units = "days")
-# juv 2 days post hatch
-merged_data$days_post_hatch_juv2 <- difftime(merged_data$juv2_measure_date,
-                                           merged_data$hatch_date, units = "days")
-# juv 3 days post hatch
-merged_data$days_post_hatch_juv3 <- difftime(merged_data$juv3_measure_date,
-                                           merged_data$hatch_date, units = "days")
-
-# naming final df and ordering for figures
-data_final <-  mutate(merged_data, hormone = factor(hormone, 
-                                        levels = c("control",
-                                                   "low",
-                                                   "high"))) %>% 
-  filter(!is.na(hormone)) %>% 
-  group_by(hormone)
-
 
 #########################
 # data arrangement up for growth estimations that will be used later
 #########################
 # calculating days difference between measurments 
-data_final$inital_to_juv1 <- as.numeric(difftime(data_final$juv1_measure_date,
-                                                 data_final$hatch_date, 
-                                                 units = "days"))
-data_final$juv1_to_juv2 <- as.numeric(difftime(data_final$juv2_measure_date,
-                                               data_final$juv1_measure_date, 
-                                               units = "days"))  
-data_final$juv2_to_juv3 <- as.numeric(difftime(data_final$juv3_measure_date,
-                                               data_final$juv2_measure_date, 
-                                               units = "days"))
-data_final$inital_to_juv3 <- as.numeric(difftime(data_final$juv3_measure_date,
-                                                 data_final$hatch_date, 
-                                                 units = "days"))
+merged_data$hatch_juv1_days <- as.numeric(difftime(merged_data$juv1_measure_date,
+                                        merged_data$hatch_date, units = "days"))
+merged_data$hatch_juv2_days <- as.numeric(difftime(merged_data$juv2_measure_date,
+                                        merged_data$hatch_date, units = "days"))
+# juv 3 days post hatch
+merged_data$hatch_juv3_days <- as.numeric(difftime(merged_data$juv3_measure_date,
+                                        merged_data$hatch_date, units = "days"))
+
+
+
+############
+# Rename columns
+data_final <- merged_data %>% 
+  rename(hatch_svl_mm = hatch_svl_orig_mm,
+         hatch_mass_g = hatch_mass_orig, 
+         juv1_SVL_mm = juv1_measure_SVL_mm,
+         juv2_SVL_mm = juv2_measure_SVL_mm,
+         juv1_mass_g = juv1_measure_mass_g,
+         juv2_mass_g = juv2_measure_mass_g)
+
+
+
 ########
 # growth rate calculations: calculated growth rates by 
 # dividing change in SVL (or mass) between initial, 
 # juv 1, juv 2, juv 3(final) measurements/by the total number of days elapsed
 data_final <- data_final %>% 
-  mutate(day_SVL_growth1_inital_to_juv1 = ((juv1_measure_SVL_mm-hatch_svl_orig_mm)/inital_to_juv1), 
-         day_mass_growth1_inital_to_juv1 = ((juv1_measure_mass_g-hatch_mass_orig)/inital_to_juv1),
-         day_SVL_growth2_juv1_to_juv2 = ((juv2_measure_SVL_mm - juv1_measure_SVL_mm)/juv1_to_juv2),
-         day_mass_growth2_juv1_to_juv2 = ((juv2_measure_mass_g-juv1_measure_mass_g)/juv1_to_juv2),
-         day_SVL_growth3_juv2_to_juv3 = ((juv3_SVL_mm-juv2_measure_SVL_mm)/juv2_to_juv3),
-         day_mass_growth3_juv2_to_juv3 = ((juv3_mass_g-juv2_measure_mass_g)/juv2_to_juv3), 
-         day_SVL_growth4_inital_to_juv3 = ((juv3_SVL_mm-hatch_svl_orig_mm)/inital_to_juv3),
-         day_mass_growth4_inital_to_juv3 = ((juv3_mass_g-hatch_mass_orig)/inital_to_juv3))
+  mutate(hatch_juv3_SVL_growth =  (juv3_SVL_mm-hatch_svl_mm)/hatch_juv3_days,
+         hatch_juv3_MASS_growth = (juv3_mass_g-hatch_mass_g)/hatch_juv3_days)
+
+data_final <-  mutate(data_final, hormone = factor(hormone, 
+                                                   levels = c("control","low","high"))) %>% 
+  filter(!is.na(hormone)) %>%
+  group_by(hormone)
 
 
+
+
+
+#########
+# save final data for figures and quarto doc
+write.csv(data_final, "Kwild_code/data/final_analysis_data")
 
 ################
 #### 1.	What are the effects of developmental treatments (temp, cort, interaction) on time to hatch?
@@ -106,7 +101,6 @@ check_model(hatch_dev_mod) # bimodal because there is an effect on temp to days 
 
 # temperature effects days to hatch; no effect on hormone or temp x hormone interaction
 summary(hatch_dev_mod)
-anova(hatch_dev_mod)
 # faster hatch warmer temps
 hatch_dev_mod_emm <- emmeans(hatch_dev_mod, pairwise ~ temp)
 plot(hatch_dev_mod_emm)
@@ -121,22 +115,20 @@ saveRDS(hatch_dev_mod, "Kwild_code/models/hatch_dev_mod.RDS")
 
 ################
 #### SVL; interaction removed
-SVL_hatch_mod <- lm(hatch_svl_orig_mm ~ temp + hormone , data = data_final)
+SVL_hatch_mod <- lm(hatch_svl_mm ~ temp + hormone , data = data_final)
 check_model(SVL_hatch_mod)
 # hormone effects body size; no effects on temp or temp x hormone interaction
 summary(SVL_hatch_mod)
-anova(SVL_hatch_mod)
 # high hormone lower SVL
 SVL_hatch_mod_emm <- emmeans(SVL_hatch_mod, pairwise ~ hormone)
 plot(SVL_hatch_mod_emm)
 saveRDS(SVL_hatch_mod, "Kwild_code/models/SVL_hatch_mod.RDS")
 
 #### MASS; interaction removed
-Mass_hatch_mod <- lm(hatch_mass_orig ~ temp + hormone, data = data_final)
+Mass_hatch_mod <- lm(hatch_mass_g ~ temp + hormone, data = data_final)
 check_model(Mass_hatch_mod)
 # temperature and hormone effects mass; no interaction effects
 summary(Mass_hatch_mod)
-anova(Mass_hatch_mod)
 # hormone pairwise comparison - control higher mass
 Mass_hormone_hatch_mod_emm <- emmeans(Mass_hatch_mod, pairwise ~ hormone)
 plot(Mass_hormone_hatch_mod_emm)
@@ -147,14 +139,13 @@ saveRDS(Mass_hatch_mod, "Kwild_code/models/MASS_hatch_mod.RDS")
 
 #### BCI from residuals (OLS)
 # hatchlings- residuals
-condition_hatch_fit <- lm(hatch_mass_orig ~ hatch_svl_orig_mm, data = data_final, na.action=na.exclude) 
+condition_hatch_fit <- lm(hatch_mass_g ~ hatch_svl_mm, data = data_final, na.action=na.exclude) 
 data_final$hatch_bc_residuals <- residuals(condition_hatch_fit, na.action=na.exclude) 
 ## hatchlings-anova on BCI residuals; interaction removed
 condition_hatch_mod <- lm(hatch_bc_residuals ~ temp + hormone, data = data_final)
 check_model(condition_hatch_mod)
 # temperature has effect on BCI; no effect on hormone, or temp x hormone interaction
 summary(condition_hatch_mod)
-anova(condition_hatch_mod)
 # temp and BCI plot - poor BCI warm temps
 condition_hatch_mod_emm <- emmeans(condition_hatch_mod, pairwise ~ temp)
 plot(condition_hatch_mod_emm)
@@ -169,7 +160,7 @@ saveRDS(Mass_hatch_mod, "Kwild_code/models/condition_hatch_mod.RDS")
 #### Juv3_SVL: high hormone low body size; males smaller than females
 #### Juv1_MASS: low mass with high hormones; low mass with high temperatures
 #### Juv2_MASS: low mass with high temperatures
-#### Juv3_MASS: low mass males, and low mass high temp
+#### Juv3_MASS: low mass males
 #### Juv1_BCI: no treatment effects
 #### Juv2_BCI: no treatment effects
 #### Juv3_BCI: Sex effect: male lower BCI than females - could be size difference
@@ -178,7 +169,7 @@ saveRDS(Mass_hatch_mod, "Kwild_code/models/condition_hatch_mod.RDS")
 # SVL ANALYSIS: Juv_1, Juv_2, Juv_3 (sex accounted for last measurment)
 ###############
 #### JUV_1: SVL - adding days since hatch because effect of temp on development time); interaction removed
-SVL_Juv1_mod <- lm(juv1_measure_SVL_mm ~ temp + hormone + scale(days_post_hatch_juv1), data = data_final)
+SVL_Juv1_mod <- lm(juv1_SVL_mm ~ temp + hormone + scale(hatch_juv1_days), data = data_final)
 check_model(SVL_Juv1_mod)
 # effect on temperature and day of hatch on body size 
 summary(SVL_Juv1_mod)
@@ -188,7 +179,7 @@ plot(SVL_Juv1_mod_emm)
 saveRDS(SVL_Juv1_mod, "Kwild_code/models/SVL_Juv1_mod.RDS")
 
 #### JUV_2: SVL; interaction removed
-SVL_Juv2_mod <- lm(juv2_measure_SVL_mm ~ temp + hormone  + scale(days_post_hatch_juv2), data = data_final)
+SVL_Juv2_mod <- lm(juv2_SVL_mm ~ temp + hormone  + scale(hatch_juv2_days), data = data_final)
 check_model(SVL_Juv2_mod)
 # marginal hermonal effect on body size p = 0.06
 summary(SVL_Juv2_mod)
@@ -196,15 +187,15 @@ anova(SVL_Juv2_mod)
 saveRDS(SVL_Juv2_mod, "Kwild_code/models/SVL_Juv2_mod.RDS")
 
 #### SVL - NOTE SEX ACCOUTNED; no interaction
-SVL_Juv3_mod <- lm(juv3_SVL_mm ~ temp + hormone + sex + scale(days_post_hatch_juv3), data = data_final)
+SVL_Juv3_mod <- lm(juv3_SVL_mm ~ temp + hormone + sex + scale(hatch_juv3_days), data = data_final)
 check_model(SVL_Juv3_mod)
 # effect on hormones and sex
 summary(SVL_Juv3_mod)
-anova(SVL_Juv3_mod)
+
 # plot - high hormone lower svl
 SVL_Juv3_hormone_mod_emm <- emmeans(SVL_Juv3_mod, pairwise ~ hormone)
 plot(SVL_Juv3_hormone_mod_emm)
-# plot - males are smaller than girls
+# plot - males are smaller than females
 SVL_Juv3_sex_mod_emm <- emmeans(SVL_Juv3_mod, pairwise ~ sex)
 plot(SVL_Juv3_sex_mod_emm)
 saveRDS(SVL_Juv3_mod, "Kwild_code/models/SVL_Juv3_mod.RDS")
@@ -214,7 +205,7 @@ saveRDS(SVL_Juv3_mod, "Kwild_code/models/SVL_Juv3_mod.RDS")
 # MASS ANALYSIS: Juv_1, Juv_2, Juv_3
 ###############
 #### MASS: Juv_1 - interaction removed
-Mass_Juv1_mod <- lm(juv1_measure_mass_g ~ temp + hormone + scale(days_post_hatch_juv1), data = data_final)
+Mass_Juv1_mod <- lm(juv1_mass_g ~ temp + hormone + scale(hatch_juv1_days), data = data_final)
 check_model(Mass_Juv1_mod)
 # effect on temp, hormone, and days since hatch; no effects on temp x hormone interaction
 summary(Mass_Juv1_mod)
@@ -228,25 +219,20 @@ plot(Mass_Juv1_temp_mod_emm)
 saveRDS(Mass_Juv1_mod, "Kwild_code/models/Mass_Juv1_mod.RDS")
 
 #### MASS: Juv_2; interaction removed
-Mass_Juv2_mod <- lm(juv2_measure_mass_g ~ temp + hormone  + scale(days_post_hatch_juv2), data = data_final)
+Mass_Juv2_mod <- lm(juv2_mass_g ~ temp + hormone  + scale(hatch_juv2_days), data = data_final)
 check_model(Mass_Juv2_mod)
-# temp effect
+# temp  effect
 summary(Mass_Juv2_mod)
-anova(Mass_Juv2_mod)
 # temp plot - low mass with high temperatures
 Mass_Juv2_temp_mod_emm <- emmeans(Mass_Juv2_mod, pairwise ~ temp)
 plot(Mass_Juv2_temp_mod_emm)
 saveRDS(Mass_Juv2_mod, "Kwild_code/models/Mass_Juv2_mod.RDS")
 
 #### MASS: Juv_3; NOTE SEX IS ACCOUNTED FOR
-Mass_Juv3_mod <- lm(juv3_mass_g ~ temp + hormone+ sex+ scale(days_post_hatch_juv2), data = data_final)
+Mass_Juv3_mod <- lm(juv3_mass_g ~ temp + hormone+ sex + scale(hatch_juv3_days), data = data_final)
 check_model(Mass_Juv3_mod)
-# temp effect
+# sex effect
 summary(Mass_Juv3_mod)
-anova(Mass_Juv3_mod)
-# temp plot - low mass with high temperature
-Mass_Juv3_temp_mod_emm <- emmeans(Mass_Juv3_mod, pairwise ~ temp)
-plot(Mass_Juv3_temp_mod_emm)
 # temp plot - males smaller than females
 Sex_Juv3_temp_mod_emm <- emmeans(Mass_Juv3_mod, pairwise ~ sex)
 plot(Sex_Juv3_temp_mod_emm)
@@ -257,13 +243,12 @@ saveRDS(Mass_Juv3_mod, "Kwild_code/models/Mass_Juv3_mod.RDS")
 # BCI ANALYSIS: Juv_1, Juv_2, Juv_3
 ###############
 ### BCI Juv1 - residuals
-condition_juv1_fit <- lm(juv1_measure_mass_g ~ juv1_measure_SVL_mm + scale(days_post_hatch_juv1), data = data_final, na.action=na.exclude) # fit the model for residuals
-data_final$juv1_bc_residuals <- residuals(condition_juv1_fit, na.action=na.exclude) # Save the residual values
+condition_juv1_fit <- lm(juv1_mass_g ~ juv1_SVL_mm + scale(hatch_juv1_days), data = data_final, na.action=na.exclude) # fit the model for residuals
+data_final$juv1_bc_resid <- residuals(condition_juv1_fit, na.action=na.exclude) # Save the residual values
 ## Juvenile -anova on BCI residuals; interaction removed
-condition_juv_mod <- lm(juv1_bc_residuals ~ temp + hormone  + scale(days_post_hatch_juv1), data = data_final)
+condition_juv_mod <- lm(juv1_bc_resid ~ temp + hormone  + scale(hatch_juv1_days), data = data_final)
 # no treatment effects on bci juv1
 summary(condition_juv_mod)
-anova(condition_juv_mod) 
 check_model(condition_juv_mod)
 # temp plot - 
 condition_juv_mod_emm <- emmeans(condition_juv_mod, pairwise ~ temp)
@@ -271,25 +256,23 @@ plot(condition_juv_mod_emm)
 saveRDS(condition_juv_mod, "Kwild_code/models/condition_juv_mod.RDS")
 
 ### BCI Juv2 - residuals
-condition_juv2_fit <- lm(juv2_measure_mass_g ~ juv2_measure_SVL_mm + scale(days_post_hatch_juv2), data = data_final, na.action=na.exclude) # fit the model for residuals
-data_final$juv2_bc_residuals <- residuals(condition_juv2_fit, na.action=na.exclude) # Save the residual values
+condition_juv2_fit <- lm(juv2_mass_g ~ juv2_SVL_mm + scale(hatch_juv2_days), data = data_final, na.action=na.exclude) # fit the model for residuals
+data_final$juv2_bc_resid <- residuals(condition_juv2_fit, na.action=na.exclude) # Save the residual values
 ## Juvenile -anova on BCI residuals; interaction removed
-condition_juv2_mod <- lm(juv2_bc_residuals ~ temp + hormone +scale(days_post_hatch_juv2), data = data_final)
+condition_juv2_mod <- lm(juv2_bc_resid ~ temp + hormone +scale(hatch_juv2_days), data = data_final)
 check_model(condition_juv2_mod)
 # no treatment effects on bci juv1
 summary(condition_juv2_mod)
-anova(condition_juv2_mod) 
 saveRDS(condition_juv2_mod, "Kwild_code/models/condition_juv2_mod.RDS")
 
 ### BCI Juv3 - residuals
-condition_juv3_fit <- lm(juv3_mass_g ~ juv3_SVL_mm + scale(days_post_hatch_juv3), data = data_final, na.action=na.exclude) # fit the model for residuals
-data_final$juv3_bc_residuals <- residuals(condition_juv3_fit, na.action=na.exclude) # Save the residual values
+condition_juv3_fit <- lm(juv3_mass_g ~ juv3_SVL_mm + scale(hatch_juv2_days), data = data_final, na.action=na.exclude) # fit the model for residuals
+data_final$juv3_bc_resid <- residuals(condition_juv3_fit, na.action=na.exclude) # Save the residual values
 ## Juvenile -anova on BCI residuals; NOTE SEX INCLUDED
-condition_juv3_mod <- lm(juv3_bc_residuals ~ temp + hormone + sex + scale(days_post_hatch_juv3), data = data_final)
+condition_juv3_mod <- lm(juv3_bc_resid ~ temp + hormone + sex + scale(hatch_juv2_days), data = data_final)
 check_model(condition_juv3_mod)
 # no treatment effects on bci juv1
 summary(condition_juv3_mod)
-anova(condition_juv3_mod) 
 # sex plot - 
 sex_condition_juv3_mod_emm <- emmeans(condition_juv3_mod, pairwise ~ sex)
 plot(sex_condition_juv3_mod_emm)
@@ -297,49 +280,43 @@ saveRDS(condition_juv3_mod, "Kwild_code/models/condition_juv3_mod.RDS")
 
 
 ################
-#### 4.	developmental treatment & survival; Testing days to mortality across treatments
+#### 4.	developmental treatment; Testing days to mortality across treatments
 #### no differences between treatments
 ################
 # survival fisher test- filter out missing animals
 survival<- data_final %>% 
   filter(liz_status_db != "MISSING")
 survival_table <- table(survival$liz_status_db, survival$hormone)
-fisher.test(survival_table)
-
-# days difference 
-survival_dat <- data_final %>% 
-  filter(liz_status_db == "DEAD") %>% 
-  select(c("temp", "hormone", "mortality_date_dmy")) %>% 
-  drop_na() 
-
-survival_day_hormone <- kruskal.test(mortality_date_dmy ~ hormone, data = survival_dat)
-survival_day_temp <- kruskal.test(mortality_date_dmy ~ temp, data = survival_dat)
+# analysis
+survival_day_hormone <- kruskal.test(mortality_date ~ hormone, data = survival_dat)
+survival_day_temp <- kruskal.test(mortality_date ~ temp, data = survival_dat)
+# save analysis
+saveRDS(survival_day_hormone, "Kwild_code/models/survival_day_hormone.RDS")
+saveRDS(survival_day_temp, "Kwild_code/models/survival_day_temp.RDS")
 
 
 ################
 #### 5.	Growthrate
-#### OVERALL SVL: effect of temperature- warm temps faster svl growth
+#### OVERALL SVL: 
 #### OVERALL MASS: effect of temperature-warm temps slower mass growth
 ################
 # SVL overall growth: hatch to juv_3; interaction removed
-overall_SVL_growth_mod <- lm(day_SVL_growth4_inital_to_juv3 ~hormone + temp, 
+overall_SVL_growth_mod <- lm(hatch_juv3_SVL_growth ~hormone + temp + scale(hatch_juv3_days), 
                       data = data_final, na.action=na.exclude)
 check_model(overall_SVL_growth_mod)
 # treatment effect on temp but not hormone
 summary(overall_SVL_growth_mod)
-anova(overall_SVL_growth_mod) 
 # temp and growth plot - faster growth rates in cooler temps
 overall_SVL_growth_mod_emm <- emmeans(overall_SVL_growth_mod, pairwise ~ temp)
 plot(overall_SVL_growth_mod_emm)
 saveRDS(overall_SVL_growth_mod, "Kwild_code/models/overall_SVL_growth_mod.RDS")
 
 # Mass test; interaction removed
-growth4_mass_mod <- lm(day_SVL_growth4_inital_to_juv3 ~hormone + temp, 
+growth4_mass_mod <- lm( hatch_juv3_MASS_growth~hormone + temp + scale(hatch_juv3_days), 
                        data = data_final, na.action=na.exclude) 
 check_model(growth4_mass_mod)
 # treatment effect on temp but not hormone
 summary(growth4_mass_mod)
-anova(growth4_mass_mod) 
 # temp and growth plot - faster growth rates in cooler temps
 growth4_mass_mod_emm <- emmeans(growth4_mass_mod, pairwise ~ temp)
 plot(growth4_mass_mod_emm)
@@ -347,22 +324,122 @@ saveRDS(growth4_mass_mod, "Kwild_code/models/growth4_mass_mod.RDS")
 
 
 ########################
-# Testosterone, T4, Cort
+### 6: CORT, Testosterone, T4
+# Cort: no differences across treatments but overall correlation with SVL and mass growth (high cort, high growth rate)
+#
+# Testosterone: no differences across treatments and no effects on growth rates
 ########################
-hormone_analysis_dat <- data_final %>% 
-  filter(!is.na(juv3_CORT_Final_Hormone_ng_mL))
+# data
+cort_dat <- data_final %>%
+  drop_na(juv3_CORT_Final_Hormone_ng_mL, temp, hormone, juv3_HandlingTime_sec)
 
+test_dat <- data_final %>%
+  drop_na(juv3_Testosterone_Final_ng_ml, temp, hormone, Lizard_ID)
 
-# cort differences
-Cort_sex <- lmer(juv3_CORT_Final_Hormone_ng_mL ~Season + Sex + Season*Sex
-                 + (1|Liz_ID), data = move.dat)
-anova(Raw.Avg.mixed.lmer)  
-
-
-
+t4_dat <- data_final %>%
+  drop_na(juv3_T4_corrected_ng_mL, temp, hormone, Lizard_ID)
 
 
 
+################
+# CORT
+######## 1) treatments- how does cort vary across temp and hormone treatment
+cort_mod <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ hormone + temp + sex + juv3_HandlingTime_sec + scale(juv3_mass_g), data = cort_dat)
+check_model(cort_mod)
+summary(cort_mod)
+
+######## 2)  SVL growth - does cort correlate with growth rate and how does this vary across temp and hormone treatment
+# high svl growth associated with high cort
+cort_SVL_growth <- lm(juv3_CORT_Final_Hormone_ng_mL ~ hatch_juv3_SVL_growth + hormone, data = cort_dat)
+summary(cort_SVL_growth)
+ggplot(cort_dat, aes(x = hatch_juv3_SVL_growth, y = juv3_CORT_Final_Hormone_ng_mL)) +
+  geom_point(aes(color = as.factor(temp), shape = hormone), size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(x = "SVL growth rate (mm/d)", y = "CORT Final Hormone (ng/mL)", 
+       color = "Temperature", shape = "Treatment") +
+  scale_color_discrete(name = "Temperature") + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = c(0.99, 0.99),  # Positions the legend inside the plot
+        legend.justification = c("right", "top"), # Justifies the legend's position
+        legend.background = element_blank())
+
+######## 3)  MASS growth - does cort correlate with mass growth rate and how does this vary across temp and hormone treatment
+# high growth associated with high cort 
+cort_mass_growth <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ scale(hatch_juv3_MASS_growth) +hormone, data = cort_dat)
+summary(cort_mass_growth)
+ggplot(cort_dat, aes(x = hatch_juv3_MASS_growth, y = juv3_CORT_Final_Hormone_ng_mL)) +
+  geom_point(aes(color = as.factor(temp), shape = hormone), size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(x = "Mass growth rate (g/d)", y = "CORT Final Hormone (ng/mL)", 
+       color = "Temperature", shape = "Treatment") +
+  scale_color_discrete(name = "Temperature") + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = c(0.99, 0.99),  # Positions the legend inside the plot
+        legend.justification = c("right", "top"), # Justifies the legend's position
+        legend.background = element_blank())
+
+
+######## 4) Body condition: NS
+cort_BCI_growth <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~juv3_bc_resid, 
+                      data = cort_dat)
+summary(cort_BCI_growth)
+
+
+
+
+################
+# T4
+################ 
+# 1) treatments -  does T4 vary across temp and hormone treatment: NS
+T4_mod_temp_hormone <- lm(juv3_T4_corrected_ng_mL ~ log(juv3_CORT_Final_Hormone_ng_mL) + 
+                            scale(hatch_juv3_MASS_growth) + temp + hormone,
+                          data = t4_dat)
+check_model(T4_mod_temp_hormone)
+# NS
+summary(T4_mod_temp_hormone)
+
+
+
+# 2) growth and the interaction between T4 and cort
+T4_mod_growth <- lm(scale(hatch_juv3_MASS_growth) ~ scale(log(juv3_CORT_Final_Hormone_ng_mL))* 
+                      scale(log(juv3_T4_corrected_ng_mL)) + temp, 
+             data = t4_dat)
+check_model(T4_mod_growth)
+summary(T4_mod_growth)
+
+# predicitions: growth and T4 and cort
+newdata <- data.frame(`juv3_CORT_Final_Hormone_ng_mL` = seq(from = min(t4_dat$juv3_CORT_Final_Hormone_ng_mL), 
+                                                            to = max(t4_dat$juv3_CORT_Final_Hormone_ng_mL),
+                                                            length.out = 100),
+                      `juv3_T4_corrected_ng_mL` = rep(seq(from = min(t4_dat$juv3_T4_corrected_ng_mL), 
+                                                          to = max(t4_dat$juv3_T4_corrected_ng_mL)), 
+                                                      each = 100), temp = 23)
+
+newdata$pred <- predict(T4_mod_growth, newdata = newdata)
+
+# contour plot
+s <- interp(x = newdata$juv3_T4_corrected_ng_mL, 
+            y = newdata$juv3_CORT_Final_Hormone_ng_mL, 
+            z = newdata$pred)
+
+image.plot(s, xlab = "T4_ng_mL", ylab = "Cort_ng_mL", 
+           las = 1, col = viridis(option = "magma", 50), 
+           cex.axis = 1, axis.args = list(cex.axis = 1.5), cex.lab = 1.8,
+           xlim = c(min(newdata$juv3_T4_corrected_ng_mL)+.012, 
+                    max(newdata$juv3_T4_corrected_ng_mL)-.011),  # Explicitly defining x limits
+           ylim = c(min(newdata$juv3_CORT_Final_Hormone_ng_mL)+8, 
+                    max(newdata$juv3_CORT_Final_Hormone_ng_mL)))  # Explicitly defining y limits
+contour(s, add = TRUE, col = "white")
+
+
+######## 3) growth -  does T4 correlate with growth rate and how does this vary across temp and hormone treatment
+# Fit a linear model to T4 the interaction between variables
+T4_growth <- lm(juv3_T4_corrected_ng_mL ~ scale(hatch_juv3_SVL_growth) * temp * hormone, data = t4_dat)
+summary(T4_growth)
 
 
 
@@ -372,34 +449,48 @@ anova(Raw.Avg.mixed.lmer)
 hormones <- c("#999999", "#E69F00", "brown2")
 temps <- c("Blue", "Red")
 my_comparisons <- rev(list(c("control","low"),c("control","high-"),c("low","high")))
-# Figure1 : effects of developmental treatments (temp, cort, interaction) on time to hatch: -	Effect on temperature: warmer temps faster development 
-Fig1 <- ggboxplot(data_final, x = "temp", y = "days_to_hatch",
-                  color = "temp", palette = temps,
-                  short.panel.labs = FALSE,
-                  font.label = list(size = 14, color = "black"),
-                  ggtheme = theme_bw())+ 
+
+########## FIGURE 1: temperature and morphology: effects of developmental treatments (temp, cort, interaction) on time to hatch: -	Effect on temperature: warmer temps faster development 
+fig1 <- ggviolin(data_final, x = "temp", y = "days_to_hatch",
+                 color = "temp", palette = temps,
+                 short.panel.labs = FALSE,
+                 font.label = list(size = 14, color = "black"),
+                 ggtheme = theme_bw()) + 
+  geom_jitter(aes(color = temp), width = 0.2, alpha = 0.4) +  # Adding raw data points
+  
+  # Adding mean and standard error
+  stat_summary(
+    mapping = aes(x = temp, y = days_to_hatch),
+    fun = "mean", geom = "point", size = 2, color = "black", alpha = 0.6) +
+  stat_summary(
+    mapping = aes(x = temp, y = days_to_hatch),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black",  alpha = 0.6) +
+  
   stat_compare_means(method = "anova", vjust = -.1, hjust = -3)+ 
   labs(x = "Temperature (°C)", y = "Incubation time (days)") +
   labs(color='Incubation Temperature')+
   scale_y_continuous(breaks=seq(25, 60, 5), limits = c(25,60))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"))
-Fig1
 
 
-# Figure 2: effects of developmental treatments on body size, condition, and mass at hatching;
-# Hormone effect svl; mass hormone and temp effects body size; Temp effects BCI 
-# MODS USED:  
-# SVL_hatch_mod <- lm(hatch_svl_orig_mm ~ temp + hormone, data = Liz) 
-# Mass_hatch_mod <- lm(hatch_mass_orig ~ temp + hormone, data = Liz) 
-# condition_hatch_mod <- lm(hatch_bc_residuals ~ temp + hormone, data = Liz)
-# A)
-fig2_A <- ggboxplot(data_final, x = "hormone", y = "hatch_svl_orig_mm",
-                      color = "hormone", palette = hormones,
-                      short.panel.labs = FALSE,
-                      font.label = list(size = 14, color = "black"),
-                      ggtheme = theme_bw())+ 
-  geom_jitter(aes(color = hormone), width = 0.2, alpha = 0.4) +  # Adding raw data points with color and transparency
+########### FIGURE 2: temperature and morphology effects of developmental 
+# treatments on body size, condition, and mass at hatching;
+fig2_A <- ggviolin(data_final, x = "hormone", y = "hatch_svl_mm",
+                    color = "hormone", palette = hormones,
+                    short.panel.labs = FALSE,
+                    font.label = list(size = 14, color = "black"),
+                    ggtheme = theme_bw())+ 
+  geom_jitter(aes(color = hormone), width = 0.2, alpha = 0.6) +  # Adding raw data points with color and transparency
+  
+  # Adding mean and standard error
+  stat_summary(
+    mapping = aes(x = hormone, y = hatch_svl_mm),
+    fun = "mean", geom = "point", size = 3, color = "black", alpha = 0.6) +
+  stat_summary(
+    mapping = aes(x = hormone, y = hatch_svl_mm),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = 0.6) +
+  
   stat_compare_means(comparisons = list(c("control","low"), c("control","high"), c("low","high"))) +
   stat_compare_means(method = "anova")+
   labs(x = NULL, y = "Hatchling SVL") +
@@ -408,17 +499,21 @@ fig2_A <- ggboxplot(data_final, x = "hormone", y = "hatch_svl_orig_mm",
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         legend.position = "none")
-
-
-
-
-# B)
-Fig2_B <- ggboxplot(data_final, x = "hormone", y = "hatch_mass_orig",
-                         color = "hormone", palette = hormones,
-                         short.panel.labs = FALSE,
-                         font.label = list(size = 14, color = "black"),
-                         ggtheme = theme_bw()) +
+# B) hatchling mass * hormone
+Fig2_B <- ggviolin(data_final, x = "hormone", y = "hatch_mass_g",
+                    color = "hormone", palette = hormones,
+                    short.panel.labs = FALSE,
+                    font.label = list(size = 14, color = "black"),
+                    ggtheme = theme_bw()) +
   geom_jitter(aes(color = hormone), width = 0.2, alpha = 0.4) +  # Adding raw data points with color and transparency
+  
+  # Adding mean and standard error
+  stat_summary(
+    mapping = aes(x = hormone, y = hatch_mass_g),
+    fun = "mean", geom = "point", size = 3, color = "black", alpha = .6) +
+  stat_summary(
+    mapping = aes(x = hormone, y = hatch_mass_g),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = 0.6) +
   stat_compare_means(comparisons = list(c("control","low"), c("control","high"), c("low","high"))) +
   stat_compare_means(method = "anova") +
   labs(x = NULL, y = "Hatchling mass (g)") +
@@ -434,51 +529,123 @@ Fig2_B <- ggboxplot(data_final, x = "hormone", y = "hatch_mass_orig",
         legend.text = element_text(size = 6),
         legend.title = element_text(size = 8))
 
-Fig2 <- plot_grid(fig2_A, Fig2_B, ncol = 2, align = "h")
+fig2 <- plot_grid(fig2_A, Fig2_B, ncol = 2, align = "h")
 
-# Fig 3 Temperature
-fig3_A <- ggboxplot(data_final, x = "temp", y = "hatch_bc_residuals",
-                      color = "temp", palette = temps,
-                      short.panel.labs = FALSE,
-                      font.label = list(size = 14, color = "black"),
-                      ggtheme = theme_bw()) + 
-  geom_jitter(aes(color = temp), width = 0.2, alpha = 0.4) +  # Adding raw data points with color and transparency
-  stat_compare_means(method = "anova", vjust = -.1, hjust = -2)+ 
-  labs(x = "Temperature (°C)", y = "BCI") +
-  labs(color='Incubation Treatment')+
-  scale_y_continuous(breaks=seq(-0.06, 0.06, 0.02), limits = c(-0.06, 0.06))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), axis.line = element_line(colour = "black"))
-
-
-
-# D)
-fig3_B <- ggboxplot(data_final, x = "temp", y = "hatch_mass_orig",
-                         color = "temp", palette = temps,
-                         short.panel.labs = FALSE,
-                         font.label = list(size = 14, color = "black"),
-                         ggtheme = theme_bw()) +
-  geom_jitter(aes(color = temp), width = 0.2, alpha = 0.4) +  # Adding raw data points with color and transparency
+########## FIGURE 3: temperature and morphology of hatchlings
+fig3_A <- ggviolin(data_final, x = "temp", y = "hatch_mass_g",
+                    color = "temp", palette = temps,
+                    short.panel.labs = FALSE,
+                    font.label = list(size = 14, color = "black"),
+                    ggtheme = theme_bw()) +
+  
+  geom_jitter(aes(color = temp), width = 0.2, alpha = 0.4) + 
+  stat_summary(
+    mapping = aes(x = temp, y = hatch_mass_g),
+    fun = "mean", geom = "point", size = 2, color = "black", alpha = .5) +
+  stat_summary(
+    mapping = aes(x = temp, y = hatch_mass_g),
+    fun.data = "mean_se", geom = "errorbar", width = .1, color = "black", alpha = .5) +
   stat_compare_means(method = "anova") +
   labs(x = "Temperature (°C)", y = "Hatchling mass (g)") +
   labs(color='Temperature Treatment')+
   scale_y_continuous(breaks=seq(0.06, 0.18, .02), limits = c(0.06,0.18)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = "none")
 
-
-
+# body condition and temp
+fig3_B <- ggviolin(data_final, x = "temp", y = "hatch_bc_residuals",
+                   color = "temp", palette = temps,
+                   short.panel.labs = FALSE,
+                   font.label = list(size = 14, color = "black"),
+                   ggtheme = theme_bw()) + 
+  geom_jitter(aes(color = temp), width = 0.2, alpha = 0.4) +  
+  stat_summary(
+    mapping = aes(x = temp, y = hatch_bc_residuals),
+    fun = "mean", geom = "point", size = 2, color = "black", alpha = .5 ) +
+  stat_summary(
+    mapping = aes(x = temp, y = hatch_bc_residuals),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = .5) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  stat_compare_means(method = "anova", vjust = -.1, hjust = 0)+ 
+  labs(x = "Temperature (°C)", y = "BCI") +
+  labs(color='Incubation Treatment')+
+  scale_y_continuous(breaks=seq(-0.06, 0.06, 0.02), limits = c(-0.06, 0.06))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = c(0.99, 0.99),  # Positions the legend inside the plot
+        legend.justification = c("right", "top"), # Justifies the legend's position
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.box = element_blank(),
+        legend.text = element_text(size = 6),
+        legend.title = element_text(size = 8))
 
 fig3 <- plot_grid(fig3_A, fig3_B, ncol = 2, align = "h")
 
+#### FIGURE 4: Mass growth on final cort measurments 
+fig4_A <- ggplot(cort_dat, aes(x = hatch_juv3_SVL_growth, y = juv3_CORT_Final_Hormone_ng_mL)) +
+  geom_point(aes(color = as.factor(temp), shape = hormone), size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = 2) +
+  labs(x = "SVL growth rate (mm/d)", y = "CORT Final Hormone (ng/mL)", 
+       color = "Temperature", shape = "Treatment") +
+  scale_color_discrete(name = "Temperature") + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = "none")
+# B
+fig4_B <- ggplot(cort_dat, aes(x = hatch_juv3_MASS_growth, 
+                               y = juv3_CORT_Final_Hormone_ng_mL)) +
+  geom_point(aes(color = as.factor(temp), shape = hormone), size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = 2) +
+  labs(x = "Mass growth rate (g/d)", y = NULL, 
+       color = "Temperature", shape = "Treatment") +
+  scale_color_discrete(name = "Temperature") + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = c(0.99, 0.99),  # Positions the legend inside the plot
+        legend.justification = c("right", "top"), # Justifies the legend's position
+        legend.background = element_blank())
 
-ggplot(Liz, aes(x = hormone, y = bd_mass_orig, fill = hormone))+
-  geom_violin(alpha=0.4, position = position_dodge(width = .9),size=1, color="black", trim = FALSE)+ 
-  geom_point()+
-  stat_compare_means(comparisons = list(c("control","low"), c("control","high"), c("low","high")))+
-  stat_compare_means()+
-  ggforce::geom_sina(alpha=0.4)
+fig4 <- plot_grid(fig4_A, fig4_B, ncol = 2, align = "h")
 
 
+########## FIGURE 5: cort values from cort treatments
+fig5 <- ggviolin(data_final, x = "hormone", y = "juv3_CORT_Final_Hormone_ng_mL",
+                   color = "hormone", palette = hormones,
+                   short.panel.labs = FALSE,
+                   font.label = list(size = 14, color = "black"),
+                   ggtheme = theme_bw()) +
+  geom_jitter(aes(color = hormone), width = 0.2, alpha = 0.4) +  #
+  stat_summary(
+    mapping = aes(x = hormone, y = juv3_CORT_Final_Hormone_ng_mL),
+    fun = "mean", geom = "point", size = 3, color = "black", alpha = .6) +
+  stat_summary(
+    mapping = aes(x = hormone, y = juv3_CORT_Final_Hormone_ng_mL),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = 0.6) +
+  labs(x = "Cort Environment Treatment", y = "Cort Final Hormone (ng/mL)") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = c(0.99, 0.99),  # Positions the legend inside the plot
+        legend.justification = c("right", "top"), # Justifies the legend's position
+        legend.background = element_blank())
 
-str(liz_ondi)
+
+# Fig 6 T4 and cort effects on final growth contour plot
+# another plot
+s <- interp(x = newdata$juv3_T4_corrected_ng_mL, 
+            y = newdata$juv3_CORT_Final_Hormone_ng_mL, 
+            z = newdata$pred)
+image.plot(s, xlab = "T4", ylab = "Cort", 
+           las = 1, col = viridis(option = "magma", 50), 
+           cex.axis = 1, axis.args = list(cex.axis = 1.5), cex.lab = 1.8)
+contour(s, add = TRUE, col = "white")
+
+
+fig1
+fig2
+fig3
+fig4
+fig5
