@@ -78,18 +78,8 @@ data_final <- data_final %>%
   mutate(hatch_juv3_SVL_growth =  (juv3_SVL_mm-hatch_svl_mm)/hatch_juv3_days,
          hatch_juv3_MASS_growth = (juv3_mass_g-hatch_mass_g)/hatch_juv3_days)
 
-data_final <-  mutate(data_final, hormone = factor(hormone, 
-                                                   levels = c("control","low","high"))) %>% 
-  filter(!is.na(hormone)) %>%
-  group_by(hormone)
 
 
-
-
-
-#########
-# save final data for figures and quarto doc
-write.csv(data_final, "Kwild_code/data/final_analysis_data")
 
 ################
 #### 1.	What are the effects of developmental treatments (temp, cort, interaction) on time to hatch?
@@ -279,17 +269,26 @@ plot(sex_condition_juv3_mod_emm)
 saveRDS(condition_juv3_mod, "Kwild_code/models/condition_juv3_mod.RDS")
 
 
+#########
+# save final data with BCI residuals for figures and quarto doc
+data_final <-  mutate(data_final, hormone = factor(hormone, 
+                                                   levels = c("control","low","high"))) %>% 
+  filter(!is.na(hormone)) %>%
+  group_by(hormone)
+write.csv(data_final, "Kwild_code/data/final_analysis_data.csv")
+
+
 ################
 #### 4.	developmental treatment; Testing days to mortality across treatments
-#### no differences between treatments
+#### no differences between treatments. Mortality of duration of study
 ################
 # survival fisher test- filter out missing animals
 survival<- data_final %>% 
   filter(liz_status_db != "MISSING")
 survival_table <- table(survival$liz_status_db, survival$hormone)
 # analysis
-survival_day_hormone <- kruskal.test(mortality_date ~ hormone, data = survival_dat)
-survival_day_temp <- kruskal.test(mortality_date ~ temp, data = survival_dat)
+survival_day_hormone <- kruskal.test(liz_status_db ~ hormone, data = survival)
+survival_day_temp <- kruskal.test(liz_status_db ~ temp, data = survival)
 # save analysis
 saveRDS(survival_day_hormone, "Kwild_code/models/survival_day_hormone.RDS")
 saveRDS(survival_day_temp, "Kwild_code/models/survival_day_temp.RDS")
@@ -333,25 +332,26 @@ saveRDS(growth4_mass_mod, "Kwild_code/models/growth4_mass_mod.RDS")
 cort_dat <- data_final %>%
   drop_na(juv3_CORT_Final_Hormone_ng_mL, temp, hormone, juv3_HandlingTime_sec)
 
-test_dat <- data_final %>%
-  drop_na(juv3_Testosterone_Final_ng_ml, temp, hormone, Lizard_ID)
-
 t4_dat <- data_final %>%
   drop_na(juv3_T4_corrected_ng_mL, temp, hormone, Lizard_ID)
 
+test_dat <- data_final %>%
+  drop_na(juv3_Testosterone_Final_ng_ml, temp, hormone, Lizard_ID)
 
-
-################
+########
 # CORT
 ######## 1) treatments- how does cort vary across temp and hormone treatment
-cort_mod <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ hormone + temp + sex + juv3_HandlingTime_sec + scale(juv3_mass_g), data = cort_dat)
-check_model(cort_mod)
-summary(cort_mod)
+cort_development_mod <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ hormone + temp + sex + juv3_HandlingTime_sec + scale(juv3_mass_g), data = cort_dat)
+check_model(cort_development_mod)
+summary(cort_development_mod)
+saveRDS(cort_development_mod, "Kwild_code/models/cort_development_mod.RDS")
 
 ######## 2)  SVL growth - does cort correlate with growth rate and how does this vary across temp and hormone treatment
 # high svl growth associated with high cort
-cort_SVL_growth <- lm(juv3_CORT_Final_Hormone_ng_mL ~ hatch_juv3_SVL_growth + hormone, data = cort_dat)
-summary(cort_SVL_growth)
+cort_SVL_growth_mod <- lm(juv3_CORT_Final_Hormone_ng_mL ~ hatch_juv3_SVL_growth + hormone, data = cort_dat)
+summary(cort_SVL_growth_mod)
+saveRDS(cort_SVL_growth_mod, "Kwild_code/models/cort_SVL_growth_mod.RDS")
+# plot 
 ggplot(cort_dat, aes(x = hatch_juv3_SVL_growth, y = juv3_CORT_Final_Hormone_ng_mL)) +
   geom_point(aes(color = as.factor(temp), shape = hormone), size = 2) + 
   geom_smooth(method = "lm", se = FALSE, color = "black") +
@@ -367,8 +367,10 @@ ggplot(cort_dat, aes(x = hatch_juv3_SVL_growth, y = juv3_CORT_Final_Hormone_ng_m
 
 ######## 3)  MASS growth - does cort correlate with mass growth rate and how does this vary across temp and hormone treatment
 # high growth associated with high cort 
-cort_mass_growth <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ scale(hatch_juv3_MASS_growth) +hormone, data = cort_dat)
-summary(cort_mass_growth)
+cort_mass_growth_mod <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ scale(hatch_juv3_MASS_growth) +hormone, data = cort_dat)
+summary(cort_mass_growth_mod)
+saveRDS(cort_mass_growth_mod, "Kwild_code/models/cort_mass_growth_mod.RDS")
+# plot
 ggplot(cort_dat, aes(x = hatch_juv3_MASS_growth, y = juv3_CORT_Final_Hormone_ng_mL)) +
   geom_point(aes(color = as.factor(temp), shape = hormone), size = 2) + 
   geom_smooth(method = "lm", se = FALSE, color = "black") +
@@ -382,36 +384,38 @@ ggplot(cort_dat, aes(x = hatch_juv3_MASS_growth, y = juv3_CORT_Final_Hormone_ng_
         legend.justification = c("right", "top"), # Justifies the legend's position
         legend.background = element_blank())
 
-
 ######## 4) Body condition: NS
 cort_BCI_growth <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~juv3_bc_resid, 
                       data = cort_dat)
 summary(cort_BCI_growth)
 
 
-
-
 ################
 # T4
 ################ 
 # 1) treatments -  does T4 vary across temp and hormone treatment: NS
-T4_mod_temp_hormone <- lm(juv3_T4_corrected_ng_mL ~ log(juv3_CORT_Final_Hormone_ng_mL) + 
+T4_temp_hormone_mod <- lm(juv3_T4_corrected_ng_mL ~ log(juv3_CORT_Final_Hormone_ng_mL) + 
                             scale(hatch_juv3_MASS_growth) + temp + hormone,
                           data = t4_dat)
-check_model(T4_mod_temp_hormone)
-# NS
-summary(T4_mod_temp_hormone)
+check_model(T4_temp_hormone_mod)
+summary(T4_temp_hormone_mod)
+saveRDS(T4_temp_hormone_mod, "Kwild_code/models/T4_temp_hormone_mod.RDS")
 
-
-
-# 2) growth and the interaction between T4 and cort
-T4_mod_growth <- lm(scale(hatch_juv3_MASS_growth) ~ scale(log(juv3_CORT_Final_Hormone_ng_mL))* 
+# 2) SVL growth and the interaction between T4 and cort
+T4_SVL_growth_mod <- lm(scale(hatch_juv3_SVL_growth) ~ scale(log(juv3_CORT_Final_Hormone_ng_mL))* 
                       scale(log(juv3_T4_corrected_ng_mL)) + temp, 
              data = t4_dat)
-check_model(T4_mod_growth)
-summary(T4_mod_growth)
+check_model(T4_SVL_growth_mod)
+summary(T4_SVL_growth_mod)
 
-# predicitions: growth and T4 and cort
+# 3) MASS growth and the interaction between T4 and cort
+T4_mass_growth_mod <- lm(scale(hatch_juv3_MASS_growth) ~ scale(log(juv3_CORT_Final_Hormone_ng_mL))* 
+                          scale(log(juv3_T4_corrected_ng_mL)) + temp, 
+                        data = t4_dat)
+check_model(T4_mass_growth_mod)
+summary(T4_mass_growth_mod)
+saveRDS(T4_mass_growth_mod, "Kwild_code/models/T4_mass_growth_mod.RDS")
+# PLOT: predicitions: growth and T4 and cort
 newdata <- data.frame(`juv3_CORT_Final_Hormone_ng_mL` = seq(from = min(t4_dat$juv3_CORT_Final_Hormone_ng_mL), 
                                                             to = max(t4_dat$juv3_CORT_Final_Hormone_ng_mL),
                                                             length.out = 100),
@@ -419,7 +423,7 @@ newdata <- data.frame(`juv3_CORT_Final_Hormone_ng_mL` = seq(from = min(t4_dat$ju
                                                           to = max(t4_dat$juv3_T4_corrected_ng_mL)), 
                                                       each = 100), temp = 23)
 
-newdata$pred <- predict(T4_mod_growth, newdata = newdata)
+newdata$pred <- predict(T4_mass_growth_mod, newdata = newdata)
 
 # contour plot
 s <- interp(x = newdata$juv3_T4_corrected_ng_mL, 
@@ -554,7 +558,7 @@ fig3_A <- ggviolin(data_final, x = "temp", y = "hatch_mass_g",
         legend.position = "none")
 
 # body condition and temp
-fig3_B <- ggviolin(data_final, x = "temp", y = "hatch_bc_residuals",
+fig3_B <- ggviolin(data_final, x = "temp", y = "",
                    color = "temp", palette = temps,
                    short.panel.labs = FALSE,
                    font.label = list(size = 14, color = "black"),

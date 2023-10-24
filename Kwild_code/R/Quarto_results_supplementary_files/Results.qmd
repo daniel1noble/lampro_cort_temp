@@ -1,0 +1,694 @@
+---
+title: "Results"
+author: "K.Wild & DWA Noble"
+format: html
+editor: visual
+---
+
+## Data description
+
+Below are the models, results, and figures that we discussed last friday. I Still need to include the Mito data in this document. The workflow is all of our analysis data is in the R script "Lampro_Cort_Temp_Analysis.R". In this document I'm running (and checking) all of our models. Final models are then saved in the folder "models" folder and are named biased off the analysis of interest. These final models are then brought in here and are used in the code and figures below. Above each code chunk are the question(s) being addressed and their results.
+
+Note, I have the results currently by the question of interest but we can reorganize this whatever way we decide is best for telling the story.
+
+```{r setup, include=FALSE, eval = T, echo = FALSE}
+## Packages and set up
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+options(digits = 3)
+rm(list=ls())
+sessionInfo()
+pacman::p_load(dplyr, flextable, knitr, here, dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, lubridate, performance, cowplot, interp, ggpubr, ggplot2, stats, rotl, dplyr, viridis, patchwork, interp, akima, fields, MASS)
+```
+
+## Results
+
+### *a) The effects of developmental treatments (temp, and CORT) on developmental time to hatch*
+
+```{r}
+#| echo: false
+################
+#### 1.	What are the effects of developmental treatments (temp, cort, interaction) on time to hatch?
+#### effect of temperature on incubation days - faster hatch warmer temps 
+################
+# mod ; interaction removed
+hatch_dev_mod <- readRDS(here("Kwild_code/models/hatch_dev_mod.RDS"))
+hatch_dev_mod_summ <- summary(hatch_dev_mod)
+hatch_dev_mod_summ <- as.data.frame(round(hatch_dev_mod_summ$coefficients, 
+                                          digits = 2))
+# faster hatch warmer temps
+hatch_dev_mod_emm <- emmeans(hatch_dev_mod, pairwise ~ temp)
+hatch_dev_mod_emm_value <- hatch_dev_mod_emm$emmeans
+hatch_dev_mod_emm_cont <- hatch_dev_mod_emm$contrasts
+```
+
+### *b) The effects of developmental temperature and hormonal treatment on body size, mass, and condition (BCI) of hatchling lizards*
+
+```{r}
+#| echo: false
+################
+#### 2.	What are the effects of developmental treatments on body size, mass, and condition (BCI) of HATCHLINGS
+#### SVL: hormone effects body size; no effects on temp or temp x hormone interaction
+#### MASS: temperature and hormone effects mass; no interaction effects
+#### BCI:  temperature has effect on BCI; no effect on hormone, or temp x hormone interaction
+################
+#### SVL; interaction removed
+# hormone effects body size; no effects on temp or temp x hormone interaction
+SVL_hatch_mod <- readRDS(here("Kwild_code/models/SVL_hatch_mod.RDS"))
+SVL_hatch_mod_summ <- summary(SVL_hatch_mod)
+SVL_hatch_mod_summ <- as.data.frame(round(SVL_hatch_mod_summ$coefficients, 
+                                          digits = 2))
+
+# high hormone lower SVL
+SVL_hatch_mod_emm <- emmeans(hatch_dev_mod, pairwise ~ hormone)
+SVL_hatch_mod_emm_value <- hatch_dev_mod_emm$emmeans
+SVL_hatch_mod_emm_cont <- hatch_dev_mod_emm$contrasts
+
+################
+#### MASS; interaction removed
+Mass_hatch_mod <- readRDS(here("Kwild_code/models/MASS_hatch_mod.RDS"))
+# temperature and hormone effects mass; no interaction effects
+Mass_hatch_mod_summ <- summary(Mass_hatch_mod)
+Mass_hatch_mod_summ <- as.data.frame(round(Mass_hatch_mod_summ$coefficients, 
+                                          digits = 2))
+# hormone pairwise comparison - control higher mass
+Mass_hormone_hatch_mod_emm <- emmeans(Mass_hatch_mod, pairwise ~ hormone)
+Mass_hormone_hatch_mod_emm_value <- Mass_hormone_hatch_mod_emm$emmeans
+Mass_hormone_hatch_mod_emm_cont <- Mass_hormone_hatch_mod_emm$contrasts
+# temp pairwise comparison - cooler temps higher mass
+Mass_temp_hatch_mod_emm <- emmeans(Mass_hatch_mod, pairwise ~ temp)
+Mass_temp_hatch_mod_emm_value <- Mass_temp_hatch_mod_emm$emmeans
+Mass_temp_hatch_mod_emm_cont <- Mass_temp_hatch_mod_emm$contrasts
+
+################
+#### BCI from residuals (OLS); interaction removed
+# hatchlings- residuals from SVL and mass
+## hatchlings-anova on BCI residuals; interaction removed
+condition_hatch_mod <- readRDS(here("Kwild_code/models/condition_hatch_mod.RDS"))
+# temperature has effect on BCI; no effect on hormone, or temp x hormone interaction
+condition_hatch_mod_summ <- summary(condition_hatch_mod)
+condition_hatch_mod_summ <- as.data.frame(round(condition_hatch_mod_summ$coefficients, 
+                                          digits = 2))
+# temp and BCI plot - poor BCI warm temps
+condition_hatch_mod_emm <- emmeans(condition_hatch_mod, pairwise ~ temp)
+condition_hatch_mod_emm_value <- condition_hatch_mod_emm$emmeans
+condition_hatch_mod_emm_value <- condition_hatch_mod_emm$contrasts
+```
+
+### *c) The effects of developmental temperature and hormonal treatment on body size, mass, body condition (BCI), survival, and growth rate on juvenile lizards*
+
+```{r}
+#| echo: false
+#### 3.	What are the effects of developmental treatments on juvenile body size, condition, and mass (at the 3 points measured after hatching)?
+#### Juv1_SVL: effect of temperature- cooler temps larger svl
+#### Juv2_SVL: no effects - hormonal effect p = 0.07
+#### Juv3_SVL: high hormone low body size; males smaller than females
+#### Juv1_MASS: low mass with high hormones; low mass with high temperatures
+#### Juv2_MASS: low mass with high temperatures
+#### Juv3_MASS: low mass males
+#### Juv1_BCI: no treatment effects
+#### Juv2_BCI: no treatment effects
+#### Juv3_BCI: Sex effect: male lower BCI than females - could be size difference
+#### SURVIVAL: no differences between treatments
+#### GROWTH SVL (Hatchling-Juvenile): No treatment effects
+#### GROWTH MASS (Hatchling-Juvenile): No treatment effects
+
+# final raw data that have morphometrics (svl, mass, and BCI residuals) across life stage 
+data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))
+
+##################
+#### SVL ANALYSIS: Juv_1, Juv_2, Juv_3 (sex accounted for last measurement)
+### JUV_1: SVL; interaction removed
+SVL_Juv1_mod <- readRDS(here("Kwild_code/models/SVL_Juv1_mod.RDS"))
+# effect on temperature and day of hatch on body size 
+SVL_Juv1_mod_summ <- summary(SVL_Juv1_mod) 
+SVL_Juv1_mod_summ <- as.data.frame(round(SVL_Juv1_mod_summ$coefficients, 
+                                          digits = 2))
+# cooler temps larger svl
+SVL_Juv1_mod_emm <- emmeans(SVL_Juv1_mod, pairwise ~ temp)
+SVL_Juv1_mod_emm_value <- SVL_Juv1_mod_emm$emmeans
+SVL_Juv1_mod_emm_con <- SVL_Juv1_mod_emm$contrasts
+
+### JUV_2: SVL; interaction removed
+SVL_Juv2_mod <- readRDS(here("Kwild_code/models/SVL_Juv2_mod.RDS"))
+# marginal hermonal effect on body size p = 0.06
+SVL_Juv2_mod_summ <- summary(SVL_Juv2_mod) 
+SVL_Juv2_mod_summ <- as.data.frame(round(SVL_Juv2_mod_summ$coefficients, 
+                                          digits = 2))
+
+### JUV_3: SVL - NOTE SEX ACCOUTNED for; no interaction
+SVL_Juv3_mod <- readRDS(here("Kwild_code/models/SVL_Juv3_mod.RDS"))
+# effect on hormones and sex
+SVL_Juv3_mod_summ <- summary(SVL_Juv3_mod)
+SVL_Juv3_mod_summ <- as.data.frame(round(SVL_Juv3_mod_summ$coefficients, 
+                                          digits = 2))
+#  high hormone lower svl
+SVL_Juv3_hormone_mod_emm <- emmeans(SVL_Juv3_mod, pairwise ~ hormone)
+SVL_Juv3_hormone_mod_emm_value <- SVL_Juv3_hormone_mod_emm$emmeans
+SVL_Juv3_hormone_mod_emm_cont <- SVL_Juv3_hormone_mod_emm$contrasts
+# plot - males are smaller than females
+SVL_Juv3_sex_mod_emm <- emmeans(SVL_Juv3_mod, pairwise ~ sex)
+SVL_Juv3_sex_mod_emm_value <- SVL_Juv3_sex_mod_emm$emmeans
+SVL_Juv3_sex_mod_emm_cont <- SVL_Juv3_sex_mod_emm$contrasts
+
+
+######################
+#### MASS ANALYSIS: Juv_1, Juv_2, Juv_3 (sex accounted for last measurement)
+### Juv_1: MASS - interaction removed
+Mass_Juv1_mod <- readRDS(here("Kwild_code/models/Mass_Juv1_mod.RDS"))
+# effect on temp, and days since hatch
+Mass_Juv1_mod_summ <- summary(Mass_Juv1_mod)
+Mass_Juv1_mod_summ <- as.data.frame(round(Mass_Juv1_mod_summ$coefficients, 
+                                          digits = 2))
+# temp plot - low mass with high temperatures
+Mass_Juv1_temp_mod_emm <- emmeans(Mass_Juv1_mod, pairwise ~ temp)
+Mass_Juv1_temp_mod_emm_value <- Mass_Juv1_temp_mod_emm$emmeans
+Mass_Juv1_temp_mod_emm_cont <- Mass_Juv1_temp_mod_emm$contrasts
+
+#### MASS: Juv_2; interaction removed
+Mass_Juv2_mod <- readRDS(here("Kwild_code/models/Mass_Juv2_mod.RDS"))
+# temp  effect
+Mass_Juv2_mod_summ <- summary(Mass_Juv2_mod)
+Mass_Juv2_mod_summ <- as.data.frame(round(Mass_Juv2_mod_summ$coefficients, 
+                                          digits = 2))
+# temp plot - low mass with high temperatures
+Mass_Juv2_temp_mod_emm <- emmeans(Mass_Juv2_mod, pairwise ~ temp)
+Mass_Juv2_temp_mod_emm_value <-Mass_Juv2_temp_mod_emm$emmeans
+Mass_Juv2_temp_mod_emm_con <-Mass_Juv2_temp_mod_emm$contrasts
+
+#### MASS: Juv_3; NOTE SEX IS ACCOUNTED FOR
+Mass_Juv3_mod <- readRDS(here("Kwild_code/models/Mass_Juv3_mod.RDS"))
+# sex effect
+Mass_Juv3_mod_summ <- summary(Mass_Juv3_mod)
+Mass_Juv3_mod_summ <- as.data.frame(round(Mass_Juv3_mod_summ$coefficients, 
+                                          digits = 2))
+# temp plot - males smaller than females
+Mass_Juv3_sex_mod_emm <- emmeans(Mass_Juv3_mod, pairwise ~ sex)
+Mass_Juv3_sex_mod_emm_value <- Mass_Juv3_sex_mod_emm$emmeans
+Mass_Juv3_sex_mod_emm_cont <- Mass_Juv3_sex_mod_emm$contrasts
+
+
+###############
+#### BCI ANALYSIS: Juv_1, Juv_2, Juv_3 (sex accounted for last measurement)
+### BCI: Juv1 - BCI residuals; interaction removed
+condition_juv1_mod <- readRDS(here("Kwild_code/models/condition_juv_mod.RDS"))
+# no treatment effects 
+condition_juv1_mod_summ <- summary(condition_juv1_mod)
+condition_juv1_mod_summ <- as.data.frame(round(condition_juv1_mod_summ$coefficients, 
+                                          digits = 2))
+
+### BCI: Juv2 - BCI residuals; interaction removed
+condition_juv2_mod <- readRDS(here("Kwild_code/models/condition_juv2_mod.RDS"))
+# no treatment effects 
+condition_juv2_mod_summ <- summary(condition_juv2_mod)
+condition_juv2_mod_summ <- as.data.frame(round(condition_juv2_mod_summ$coefficients, 
+                                          digits = 2))
+
+### BCI: Juv3 - BCI residuals; interaction removed
+condition_juv3_mod <- readRDS(here("Kwild_code/models/condition_juv3_mod.RDS"))
+# sex differences 
+condition_juv3_mod_summ <- summary(condition_juv3_mod)
+condition_juv3_mod_summ <- as.data.frame(round(condition_juv3_mod$coefficients, 
+                                          digits = 2))
+# sex differences
+condition_juv3_sex_mod_emm <- emmeans(condition_juv3_mod, pairwise ~ sex)
+condition_juv3_sex_mod_emm_value <- condition_juv3_sex_mod_emm$emmeans
+condition_juv3_sex_mod_emm_cont <- condition_juv3_sex_mod_emm$contrasts
+
+
+###############
+#### Survival analysis to JUV 3 : hormone and temp 
+##fisher test- filter out missing animals
+survival<- data_final %>% 
+  filter(liz_status_db != "MISSING")
+survival_tbl <- table(survival$liz_status_db)
+# analysis between temperature and treatment 
+survival_hormone <- kruskal.test(liz_status_db ~ hormone, data = survival)
+survival_temp <- kruskal.test(liz_status_db ~ temp, data = survival)
+# summaries: hormone & temp 
+survival_results <- data.frame(
+  Treatment = c("Hormone", "Temperature"),
+  Test = c(survival_temp$method, survival_temp$method),
+  Statistic = c(survival_hormone$statistic, survival_temp$statistic),
+  P_value = c(survival_hormone$p.value, survival_temp$p.value))
+
+
+###############
+#### SVL growth rate: hatchling to Juv_3 
+# SVL; interaction removed
+overall_SVL_growth_mod <-  readRDS(here("Kwild_code/models/overall_SVL_growth_mod.RDS"))
+# no treatment effects
+overall_SVL_growth_mod_summ <- summary(overall_SVL_growth_mod)
+overall_SVL_growth_mod_summ <- as.data.frame(round(overall_SVL_growth_mod_summ$coefficients, 
+                                          digits = 2))
+
+#### MASS growth rate: hatchling to Juv_3  
+# Mass test; interaction removed
+overall_mass_growth_mod <- readRDS(here("Kwild_code/models/growth4_mass_mod.RDS"))
+# treatment effect on temp but not hormone
+overall_mass_growth_mod_summ <- summary(overall_mass_growth_mod)
+overall_mass_growth_mod_summ <- as.data.frame(round(overall_mass_growth_mod_summ$coefficients, 
+                                          digits = 2))
+```
+
+### *d) Developmental temperature and hormonal treatment on juvenile CORT, T4, and Testosterone*
+
+```{r}
+#| echo: false
+#### 3.	What are the developmental temperature and hormonal treatment on juvenile CORT, T4, and Testosterone)?
+#### CORT_development: CORT does not vary across temp and hormone treatment - NS
+#### CORT_growth: CORT correlates with mass growth rate 
+#### T4_development: T4 does not vary across temp and hormone treatment - NS
+#### T4_growth: T4 correlates with mass growth rate 
+
+
+
+# final raw data that have morphometrics (svl, mass, and BCI residuals) across life stage 
+data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))
+# individual data
+cort_dat <- data_final %>%
+  drop_na(juv3_CORT_Final_Hormone_ng_mL, temp, hormone, juv3_HandlingTime_sec)
+test_dat <- data_final %>%
+  drop_na(juv3_Testosterone_Final_ng_ml, temp, hormone, Lizard_ID)
+t4_dat <- data_final %>%
+  drop_na(juv3_T4_corrected_ng_mL, temp, hormone, Lizard_ID)
+
+
+###########
+# CORT
+# 1) treatments- how does cort vary across temp and hormone treatment
+cort_development_mod <- readRDS(here("Kwild_code/models/cort_development_mod.RDS"))
+cort_development_mod_summ <- summary(cort_development_mod)
+cort_development_mod_summ <- as.data.frame(round(cort_development_mod_summ$coefficients, 
+                                          digits = 2))
+
+# 2)  MASS growth - does cort correlate with mass growth rate and how does this vary across temp and hormone treatment
+cort_mass_growth_mod <- readRDS(here("Kwild_code/models/cort_mass_growth_mod.RDS"))
+cort_mass_growth_mod_summ <- summary(cort_mass_growth_mod)
+cort_mass_growth_mod_summ <- as.data.frame(round(cort_mass_growth_mod_summ$coefficients, 
+                                          digits = 2))
+
+###########
+# T4
+# 1) treatments -  does T4 vary across temp, hormone treatment and sex: Sex differences
+T4_sex_temp_hormone_mod <- readRDS(here("Kwild_code/models/T4_temp_hormone_sex_mod.RDS"))
+T4_sex_temp_hormone_mod_summ <- summary(T4_sex_temp_hormone_mod)
+T4_sex_temp_hormone_mod_summ <- as.data.frame(round(T4_sex_temp_hormone_mod_summ$coefficients, 
+                                          digits = 2))
+T4_temp_hormone_sex_mod_emm <- emmeans(T4_sex_temp_hormone_mod, pairwise ~ sex)
+T4_temp_hormone_sex_mod_emm_value <- T4_temp_hormone_sex_mod_emm$emmeans
+T4_temp_hormone_sex_mod_emm_cont <- T4_temp_hormone_sex_mod_emm$contrasts
+
+# 2) MASS growth and the interaction between T4 and cort
+T4_mass_growth_mod <- readRDS(here("Kwild_code/models/T4_mass_growth_mod.RDS"))
+T4_mass_growth_mod_summ <- summary(T4_mass_growth_mod)
+T4_mass_growth_mod_summ <- as.data.frame(round(T4_mass_growth_mod_summ$coefficients, 
+                                          digits = 2))
+```
+
+### *d) Developmental temperature and hormonal treatment on juvenile mitochondrial function*
+
+```{r}
+#| echo: false
+
+```
+
+## FIGURES:
+
+```{r}
+#| echo: FALSE
+#| warning: FALSE
+#| fig-width: 5
+#| fig-height: 5
+#| fig-align: center
+# final raw data that have morphometrics (svl, mass, and BCI residuals) across life stage 
+data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))
+
+#plot set up
+temps <- c("Blue", "Red")
+my_comparisons <- rev(list(c("control","low"),c("control","high-"),c("low","high")))
+
+########## FIGURE 1: temperature and morphology: effects of developmental treatments (temp, cort, interaction) on time to hatch: -	Effect on temperature: warmer temps faster development
+fig1 <- ggviolin(data_final, x = "temp", y = "days_to_hatch",
+                 color = "temp", palette = temps,
+                 short.panel.labs = FALSE,
+                 font.label = list(size = 14, color = "black"),
+                 ggtheme = theme_bw()) + 
+  geom_jitter(aes(color = temp), width = 0.2, alpha = 0.4) +  # Adding raw data points
+  
+  # Adding mean and standard error
+  stat_summary(
+    mapping = aes(x = temp, y = days_to_hatch),
+    fun = "mean", geom = "point", size = 2, color = "black", alpha = 0.6) +
+  stat_summary(
+    mapping = aes(x = temp, y = days_to_hatch),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black",  alpha = 0.6) +
+  
+  stat_compare_means(method = "anova", vjust = -.1, hjust = 0)+ 
+  labs(x = "Temperature (°C)", y = "Incubation time (days)") +
+  labs(color='Incubation Temperature')+
+  scale_y_continuous(breaks=seq(25, 60, 5), limits = c(25,60)) +
+  theme(legend.position = c(.95, .95), # Position the legend inside the plot at the top right corner
+        legend.justification = c("right", "top"), # Justify the legend to the top right
+        panel.grid.major = element_blank(),  # Remove major grid lines
+        panel.grid.minor = element_blank()) + # Remove minor grid lines
+  guides(color = guide_legend(nrow = 2))  # Ensure that legend items are in a single column
+fig1
+```
+
+<p>
+
+**Figure 1.** Incubation temperature effects on developmental time to hatch. Means and SE are provided along with the p-value.
+
+<p>
+
+```{r}
+#| echo: FALSE
+#| warning: FALSE
+#| fig-width: 10
+#| fig-height: 7
+#| fig-align: center
+# final raw data that have morphometrics (svl, mass, and BCI residuals) across life stage 
+data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv")) %>% 
+  mutate(data_final, hormone = factor(hormone, 
+                                      levels = c("control","low","high"))) %>% 
+  filter(!is.na(hormone)) %>%
+  group_by(hormone)
+
+# plot set up
+hormones <- c("#999999", "#E69F00", "brown2")
+my_comparisons <- rev(list(c("control","low"),c("control","high-"),c("low","high")))
+
+########### FIGURE 2: temperature and morphology effects of developmental 
+# treatments on body size, condition, and mass at hatching;
+fig2_A <- ggviolin(data_final, x = "hormone", y = "hatch_svl_mm",
+                    color = "hormone", palette = hormones,
+                    short.panel.labs = FALSE,
+                    font.label = list(size = 12, color = "black"),
+                    ggtheme = theme_bw())+ 
+  geom_jitter(aes(color = hormone), width = 0.2, alpha = 0.6) +  # Adding raw data points with color and transparency
+  
+  # Adding mean and standard error
+  stat_summary(
+    mapping = aes(x = hormone, y = hatch_svl_mm),
+    fun = "mean", geom = "point", size = 3, color = "black", alpha = 0.6) +
+  stat_summary(
+    mapping = aes(x = hormone, y = hatch_svl_mm),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = 0.6) +
+  
+  stat_compare_means(comparisons = list(c("control","low"), c("control","high"), c("low","high"))) +
+  stat_compare_means(method = "anova")+
+  labs(x = NULL, y = "Hatchling SVL (mm)") +
+  labs(color='Hormone Treatment')+
+  scale_y_continuous(breaks=seq(14, 22, 2), limits = c(14, 22))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = "none")
+# B) hatchling mass * hormone
+Fig2_B <- ggviolin(data_final, x = "hormone", y = "hatch_mass_g",
+                    color = "hormone", palette = hormones,
+                    short.panel.labs = FALSE,
+                    font.label = list(size = 12, color = "black"),
+                    ggtheme = theme_bw()) +
+  geom_jitter(aes(color = hormone), width = 0.2, alpha = 0.4) +  # Adding raw data points with color and transparency
+  
+  # Adding mean and standard error
+  stat_summary(
+    mapping = aes(x = hormone, y = hatch_mass_g),
+    fun = "mean", geom = "point", size = 3, color = "black", alpha = .6) +
+  stat_summary(
+    mapping = aes(x = hormone, y = hatch_mass_g),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = 0.6) +
+  stat_compare_means(comparisons = list(c("control","low"), c("control","high"), c("low","high"))) +
+  stat_compare_means(method = "anova") +
+  labs(x = NULL, y = "Hatchling mass (g)") +
+  labs(color='Hormone Treatment')+
+  scale_y_continuous(breaks=seq(0.06, 0.20, .02), limits = c(0.06,0.20))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = c(0.99, 0.99),  # Positions the legend inside the plot
+        legend.justification = c("right", "top"), # Justifies the legend's position
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.box = element_blank(),
+        legend.text = element_text(size = 7),
+        legend.title = element_text(size =8))
+
+fig2 <- plot_grid(fig2_A, Fig2_B, ncol = 2, align = "h", labels = c("A", "B"))
+fig2
+```
+
+**Figure 2**. Hatchling morphology body size (SVL) and mass  are effected by hormonal treatment during development. Panel A shows hatchling SVL (mm) and panel B shows hatchling mass (g). Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of morphometric measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast.
+
+```{r}
+#| echo: FALSE
+#| warning: FALSE
+#| fig-width: 10
+#| fig-height: 7
+#| fig-align: center
+data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))%>% 
+  mutate(data_final, hormone = factor(hormone, 
+                                      levels = c("control","low","high"))) %>% 
+  filter(!is.na(hormone)) %>%
+  group_by(hormone)
+
+# plot set up
+temps <- c("Blue", "Red")
+hormones <- c("#999999", "#E69F00", "brown2")
+my_comparisons <- rev(list(c("control","low"),c("control","high-"),c("low","high")))
+
+
+fig3_A <- ggviolin(data_final, x = "temp", y = "hatch_mass_g",
+                    color = "temp", palette = temps,
+                    short.panel.labs = FALSE,
+                    font.label = list(size = 14, color = "black"),
+                    ggtheme = theme_bw()) +
+  
+  geom_jitter(aes(color = temp), width = 0.2, alpha = 0.4) + 
+  stat_summary(
+    mapping = aes(x = temp, y = hatch_mass_g),
+    fun = "mean", geom = "point", size = 2, color = "black", alpha = .5) +
+  stat_summary(
+    mapping = aes(x = temp, y = hatch_mass_g),
+    fun.data = "mean_se", geom = "errorbar", width = .1, color = "black", alpha = .5) +
+  stat_compare_means(method = "anova") +
+  labs(x = "Temperature (°C)", y = "Hatchling mass (g)") +
+  labs(color='Temperature Treatment')+
+  scale_y_continuous(breaks=seq(0.06, 0.18, .02), limits = c(0.06,0.18)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = "none")
+
+# body condition and temp
+fig3_B <- ggviolin(data_final, x = "temp", y = "hatch_bc_residuals",
+                   color = "temp", palette = temps,
+                   short.panel.labs = FALSE,
+                   font.label = list(size = 14, color = "black"),
+                   ggtheme = theme_bw()) + 
+  geom_jitter(aes(color = temp), width = 0.2, alpha = 0.4) +  
+  stat_summary(
+    mapping = aes(x = temp, y = hatch_bc_residuals),
+    fun = "mean", geom = "point", size = 2, color = "black", alpha = .5 ) +
+  stat_summary(
+    mapping = aes(x = temp, y = hatch_bc_residuals),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = .5) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  stat_compare_means(method = "anova", vjust = -.1, hjust = .5)+ 
+  labs(x = "Temperature (°C)", y = "BCI") +
+  labs(color='Incubation Treatment')+
+  scale_y_continuous(breaks=seq(-0.06, 0.06, 0.02), limits = c(-0.06, 0.06))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = c(0.99, 0.99),  # Positions the legend inside the plot
+        legend.justification = c("right", "top"), # Justifies the legend's position
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.box = element_blank(),
+        legend.text = element_text(size = 6),
+        legend.title = element_text(size = 8))
+
+fig3 <- plot_grid(fig3_A, fig3_B, ncol = 2, align = "h", labels = c("A", "B"))
+fig3
+```
+
+**Figure 3**. How developmental temperature effects mass (panel A) and body condition (panel B) of hatchling lizards. Colors indicate the incubation temperature that eggs were reared in. Means and SE intervals are provided along with the p-value. Dashed horizontal line in Panel B indicates average condition, points that fall above the line are considered "good" condition and points below line are considered "poor". 
+
+```{r}
+#| echo: FALSE
+#| warning: FALSE
+#| fig-width: 10
+#| fig-height: 7
+#| fig-align: center
+data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))%>% 
+  mutate(data_final, hormone = factor(hormone, 
+                                      levels = c("control","low","high"))) %>% 
+  filter(!is.na(hormone)) %>%
+  group_by(hormone)
+# filtering cort data
+cort_dat <- data_final %>%
+  drop_na(juv3_CORT_Final_Hormone_ng_mL, temp, hormone, juv3_HandlingTime_sec)
+
+# plot set up
+hormones <- c("#999999", "#E69F00", "brown2")
+my_comparisons <- rev(list(c("control","low"),c("control","high-"),c("low","high")))
+# figure
+Fig4 <- ggviolin(data_final, x = "hormone", y = "juv3_CORT_Final_Hormone_ng_mL",
+                   color = "hormone", palette = hormones,
+                   short.panel.labs = FALSE,
+                   font.label = list(size = 14, color = "black"),
+                   ggtheme = theme_bw()) +
+  geom_jitter(aes(color = hormone), width = 0.2, alpha = 0.4) +
+  stat_compare_means(comparisons = list(c("control","low"), c("control","high"), c("low","high"))) +
+  stat_compare_means(method = "anova") +#
+  stat_summary(
+    mapping = aes(x = hormone, y = juv3_CORT_Final_Hormone_ng_mL),
+    fun = "mean", geom = "point", size = 3, color = "black", alpha = .6) +
+  stat_summary(
+    mapping = aes(x = hormone, y = juv3_CORT_Final_Hormone_ng_mL),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = 0.6) +
+  labs(x = "Hormonal Treatment During Development", y = "Cort Final Hormone (ng/mL)") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = c(0.99, 0.99),  # Positions the legend inside the plot
+        legend.justification = c("right", "top"), # Justifies the legend's position
+        legend.background = element_blank())
+Fig4
+```
+**Figure 4**. Final CORT measurements (ng/mL) of juvinile lizards based off hormonal treatment during development. Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of final CORT measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast.
+
+```{r}
+#| echo: FALSE
+#| warning: FALSE
+#| fig-width: 10
+#| fig-height: 7
+#| fig-align: center
+data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))
+cort_dat <- data_final %>%
+  drop_na(juv3_CORT_Final_Hormone_ng_mL, temp, hormone, juv3_HandlingTime_sec)
+
+# function for plot to show pvalue and correlation coefficient 
+calc_cor <- function(data, x, y) {
+  cor_test <- cor.test(data[[x]], data[[y]])
+  cor <- cor_test$estimate
+  p_value <- cor_test$p.value
+  return(data.frame(cor = cor, p_value = p_value))
+}
+
+# Calculate correlation and p-values for each plot
+cor_res_A <- calc_cor(cort_dat, "hatch_juv3_SVL_growth", "juv3_CORT_Final_Hormone_ng_mL")
+cor_res_B <- calc_cor(cort_dat, "hatch_juv3_MASS_growth", "juv3_CORT_Final_Hormone_ng_mL")
+
+# Adding p-values and correlation coefficients on the plots
+fig5_A <- ggplot(cort_dat, aes(x = hatch_juv3_SVL_growth, y = juv3_CORT_Final_Hormone_ng_mL)) +
+  geom_point(aes(color = as.factor(temp), shape = hormone), size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = 2) +
+  labs(x = "SVL growth rate (mm/d)", y = "CORT Final Hormone (ng/mL)", 
+       color = "Temperature", shape = "Treatment") +
+  scale_color_discrete(name = "Temperature") + 
+  geom_text(aes(x = Inf, y = Inf, 
+                label = sprintf("r = %.2f, p = %.3f", cor_res_A$cor, cor_res_A$p_value)), 
+            hjust = 0, vjust = 1) + # Adjust hjust and vjust to position the text
+  theme_bw() +
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+
+# Repeat similar process for fig4_B
+fig5_B <- ggplot(cort_dat, aes(x = hatch_juv3_MASS_growth, y = juv3_CORT_Final_Hormone_ng_mL)) +
+  geom_point(aes(color = as.factor(temp), shape = hormone), size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = 2) +
+  labs(x = "Mass growth rate (g/d)", y = NULL, 
+       color = "Temperature", shape = "Treatment") +
+  scale_color_discrete(name = "Temperature") + 
+  geom_text(aes(x = Inf, y = Inf, 
+                label = sprintf("r = %.2f, p = %.3f", cor_res_B$cor, cor_res_B$p_value)), 
+            hjust = 0, vjust = 1) + # Adjust hjust and vjust to position the text
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = c(0.99, 0.99),  # Positions the legend inside the plot
+        legend.justification = c("right", "top"), # Justifies the legend's position
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.box = element_blank(),
+        legend.text = element_text(size = 6),
+        legend.title = element_text(size = 8))
+
+fig5 <- plot_grid(fig5_A, fig5_B, ncol = 2, align = "h", labels = c("A", "B"))
+fig5
+```
+**Figure 5**. The relationship final cort measurements and juvenile growth rate. Growth period was determined from hatchling to final measurement (mean = 467 days). Panel A shows SVL change (mm/d) and panel B shows mass change (g/d). Colors show the incubation temperature during development and symbols show the hormonal treatment during development. Overall there were no relationships between incubation temperature during development or hormonal treatment during development and final CORT values. However there was an overall positive relationship between final CORT measurements and growth rate. 
+```{r}
+#| echo: FALSE
+#| warning: FALSE
+#| fig-width: 10
+#| fig-height: 7
+#| fig-align: right
+# Bring in T4 data and the model
+t4_dat <- read.csv(here("Kwild_code/data/final_analysis_data.csv")) %>% 
+   drop_na(juv3_T4_corrected_ng_mL, temp, hormone, Lizard_ID)
+
+T4_mass_growth_mod <-readRDS(here("Kwild_code/models/T4_mass_growth_mod.RDS"))
+# PLOT: predicitions: growth and T4 and cort
+newdata <- data.frame(`juv3_CORT_Final_Hormone_ng_mL` = seq(from = min(t4_dat$juv3_CORT_Final_Hormone_ng_mL), 
+                                                            to = max(t4_dat$juv3_CORT_Final_Hormone_ng_mL),
+                                                            length.out = 100),
+                      `juv3_T4_corrected_ng_mL` = rep(seq(from = min(t4_dat$juv3_T4_corrected_ng_mL), 
+                                                          to = max(t4_dat$juv3_T4_corrected_ng_mL)), 
+                                                      each = 100), temp = 23)
+
+newdata$pred <- predict(T4_mass_growth_mod, newdata = newdata)
+
+# another plot
+s <- interp(x = newdata$juv3_T4_corrected_ng_mL, 
+            y = newdata$juv3_CORT_Final_Hormone_ng_mL, 
+            z = newdata$pred)
+image.plot(s, xlab = "T4_ng_mL", ylab = "Cort_ng_mL", 
+           las = 1, col = viridis(option = "magma", 50), 
+           cex.axis = 1, axis.args = list(cex.axis = 1.5), cex.lab = 1.8,
+           xlim = c(min(newdata$juv3_T4_corrected_ng_mL)+.012, 
+                    max(newdata$juv3_T4_corrected_ng_mL)-.011),  # Explicitly defining x limits
+           ylim = c(min(newdata$juv3_CORT_Final_Hormone_ng_mL)+8, 
+                    max(newdata$juv3_CORT_Final_Hormone_ng_mL)))  # Explicitly defining y limits
+contour(s, add = TRUE, col = "white")
+```
+**Figure 6**. Predicted parametric contour plots of mass growth rate  as a function of our standardized traits from generalized linear models. Colors indicate the r mass growth rate of individual lizards: dark purple = relative growth rate -1.0 (g) and below,  purple = relative growth rate -0.5  and 0.5 (g), red = relative growth rate 0.5 and 1.5 (g), and yellow = relative growth rate greater than 1.5 (g). 
+
+```{r}
+#| echo: FALSE
+#| warning: FALSE
+#| fig-width: 10
+#| fig-height: 7
+#| fig-align: right
+# Bring in T4 data and the model
+t4_dat <- read.csv(here("Kwild_code/data/final_analysis_data.csv")) %>% 
+   drop_na(juv3_T4_corrected_ng_mL, temp, hormone, Lizard_ID)
+
+fig7 <- ggviolin(t4_dat, x = "sex", y = "juv3_T4_corrected_ng_mL",
+                   color = "sex", short.panel.labs = FALSE,
+                   font.label = list(size = 12, color = "black"),
+                   ggtheme = theme_bw()) + 
+  geom_jitter(aes(color = sex), width = 0.2, alpha = 0.4) +  
+  stat_summary(
+    mapping = aes(x = sex, y = juv3_T4_corrected_ng_mL),
+    fun = "mean", geom = "point", size = 2, color = "black", alpha = .5 ) +
+  stat_summary(
+    mapping = aes(x = sex, y = juv3_T4_corrected_ng_mL),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = .5) +
+  stat_compare_means(method = "anova", vjust = -.1, hjust = .5)+ 
+  labs(x = "Sex", y = "T4 (ng/mL)") +
+  labs(color='Sex')+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = c(0.99, 0.99),  # Positions the legend inside the plot
+        legend.justification = c("right", "top"), # Justifies the legend's position
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.box = element_blank(),
+        legend.text = element_text(size = 6),
+        legend.title = element_text(size = 8))
+
+fig7
+```
+**Figure 7**. Differences in T4 levels between male (red) and female (blue) lizards.  Means and SE intervals are provided along with the p-value.
