@@ -276,7 +276,7 @@ data_final <-  mutate(data_final, hormone = factor(hormone,
   filter(!is.na(hormone)) %>%
   group_by(hormone)
 write.csv(data_final, "Kwild_code/data/final_analysis_data.csv")
-
+data_final <- read.csv(file = "Kwild_code/data/final_analysis_data.csv")
 
 ################
 #### 4.	developmental treatment; Testing days to mortality across treatments
@@ -394,12 +394,14 @@ summary(cort_BCI_growth)
 # T4
 ################ 
 # 1) treatments -  does T4 vary across temp and hormone treatment: NS
-T4_temp_hormone_mod <- lm(juv3_T4_corrected_ng_mL ~ log(juv3_CORT_Final_Hormone_ng_mL) + 
-                            scale(hatch_juv3_MASS_growth) + temp + hormone,
+T4_temp_hormone_sex_mod <- lm(juv3_T4_corrected_ng_mL ~  temp + hormone + sex,
                           data = t4_dat)
-check_model(T4_temp_hormone_mod)
-summary(T4_temp_hormone_mod)
-saveRDS(T4_temp_hormone_mod, "Kwild_code/models/T4_temp_hormone_mod.RDS")
+check_model(T4_temp_hormone_sex_mod)
+summary(T4_temp_hormone_sex_mod)
+# sex differences: females have higher T4
+T4_temp_hormone_sex_mod_emm <- emmeans(T4_temp_hormone_sex_mod, pairwise ~ sex)
+plot(T4_temp_hormone_sex_mod_emm)
+saveRDS(T4_temp_hormone_sex_mod, "Kwild_code/models/T4_temp_hormone_sex_mod.RDS")
 
 # 2) SVL growth and the interaction between T4 and cort
 T4_SVL_growth_mod <- lm(scale(hatch_juv3_SVL_growth) ~ scale(log(juv3_CORT_Final_Hormone_ng_mL))* 
