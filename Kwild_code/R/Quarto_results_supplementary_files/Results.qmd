@@ -258,7 +258,7 @@ overall_mass_growth_mod_summ <- as.data.frame(round(overall_mass_growth_mod_summ
 #### 3.	What are the developmental temperature and hormonal treatment on juvenile CORT, T4, and Testosterone)?
 #### CORT_development: CORT does not vary across temp and hormone treatment - NS
 #### CORT_growth: CORT correlates with mass growth rate 
-#### T4_development: T4 does not vary across temp and hormone treatment - NS
+#### T4_development: T4 varies across sex but not developmental treatments (temp or hormone)
 #### T4_growth: T4 correlates with mass growth rate 
 
 
