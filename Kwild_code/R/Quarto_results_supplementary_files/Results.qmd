@@ -2,7 +2,7 @@
 title: "Results"
 format:
   docx:
-    reference-doc: ../bib/template.docx
+    reference-doc: ../../bib/template.docx
 editor_options: 
   chunk_output_type: console
 execute:
@@ -59,7 +59,7 @@ hatch_dev_mod_emm_cont <- hatch_dev_mod_emm$contrasts
 ### *d) Developmental temperature and hormonal treatment on juvenile CORT, T4, and Testosterone*
 
 ```{r}
-  #| echo: false
+#| echo: false
   #### 3.	What are the developmental temperature and hormonal treatment on juvenile CORT, T4, and Testosterone)?
   #### CORT_development: CORT does not vary across temp and hormone treatment - NS
   #### CORT_growth: CORT correlates with mass growth rate 
@@ -114,7 +114,7 @@ hatch_dev_mod_emm_cont <- hatch_dev_mod_emm$contrasts
 ### *d) Developmental temperature and hormonal treatment on juvenile mitochondrial function*
 
 ```{r}
-  #| echo: false
+#| echo: false
 
 ```
 ### *b) The effects of developmental temperature and hormonal treatment on body size, mass, and condition (BCI) of hatchling lizards*
@@ -383,7 +383,7 @@ fig1
 
 ```{r}
 #| label: fig-fig2
-#| fig-cap: Hatchling morphology body size (SVL) and mass are effected by hormonal treatment during development. Panel A shows hatchling SVL (mm) and panel B shows hatchling mass (g). Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of morphometric measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast.
+#| fig-cap: "Hatchling morphology body size (SVL) and mass are effected by hormonal treatment during development. Panel A shows hatchling SVL (mm) and panel B shows hatchling mass (g). Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of morphometric measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast."
 #| echo: FALSE
 #| warning: FALSE
 #| fig-width: 10
