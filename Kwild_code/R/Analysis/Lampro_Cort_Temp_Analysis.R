@@ -329,13 +329,16 @@ saveRDS(growth4_mass_mod, "Kwild_code/models/growth4_mass_mod.RDS")
 ########################
 # data
 cort_dat <- data_final %>%
-  drop_na(juv3_CORT_Final_Hormone_ng_mL, temp, hormone, juv3_HandlingTime_sec)
+  drop_na(juv3_CORT_Final_Hormone_ng_mL, temp, hormone, juv3_HandlingTime_sec) %>% 
+  filter(juv3_Sample_volume_ul >= 4 ) # remove values below 4 ul juv3_Sample_volume_ul
 
 t4_dat <- data_final %>%
-  drop_na(juv3_T4_corrected_ng_mL, temp, hormone, Lizard_ID)
+  drop_na(juv3_T4_corrected_ng_mL, temp, hormone, Lizard_ID) %>% 
+  filter(juv3_Sample_volume_ul >= 4 ) # remove values below 4 ul juv3_Sample_volume_ul
 
 test_dat <- data_final %>%
-  drop_na(juv3_Testosterone_Final_ng_ml, temp, hormone, Lizard_ID)
+  drop_na(juv3_Testosterone_Final_ng_ml, temp, hormone, Lizard_ID) %>% 
+  filter(juv3_Sample_volume_ul >= 4 ) # remove values below 4 ul juv3_Sample_volume_ul
 
 ########
 # CORT
@@ -471,7 +474,8 @@ mito_dat <- data_final %>%
                 RCR_R_ETS = juv3_RCR.R.ETS.,
                 RCR_L_ETS = juv3_RCR.L.ETS., 
                 oroboros_comments = juv3_oroboros_comments) %>% 
-  mutate(ID_and_Comments = paste(Lizard_ID, oroboros_comments, sep = ": "))
+  mutate(ID_and_Comments = paste(Lizard_ID, oroboros_comments, sep = ": "),
+         state2_state3 = basal_corrected_pmol/basal_corrected_pmol)
 
 
 # Scatter Plot of RCR(R/ETS) VS RCR(L/ETS
@@ -490,10 +494,10 @@ mito_dat <- mutate(mito_dat, hormone = factor(hormone, levels = c("control","low
 
 # Function to calculate mean and standard error
 mean_se <- function(x) {
-  return(data.frame(y = mean(x), ymin = mean(x) - sd(x)/sqrt(length(x)), ymax = mean(x) + sd(x)/sqrt(length(x))))
+  return(data.frame(y = mean(x), 
+                    ymin = mean(x) - sd(x)/sqrt(length(x)), 
+                    ymax = mean(x) + sd(x)/sqrt(length(x))))
 }
-
-
 
 # Creating the violin plot with data points overlaid, and means and standard errors
 plot <- ggplot(data = mito_dat, aes(x = hormone, y = RCR_L_ETS)) +
@@ -511,6 +515,38 @@ plot <- ggplotly(plot, tooltip = "text")
 
 # Displaying the plot
 plot
+
+
+
+# Creating the violin plot with data points overlaid, and means and standard errors
+hormones <- c("#999999", "#E69F00", "brown2")
+temps <- c("Blue", "Red")
+my_comparisons <- rev(list(c("control","low"),c("control","high-"),c("low","high")))
+
+ggviolin(mito_dat, x = "hormone", y = "state2_state3",
+         color = "hormone", palette = hormones,
+         short.panel.labs = FALSE,
+         font.label = list(size = 14, color = "black"),
+         ggtheme = theme_bw())+ 
+  geom_jitter(aes(color = hormone), width = 0.2, alpha = 0.6) +  # Adding raw data points with color and transparency
+  
+  # Adding mean and standard error
+  stat_summary(
+    mapping = aes(x = hormone, y = state2_state3),
+    fun = "mean", geom = "point", size = 3, color = "black", alpha = 0.6) +
+  stat_summary(
+    mapping = aes(x = hormone, y = state2_state3),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = 0.6) +
+  
+  stat_compare_means(comparisons = list(c("control","low"), c("control","high"), c("low","high"))) +
+  stat_compare_means(method = "anova")+
+  labs(x = NULL, y = "state2_state3") +
+  labs(color='Hormone Treatment')+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = "none")
+
+  
 
 
 

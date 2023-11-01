@@ -261,17 +261,17 @@ overall_mass_growth_mod_summ <- as.data.frame(round(overall_mass_growth_mod_summ
 #### T4_development: T4 varies across sex but not developmental treatments (temp or hormone)
 #### T4_growth: T4 correlates with mass growth rate 
 
-
-
 # final raw data that have morphometrics (svl, mass, and BCI residuals) across life stage 
-data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))
+data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv")) %>%  filter(juv3_Sample_volume_ul >= 4 ) # remove values below 4 ul juv3_Sample_volume_ul
+
+
 # individual data
 cort_dat <- data_final %>%
   drop_na(juv3_CORT_Final_Hormone_ng_mL, temp, hormone, juv3_HandlingTime_sec)
-test_dat <- data_final %>%
-  drop_na(juv3_Testosterone_Final_ng_ml, temp, hormone, Lizard_ID)
 t4_dat <- data_final %>%
   drop_na(juv3_T4_corrected_ng_mL, temp, hormone, Lizard_ID)
+test_dat <- data_final %>%
+  drop_na(juv3_Testosterone_Final_ng_ml, temp, hormone, Lizard_ID)
 
 
 ###########
@@ -438,7 +438,7 @@ fig2 <- plot_grid(fig2_A, Fig2_B, ncol = 2, align = "h", labels = c("A", "B"))
 fig2
 ```
 
-**Figure 2**. Hatchling morphology body size (SVL) and mass  are effected by hormonal treatment during development. Panel A shows hatchling SVL (mm) and panel B shows hatchling mass (g). Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of morphometric measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast.
+**Figure 2**. Hatchling morphology body size (SVL) and mass are effected by hormonal treatment during development. Panel A shows hatchling SVL (mm) and panel B shows hatchling mass (g). Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of morphometric measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast.
 
 ```{r}
 #| echo: FALSE
@@ -511,7 +511,7 @@ fig3 <- plot_grid(fig3_A, fig3_B, ncol = 2, align = "h", labels = c("A", "B"))
 fig3
 ```
 
-**Figure 3**. How developmental temperature effects mass (panel A) and body condition (panel B) of hatchling lizards. Colors indicate the incubation temperature that eggs were reared in. Means and SE intervals are provided along with the p-value. Dashed horizontal line in Panel B indicates average condition, points that fall above the line are considered "good" condition and points below line are considered "poor". 
+**Figure 3**. How developmental temperature effects mass (panel A) and body condition (panel B) of hatchling lizards. Colors indicate the incubation temperature that eggs were reared in. Means and SE intervals are provided along with the p-value. Dashed horizontal line in Panel B indicates average condition, points that fall above the line are considered "good" condition and points below line are considered "poor".
 
 ```{r}
 #| echo: FALSE
@@ -554,6 +554,7 @@ Fig4 <- ggviolin(data_final, x = "hormone", y = "juv3_CORT_Final_Hormone_ng_mL",
         legend.background = element_blank())
 Fig4
 ```
+
 **Figure 4**. Final CORT measurements (ng/mL) of juvinile lizards based off hormonal treatment during development. Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of final CORT measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast.
 
 ```{r}
@@ -618,7 +619,9 @@ fig5_B <- ggplot(cort_dat, aes(x = hatch_juv3_MASS_growth, y = juv3_CORT_Final_H
 fig5 <- plot_grid(fig5_A, fig5_B, ncol = 2, align = "h", labels = c("A", "B"))
 fig5
 ```
-**Figure 5**. The relationship final cort measurements and juvenile growth rate. Growth period was determined from hatchling to final measurement (mean = 467 days). Panel A shows SVL change (mm/d) and panel B shows mass change (g/d). Colors show the incubation temperature during development and symbols show the hormonal treatment during development. Overall there were no relationships between incubation temperature during development or hormonal treatment during development and final CORT values. However there was an overall positive relationship between final CORT measurements and growth rate. 
+
+**Figure 5**. The relationship final cort measurements and juvenile growth rate. Growth period was determined from hatchling to final measurement (mean = 467 days). Panel A shows SVL change (mm/d) and panel B shows mass change (g/d). Colors show the incubation temperature during development and symbols show the hormonal treatment during development. Overall there were no relationships between incubation temperature during development or hormonal treatment during development and final CORT values. However there was an overall positive relationship between final CORT measurements and growth rate.
+
 ```{r}
 #| echo: FALSE
 #| warning: FALSE
@@ -653,7 +656,8 @@ image.plot(s, xlab = "T4_ng_mL", ylab = "Cort_ng_mL",
                     max(newdata$juv3_CORT_Final_Hormone_ng_mL)))  # Explicitly defining y limits
 contour(s, add = TRUE, col = "white")
 ```
-**Figure 6**. Predicted parametric contour plots of mass growth rate  as a function of our standardized traits from generalized linear models. Colors indicate the r mass growth rate of individual lizards: dark purple = relative growth rate -1.0 (g) and below,  purple = relative growth rate -0.5  and 0.5 (g), red = relative growth rate 0.5 and 1.5 (g), and yellow = relative growth rate greater than 1.5 (g). 
+
+**Figure 6**. Predicted parametric contour plots of mass growth rate as a function of our standardized traits from generalized linear models. Colors indicate the r mass growth rate of individual lizards: dark purple = relative growth rate -1.0 (g) and below, purple = relative growth rate -0.5 and 0.5 (g), red = relative growth rate 0.5 and 1.5 (g), and yellow = relative growth rate greater than 1.5 (g).
 
 ```{r}
 #| echo: FALSE
@@ -691,4 +695,5 @@ fig7 <- ggviolin(t4_dat, x = "sex", y = "juv3_T4_corrected_ng_mL",
 
 fig7
 ```
-**Figure 7**. Differences in T4 levels between male (red) and female (blue) lizards.  Means and SE intervals are provided along with the p-value.
+
+**Figure 7**. Differences in T4 levels between male (red) and female (blue) lizards. Means and SE intervals are provided along with the p-value.
