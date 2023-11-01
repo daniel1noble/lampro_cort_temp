@@ -1,10 +1,24 @@
 ---
 title: "Results"
-author: "K.Wild & DWA Noble"
-format: html
-editor: visual
+format:
+  docx:
+    reference-doc: ../bib/template.docx
+editor_options: 
+  chunk_output_type: console
+execute:
+  freeze: auto  # re-render only when source changes
+  cache: false
+  echo: false
+  warning: false
+  error: false
+  include: true
+crossref:
+  fig-title: 'Figure'
+  fig-labels: arabic
+  title-delim: "-"
+  fig-prefix: "Figure"
+  tbl-prefix: "Table"
 ---
-
 ## Data description
 
 Below are the models, results, and figures that we discussed last friday. I Still need to include the Mito data in this document. The workflow is all of our analysis data is in the R script "Lampro_Cort_Temp_Analysis.R". In this document I'm running (and checking) all of our models. Final models are then saved in the folder "models" folder and are named biased off the analysis of interest. These final models are then brought in here and are used in the code and figures below. Above each code chunk are the question(s) being addressed and their results.
