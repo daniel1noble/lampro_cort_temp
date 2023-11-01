@@ -37,8 +37,7 @@ pacman::p_load(dplyr, flextable, knitr, here, dplyr, tidyverse, ggpubr, lme4, em
 
 ## Results
 
-### *a) The effects of developmental treatments (temp, and CORT) on developmental time to hatch*
-
+### *a) The effects of developmental treatments (temp, and CORT) on hatchling prototypes*
 ```{r}
 #| echo: false
 ################
@@ -54,73 +53,9 @@ hatch_dev_mod_summ <- as.data.frame(round(hatch_dev_mod_summ$coefficients,
 hatch_dev_mod_emm <- emmeans(hatch_dev_mod, pairwise ~ temp)
 hatch_dev_mod_emm_value <- hatch_dev_mod_emm$emmeans
 hatch_dev_mod_emm_cont <- hatch_dev_mod_emm$contrasts
-```
-
-### *d) Developmental temperature and hormonal treatment on juvenile CORT, T4, and Testosterone*
-
-```{r}
-#| echo: false
-  #### 3.	What are the developmental temperature and hormonal treatment on juvenile CORT, T4, and Testosterone)?
-  #### CORT_development: CORT does not vary across temp and hormone treatment - NS
-  #### CORT_growth: CORT correlates with mass growth rate 
-  #### T4_development: T4 varies across sex but not developmental treatments (temp or hormone)
-  #### T4_growth: T4 correlates with mass growth rate 
-
-  # final raw data that have morphometrics (svl, mass, and BCI residuals) across life stage 
-  data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv")) %>%  filter(juv3_Sample_volume_ul >= 4 ) # remove values below 4 ul juv3_Sample_volume_ul
 
 
-  # individual data
-  cort_dat <- data_final %>%
-    drop_na(juv3_CORT_Final_Hormone_ng_mL, temp, hormone, juv3_HandlingTime_sec)
-  t4_dat <- data_final %>%
-    drop_na(juv3_T4_corrected_ng_mL, temp, hormone, Lizard_ID)
-  test_dat <- data_final %>%
-    drop_na(juv3_Testosterone_Final_ng_ml, temp, hormone, Lizard_ID)
 
-
-  ###########
-  # CORT
-  # 1) treatments- how does cort vary across temp and hormone treatment
-  cort_development_mod <- readRDS(here("Kwild_code/models/cort_development_mod.RDS"))
-  cort_development_mod_summ <- summary(cort_development_mod)
-  cort_development_mod_summ <- as.data.frame(round(cort_development_mod_summ$coefficients, 
-                                            digits = 2))
-
-  # 2)  MASS growth - does cort correlate with mass growth rate and how does this vary across temp and hormone treatment
-  cort_mass_growth_mod <- readRDS(here("Kwild_code/models/cort_mass_growth_mod.RDS"))
-  cort_mass_growth_mod_summ <- summary(cort_mass_growth_mod)
-  cort_mass_growth_mod_summ <- as.data.frame(round(cort_mass_growth_mod_summ$coefficients, 
-                                            digits = 2))
-
-  ###########
-  # T4
-  # 1) treatments -  does T4 vary across temp, hormone treatment and sex: Sex differences
-  T4_sex_temp_hormone_mod <- readRDS(here("Kwild_code/models/T4_temp_hormone_sex_mod.RDS"))
-  T4_sex_temp_hormone_mod_summ <- summary(T4_sex_temp_hormone_mod)
-  T4_sex_temp_hormone_mod_summ <- as.data.frame(round(T4_sex_temp_hormone_mod_summ$coefficients, 
-                                            digits = 2))
-  T4_temp_hormone_sex_mod_emm <- emmeans(T4_sex_temp_hormone_mod, pairwise ~ sex)
-  T4_temp_hormone_sex_mod_emm_value <- T4_temp_hormone_sex_mod_emm$emmeans
-  T4_temp_hormone_sex_mod_emm_cont <- T4_temp_hormone_sex_mod_emm$contrasts
-
-  # 2) MASS growth and the interaction between T4 and cort
-  T4_mass_growth_mod <- readRDS(here("Kwild_code/models/T4_mass_growth_mod.RDS"))
-  T4_mass_growth_mod_summ <- summary(T4_mass_growth_mod)
-  T4_mass_growth_mod_summ <- as.data.frame(round(T4_mass_growth_mod_summ$coefficients, 
-                                            digits = 2))
-```
-
-### *d) Developmental temperature and hormonal treatment on juvenile mitochondrial function*
-
-```{r}
-#| echo: false
-
-```
-### *b) The effects of developmental temperature and hormonal treatment on body size, mass, and condition (BCI) of hatchling lizards*
-
-```{r}
-#| echo: false
 ################
 #### 2.	What are the effects of developmental treatments on body size, mass, and condition (BCI) of HATCHLINGS
 #### SVL: hormone effects body size; no effects on temp or temp x hormone interaction
@@ -170,10 +105,86 @@ condition_hatch_mod_emm_value <- condition_hatch_mod_emm$emmeans
 condition_hatch_mod_emm_value <- condition_hatch_mod_emm$contrasts
 ```
 
-### *c) The effects of developmental temperature and hormonal treatment on body size, mass, body condition (BCI), survival, and growth rate on juvenile lizards*
+### *b) The effects of developmental treatments (tem and CORT) on juvenile Physiology - CORT, T4, and mitofunction*
+```{r}
+#| echo: false
+  #### 3.	What are the developmental temperature and hormonal treatment on juvenile CORT, T4, and Testosterone)?
+  #### CORT_development: CORT does not vary across temp and hormone treatment - NS
+  #### CORT_growth: CORT correlates with mass growth rate 
+  #### T4_development: T4 varies across sex but not developmental treatments (temp or hormone)
+  #### T4_growth: T4 correlates with mass growth rate 
 
-@fig-fig1
+  # final raw data that have morphometrics (svl, mass, and BCI residuals) across life stage 
+  data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv")) %>%
+  filter(juv3_Sample_volume_ul >= 4 ) # remove values below 4 ul juv3_Sample_volume_ul
 
+
+  ### individual data
+  # cort data  
+  cort_dat <- data_final %>%
+    drop_na(juv3_CORT_Final_Hormone_ng_mL, temp, hormone, juv3_HandlingTime_sec)
+  # T4 data
+  t4_dat <- data_final %>%
+    drop_na(juv3_T4_corrected_ng_mL, temp, hormone, Lizard_ID) 
+  
+  # oroboros data
+  mito_dat <- data_final %>%
+  dplyr::select(c("Lizard_ID", "temp", "hormone", "sex", "juv3_bc_resid",
+                  "juv3_inject_time_sec", "juv3_liver_time_sec", "juv3_oroboros", 
+                  "juv3_chamber","juv3_basal_corrected.pmol..sec.ng..", 
+                  "juv3_adp_corrected.pmol..sec.ng..", "juv3_oligo_corrected.pmol..sec.ng..", 
+                  "juv3_fccp_corrected.pmol..sec.ng..", "juv3_RCR.L.R.", "juv3_RCR.R.ETS.",
+                  "juv3_oroboros_comments", "juv3_RCR.L.ETS.")) %>% 
+  dplyr::rename(inject_time_sec = juv3_inject_time_sec, 
+                chamber = juv3_chamber,
+                basal_corrected_pmol = juv3_basal_corrected.pmol..sec.ng..,
+                oligo_corrected_pmol = juv3_oligo_corrected.pmol..sec.ng..,
+                fccp_corrected_pmol = juv3_fccp_corrected.pmol..sec.ng..,
+                adp_corrected_pmol =  juv3_adp_corrected.pmol..sec.ng..,
+                RCR_L_R = juv3_RCR.L.R., 
+                RCR_R_ETS = juv3_RCR.R.ETS.,
+                RCR_L_ETS = juv3_RCR.L.ETS., 
+                oroboros_comments = juv3_oroboros_comments) %>% 
+  mutate(ID_and_Comments = paste(Lizard_ID, oroboros_comments, sep = ": "),
+         state2_state3 = basal_corrected_pmol/basal_corrected_pmol)
+
+
+  ###########
+  # CORT
+  # 1) treatments- how does cort vary across temp and hormone treatment
+  cort_development_mod <- readRDS(here("Kwild_code/models/cort_development_mod.RDS"))
+  cort_development_mod_summ <- summary(cort_development_mod)
+  cort_development_mod_summ <- as.data.frame(round(cort_development_mod_summ$coefficients, 
+                                            digits = 2))
+
+  # 2)  MASS growth - does cort correlate with mass growth rate and how does this vary across temp and hormone treatment
+  cort_mass_growth_mod <- readRDS(here("Kwild_code/models/cort_mass_growth_mod.RDS"))
+  cort_mass_growth_mod_summ <- summary(cort_mass_growth_mod)
+  cort_mass_growth_mod_summ <- as.data.frame(round(cort_mass_growth_mod_summ$coefficients, 
+                                            digits = 2))
+
+  ###########
+  # T4
+  # 1) treatments -  does T4 vary across temp, hormone treatment and sex: Sex differences
+  T4_sex_temp_hormone_mod <- readRDS(here("Kwild_code/models/T4_temp_hormone_sex_mod.RDS"))
+  T4_sex_temp_hormone_mod_summ <- summary(T4_sex_temp_hormone_mod)
+  T4_sex_temp_hormone_mod_summ <- as.data.frame(round(T4_sex_temp_hormone_mod_summ$coefficients, 
+                                            digits = 2))
+  T4_temp_hormone_sex_mod_emm <- emmeans(T4_sex_temp_hormone_mod, pairwise ~ sex)
+  T4_temp_hormone_sex_mod_emm_value <- T4_temp_hormone_sex_mod_emm$emmeans
+  T4_temp_hormone_sex_mod_emm_cont <- T4_temp_hormone_sex_mod_emm$contrasts
+
+  # 2) MASS growth and the interaction between T4 and cort
+  T4_mass_growth_mod <- readRDS(here("Kwild_code/models/T4_mass_growth_mod.RDS"))
+  T4_mass_growth_mod_summ <- summary(T4_mass_growth_mod)
+  T4_mass_growth_mod_summ <- as.data.frame(round(T4_mass_growth_mod_summ$coefficients, 
+                                            digits = 2))
+    ###########
+    # Mito function
+  
+```
+
+### *c) The effects of developmental treatments (tem and CORT) on juvenile body size, mass, body condition (BCI), survival, and growth rate on juvenile lizards
 ```{r}
 #| echo: false
 #### 3.	What are the effects of developmental treatments on juvenile body size, condition, and mass (at the 3 points measured after hatching)?
