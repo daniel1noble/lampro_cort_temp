@@ -448,6 +448,74 @@ summary(T4_growth)
 
 
 
+
+
+########################
+### 7: Mito function
+########################
+# data
+mito_dat <- data_final %>%
+  dplyr::select(c("Lizard_ID", "temp", "hormone", "sex", "juv3_bc_resid",
+                  "juv3_inject_time_sec", "juv3_liver_time_sec", "juv3_oroboros", 
+                  "juv3_chamber","juv3_basal_corrected.pmol..sec.ng..", 
+                  "juv3_adp_corrected.pmol..sec.ng..", "juv3_oligo_corrected.pmol..sec.ng..", 
+                  "juv3_fccp_corrected.pmol..sec.ng..", "juv3_RCR.L.R.", "juv3_RCR.R.ETS.",
+                  "juv3_oroboros_comments", "juv3_RCR.L.ETS.")) %>% 
+  dplyr::rename(inject_time_sec = juv3_inject_time_sec, 
+                chamber = juv3_chamber,
+                basal_corrected_pmol = juv3_basal_corrected.pmol..sec.ng..,
+                oligo_corrected_pmol = juv3_oligo_corrected.pmol..sec.ng..,
+                fccp_corrected_pmol = juv3_fccp_corrected.pmol..sec.ng..,
+                adp_corrected_pmol =  juv3_adp_corrected.pmol..sec.ng..,
+                RCR_L_R = juv3_RCR.L.R., 
+                RCR_R_ETS = juv3_RCR.R.ETS.,
+                RCR_L_ETS = juv3_RCR.L.ETS., 
+                oroboros_comments = juv3_oroboros_comments) %>% 
+  mutate(ID_and_Comments = paste(Lizard_ID, oroboros_comments, sep = ": "))
+
+
+# Scatter Plot of RCR(R/ETS) VS RCR(L/ETS
+plot_ly(mito_dat, x = ~RCR_R_ETS, y = ~RCR_L_ETS, 
+        text = ~ID_and_Comments, type = 'scatter', mode = 'markers') %>%
+  layout(title = "Scatter Plot of RCR(R/ETS) VS RCR(L/ETS) ",
+         xaxis = list(title = "RCR(R/ETS)"),
+         yaxis = list(title = "RCR(L/ETS)")) %>%
+  add_trace(marker = list(size = 10, opacity = 0.5), textposition = 'top left')
+
+
+
+# Violin Plot of RCR_L_ETS by Hormone treatment
+mito_dat <- mutate(mito_dat, hormone = factor(hormone, levels = c("control","low","high"))) %>%
+  group_by(hormone)
+
+# Function to calculate mean and standard error
+mean_se <- function(x) {
+  return(data.frame(y = mean(x), ymin = mean(x) - sd(x)/sqrt(length(x)), ymax = mean(x) + sd(x)/sqrt(length(x))))
+}
+
+
+
+# Creating the violin plot with data points overlaid, and means and standard errors
+plot <- ggplot(data = mito_dat, aes(x = hormone, y = RCR_L_ETS)) +
+  geom_violin(scale = "width", adjust = 1.5) +
+  geom_jitter(aes(text = ID_and_Comments), width = 0.2, color = "blue") +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.2, color = "red") +
+  stat_summary(fun = mean, geom = "point", shape = 18, size = 3, color = "red") +
+  labs(
+    title = "Violin Plot of RCR(L/ETS) by Hormone Treatment",
+    x = "Hormone Treatment",
+    y = "RCR(L/ETS)") 
+
+# Converting the ggplot object to a plotly object to enable interactive features
+plot <- ggplotly(plot, tooltip = "text")
+
+# Displaying the plot
+plot
+
+
+
+
+
 #####################
 ### Figures
 #####################
