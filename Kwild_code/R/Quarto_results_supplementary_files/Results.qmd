@@ -97,6 +97,8 @@ condition_hatch_mod_emm_value <- condition_hatch_mod_emm$contrasts
 
 ### *c) The effects of developmental temperature and hormonal treatment on body size, mass, body condition (BCI), survival, and growth rate on juvenile lizards*
 
+@fig-fig1
+
 ```{r}
 #| echo: false
 #### 3.	What are the effects of developmental treatments on juvenile body size, condition, and mass (at the 3 points measured after hatching)?
@@ -315,7 +317,9 @@ T4_mass_growth_mod_summ <- as.data.frame(round(T4_mass_growth_mod_summ$coefficie
 
 ## FIGURES:
 
-```{r}
+```{r, fig-fig1}
+#| label: fig-fig1
+#| fig-cap: Incubation temperature effects on developmental time to hatch. Means and SE are provided along with the p-value.
 #| echo: FALSE
 #| warning: FALSE
 #| fig-width: 5
@@ -358,11 +362,13 @@ fig1
 
 <p>
 
-**Figure 1.** Incubation temperature effects on developmental time to hatch. Means and SE are provided along with the p-value.
+
 
 <p>
 
 ```{r}
+#| label: fig-fig2
+#| fig-cap: Hatchling morphology body size (SVL) and mass are effected by hormonal treatment during development. Panel A shows hatchling SVL (mm) and panel B shows hatchling mass (g). Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of morphometric measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast.
 #| echo: FALSE
 #| warning: FALSE
 #| fig-width: 10
@@ -438,7 +444,6 @@ fig2 <- plot_grid(fig2_A, Fig2_B, ncol = 2, align = "h", labels = c("A", "B"))
 fig2
 ```
 
-**Figure 2**. Hatchling morphology body size (SVL) and mass are effected by hormonal treatment during development. Panel A shows hatchling SVL (mm) and panel B shows hatchling mass (g). Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of morphometric measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast.
 
 ```{r}
 #| echo: FALSE
