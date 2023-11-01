@@ -1,6 +1,6 @@
 ## Kwild Lampro Cort Temp Analysis
 # WD, packages, data
-pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, MuMIn, glmm, installr, lubridate, performance, cowplot)
+pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, MuMIn, glmm, installr, lubridate, performance, cowplot, interp, akima, fields, MASS)
 
 
 #########################
@@ -275,8 +275,8 @@ data_final <-  mutate(data_final, hormone = factor(hormone,
                                                    levels = c("control","low","high"))) %>% 
   filter(!is.na(hormone)) %>%
   group_by(hormone)
-write.csv(data_final, "Kwild_code/data/final_analysis_data.csv")
-data_final <- read.csv(file = "Kwild_code/data/final_analysis_data.csv")
+write.csv(data_final, "Kwild_code/data/final_analysis_data_quarto.csv")
+data_final <- read.csv(file = "Kwild_code/data/final_analysis_data_quarto.csv")
 
 ################
 #### 4.	developmental treatment; Testing days to mortality across treatments
@@ -323,10 +323,9 @@ saveRDS(growth4_mass_mod, "Kwild_code/models/growth4_mass_mod.RDS")
 
 
 ########################
-### 6: CORT, Testosterone, T4
+### 6: CORT, T4
 # Cort: no differences across treatments but overall correlation with SVL and mass growth (high cort, high growth rate)
-#
-# Testosterone: no differences across treatments and no effects on growth rates
+# T4: 
 ########################
 # data
 cort_dat <- data_final %>%
