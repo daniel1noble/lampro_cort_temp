@@ -19,11 +19,6 @@ crossref:
   fig-prefix: "Figure"
   tbl-prefix: "Table"
 ---
-## Data description
-
-Below are the models, results, and figures that we discussed last friday. I Still need to include the Mito data in this document. The workflow is all of our analysis data is in the R script "Lampro_Cort_Temp_Analysis.R". In this document I'm running (and checking) all of our models. Final models are then saved in the folder "models" folder and are named biased off the analysis of interest. These final models are then brought in here and are used in the code and figures below. Above each code chunk are the question(s) being addressed and their results.
-
-Note, I have the results currently by the question of interest but we can reorganize this whatever way we decide is best for telling the story.
 
 ```{r setup, include=FALSE, eval = T, echo = FALSE}
 ## Packages and set up
@@ -34,12 +29,28 @@ rm(list=ls())
 sessionInfo()
 pacman::p_load(dplyr, flextable, knitr, here, dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, lubridate, performance, cowplot, interp, ggpubr, ggplot2, stats, rotl, dplyr, viridis, patchwork, interp, akima, fields, MASS)
 ```
+### *a) The effects of developmental treatments (temperature, and CORT) on hatchling prototypes*
 
-## Results
-
-### *a) The effects of developmental treatments (temp, and CORT) on hatchling prototypes*
 ```{r}
 #| echo: false
+
+##### data used in analysis
+final_analysis_data <- read.csv(here("Kwild_code/data/final_analysis_data_quarto.csv"))
+# sample size
+n_all <- final_analysis_data %>% 
+  summarise(sample_size = n_distinct(Lizard_ID))
+n_temp_horm_trt <- final_analysis_data %>%
+  group_by(as.character(temp), hormone) %>% 
+  summarise(n = n())
+n_temp_trt <- final_analysis_data %>%
+  group_by(as.character(temp)) %>% 
+  summarise(n = n())  
+n_horm_trt <- final_analysis_data %>%
+  group_by(hormone) %>% 
+  summarise(n = n())  
+
+
+
 ################
 #### 1.	What are the effects of developmental treatments (temp, cort, interaction) on time to hatch?
 #### effect of temperature on incubation days - faster hatch warmer temps 
@@ -49,30 +60,38 @@ hatch_dev_mod <- readRDS(here("Kwild_code/models/hatch_dev_mod.RDS"))
 hatch_dev_mod_summ <- summary(hatch_dev_mod)
 hatch_dev_mod_summ <- as.data.frame(round(hatch_dev_mod_summ$coefficients, 
                                           digits = 2))
+hatch_dev_mod_anova <- as.data.frame(anova(hatch_dev_mod)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+
 # faster hatch warmer temps
 hatch_dev_mod_emm <- emmeans(hatch_dev_mod, pairwise ~ temp)
-hatch_dev_mod_emm_value <- hatch_dev_mod_emm$emmeans
+hatch_dev_mod_emm_value <- as.data.frame(hatch_dev_mod_emm$emmeans) %>% 
+  mutate(emmean = round(emmean, digits = 1),
+         SE = round(SE, digits = 2),
+         LCL = round(lower.CL, digits = 2),
+         UCL = round(upper.CL, digits = 2))
 hatch_dev_mod_emm_cont <- hatch_dev_mod_emm$contrasts
 
 
 
 ################
 #### 2.	What are the effects of developmental treatments on body size, mass, and condition (BCI) of HATCHLINGS
-#### SVL: hormone effects body size; no effects on temp or temp x hormone interaction
+#### SVL: hormone effects body size; no interaction effects
 #### MASS: temperature and hormone effects mass; no interaction effects
-#### BCI:  temperature has effect on BCI; no effect on hormone, or temp x hormone interaction
+#### BCI:  temperature has effect on BCI; no effect on hormone; no interaction effects
 ################
 #### SVL; interaction removed
-# hormone effects body size; no effects on temp or temp x hormone interaction
+# hormone effects body size; no effects on temp or no interaction effects
 SVL_hatch_mod <- readRDS(here("Kwild_code/models/SVL_hatch_mod.RDS"))
 SVL_hatch_mod_summ <- summary(SVL_hatch_mod)
 SVL_hatch_mod_summ <- as.data.frame(round(SVL_hatch_mod_summ$coefficients, 
                                           digits = 2))
-
+SVL_hatch_mod_anova <- as.data.frame(anova(SVL_hatch_mod)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
 # high hormone lower SVL
-SVL_hatch_mod_emm <- emmeans(hatch_dev_mod, pairwise ~ hormone)
-SVL_hatch_mod_emm_value <- hatch_dev_mod_emm$emmeans
-SVL_hatch_mod_emm_cont <- hatch_dev_mod_emm$contrasts
+SVL_hatch_mod_emm <- emmeans(SVL_hatch_mod, pairwise ~ hormone)
+SVL_hatch_mod_emm_value <- SVL_hatch_mod_emm$emmeans
+SVL_hatch_mod_emm_cont <- SVL_hatch_mod_emm$contrasts
 
 ################
 #### MASS; interaction removed
@@ -81,6 +100,8 @@ Mass_hatch_mod <- readRDS(here("Kwild_code/models/MASS_hatch_mod.RDS"))
 Mass_hatch_mod_summ <- summary(Mass_hatch_mod)
 Mass_hatch_mod_summ <- as.data.frame(round(Mass_hatch_mod_summ$coefficients, 
                                           digits = 2))
+Mass_hatch_mod_anova <- as.data.frame(anova(Mass_hatch_mod)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
 # hormone pairwise comparison - control higher mass
 Mass_hormone_hatch_mod_emm <- emmeans(Mass_hatch_mod, pairwise ~ hormone)
 Mass_hormone_hatch_mod_emm_value <- Mass_hormone_hatch_mod_emm$emmeans
@@ -99,13 +120,17 @@ condition_hatch_mod <- readRDS(here("Kwild_code/models/condition_hatch_mod.RDS")
 condition_hatch_mod_summ <- summary(condition_hatch_mod)
 condition_hatch_mod_summ <- as.data.frame(round(condition_hatch_mod_summ$coefficients, 
                                           digits = 2))
+condition_hatch_mod_anova <- as.data.frame(anova(condition_hatch_mod)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
 # temp and BCI plot - poor BCI warm temps
 condition_hatch_mod_emm <- emmeans(condition_hatch_mod, pairwise ~ temp)
 condition_hatch_mod_emm_value <- condition_hatch_mod_emm$emmeans
 condition_hatch_mod_emm_value <- condition_hatch_mod_emm$contrasts
 ```
 
-### *b) The effects of developmental treatments (tem and CORT) on juvenile Physiology - CORT, T4, and mitofunction*
+A total of `r n_all[1,1]` eggs were randomly allocated into two incubation treatments (cold 23ºC n = `r n_temp_trt[1,2]`; hot 28ºC n = `r n_temp_trt[2,2]`). Within each temperature treatment, eggs were then randomly allocated into their hormone treatment (control n = `r n_horm_trt[1,2]`; low n = `r n_horm_trt[3,2]`; high n = `r n_horm_trt[2,2]`). Overall, there was no effect on hormonal treatment on developmental time to hatch (F$_{2,116}$ = `r hatch_dev_mod_anova[2,4]`, p = `r hatch_dev_mod_anova[2,5]`), but as expected, developmental temperature significantly increased rate of developmental time (F$_{1,117}$ = `r hatch_dev_mod_anova[1,4]`, p = `r hatch_dev_mod_anova[1,5]`; Figure S1). On average, the incubation duration for the hot treatment was `r hatch_dev_mod_emm_value[1,2]` days (`r hatch_dev_mod_emm_value[1,3]`±SE) and`r hatch_dev_mod_emm_value[2,2]` days (`r hatch_dev_mod_emm_value[2,3]`±SE). High hormonal treatment significantly decreased hatchling mass (F$_{1,125}$ = `r Mass_hatch_mod_anova[2,4]`, p = `r Mass_hatch_mod_anova[2,5]`) and SVL (F$_{1,125}$ = `r SVL_hatch_mod_anova[2,4]`, p = `r SVL_hatch_mod_anova[2,5]`) in comparison to control treatments (Fig. 1A|B). Additionally high temperature treatment decreased hatchling mass (F$_{1,125}$ = `r Mass_hatch_mod_anova[1,4]`, p = `r Mass_hatch_mod_anova[1,5]`; Fig. 2A) and resulted in poor body condition (F$_{1,125}$ = `r condition_hatch_mod_anova[1,4]`, p = `r condition_hatch_mod_anova[1,5]`; Fig. 2B). Temperature treatment did not have an overall effect on SVL (F$_{1,125}$ = `r SVL_hatch_mod_anova[1,4]`, p = `r SVL_hatch_mod_anova[1,5]`) and hormonal treatment did not effect body condition (F$_{1,125}$ = `r condition_hatch_mod_anova[2,4]`, p = `r condition_hatch_mod_anova[2,5]`).
+
+### *b) The effects of developmental treatments (temperature and CORT) on juvenile Physiology - CORT, T4, and mitochondrial function*
 ```{r}
 #| echo: false
   #### 3.	What are the developmental temperature and hormonal treatment on juvenile CORT, T4, and Testosterone)?
@@ -115,7 +140,7 @@ condition_hatch_mod_emm_value <- condition_hatch_mod_emm$contrasts
   #### T4_growth: T4 correlates with mass growth rate 
 
   # final raw data that have morphometrics (svl, mass, and BCI residuals) across life stage 
-  data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv")) %>%
+  data_final <- read.csv(here("Kwild_code/data/final_analysis_data_quarto.csv")) %>%
   filter(juv3_Sample_volume_ul >= 4 ) # remove values below 4 ul juv3_Sample_volume_ul
 
 
@@ -179,12 +204,13 @@ condition_hatch_mod_emm_value <- condition_hatch_mod_emm$contrasts
   T4_mass_growth_mod_summ <- summary(T4_mass_growth_mod)
   T4_mass_growth_mod_summ <- as.data.frame(round(T4_mass_growth_mod_summ$coefficients, 
                                             digits = 2))
-    ###########
-    # Mito function
+###########
+# Mito function
   
 ```
 
-### *c) The effects of developmental treatments (tem and CORT) on juvenile body size, mass, body condition (BCI), survival, and growth rate on juvenile lizards
+### *c) The effects of developmental treatments (temperature and CORT) on juvenile body size, mass, body condition (BCI), survival, and growth rate on juvenile lizards*
+
 ```{r}
 #| echo: false
 #### 3.	What are the effects of developmental treatments on juvenile body size, condition, and mass (at the 3 points measured after hatching)?
@@ -339,67 +365,14 @@ overall_mass_growth_mod_summ <- as.data.frame(round(overall_mass_growth_mod_summ
                                           digits = 2))
 ```
 
-
-
-## FIGURES:
-
-```{r, fig-fig1}
-#| label: fig-fig1
-#| fig-cap: Incubation temperature effects on developmental time to hatch. Means and SE are provided along with the p-value.
-#| echo: FALSE
-#| warning: FALSE
-#| fig-width: 5
-#| fig-height: 5
-#| fig-align: center
-# final raw data that have morphometrics (svl, mass, and BCI residuals) across life stage 
-data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))
-
-#plot set up
-temps <- c("Blue", "Red")
-my_comparisons <- rev(list(c("control","low"),c("control","high-"),c("low","high")))
-
-########## FIGURE 1: temperature and morphology: effects of developmental treatments (temp, cort, interaction) on time to hatch: -	Effect on temperature: warmer temps faster development
-fig1 <- ggviolin(data_final, x = "temp", y = "days_to_hatch",
-                 color = "temp", palette = temps,
-                 short.panel.labs = FALSE,
-                 font.label = list(size = 14, color = "black"),
-                 ggtheme = theme_bw()) + 
-  geom_jitter(aes(color = temp), width = 0.2, alpha = 0.4) +  # Adding raw data points
-  
-  # Adding mean and standard error
-  stat_summary(
-    mapping = aes(x = temp, y = days_to_hatch),
-    fun = "mean", geom = "point", size = 2, color = "black", alpha = 0.6) +
-  stat_summary(
-    mapping = aes(x = temp, y = days_to_hatch),
-    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black",  alpha = 0.6) +
-  
-  stat_compare_means(method = "anova", vjust = -.1, hjust = 0)+ 
-  labs(x = "Temperature (°C)", y = "Incubation time (days)") +
-  labs(color='Incubation Temperature')+
-  scale_y_continuous(breaks=seq(25, 60, 5), limits = c(25,60)) +
-  theme(legend.position = c(.95, .95), # Position the legend inside the plot at the top right corner
-        legend.justification = c("right", "top"), # Justify the legend to the top right
-        panel.grid.major = element_blank(),  # Remove major grid lines
-        panel.grid.minor = element_blank()) + # Remove minor grid lines
-  guides(color = guide_legend(nrow = 2))  # Ensure that legend items are in a single column
-fig1
-```
-
-<p>
-
-
-
-<p>
-
+\newpage
+## Figures and Tables:
 ```{r}
-#| label: fig-fig2
-#| fig-cap: "Hatchling morphology body size (SVL) and mass are effected by hormonal treatment during development. Panel A shows hatchling SVL (mm) and panel B shows hatchling mass (g). Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of morphometric measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast."
 #| echo: FALSE
 #| warning: FALSE
-#| fig-width: 10
+#| fig-width: 9
 #| fig-height: 7
-#| fig-align: center
+#| fig-align: left
 # final raw data that have morphometrics (svl, mass, and BCI residuals) across life stage 
 data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv")) %>% 
   mutate(data_final, hormone = factor(hormone, 
@@ -413,7 +386,7 @@ my_comparisons <- rev(list(c("control","low"),c("control","high-"),c("low","high
 
 ########### FIGURE 2: temperature and morphology effects of developmental 
 # treatments on body size, condition, and mass at hatching;
-fig2_A <- ggviolin(data_final, x = "hormone", y = "hatch_svl_mm",
+fig1_A <- ggviolin(data_final, x = "hormone", y = "hatch_svl_mm",
                     color = "hormone", palette = hormones,
                     short.panel.labs = FALSE,
                     font.label = list(size = 12, color = "black"),
@@ -437,7 +410,7 @@ fig2_A <- ggviolin(data_final, x = "hormone", y = "hatch_svl_mm",
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         legend.position = "none")
 # B) hatchling mass * hormone
-Fig2_B <- ggviolin(data_final, x = "hormone", y = "hatch_mass_g",
+Fig1_B <- ggviolin(data_final, x = "hormone", y = "hatch_mass_g",
                     color = "hormone", palette = hormones,
                     short.panel.labs = FALSE,
                     font.label = list(size = 12, color = "black"),
@@ -466,17 +439,18 @@ Fig2_B <- ggviolin(data_final, x = "hormone", y = "hatch_mass_g",
         legend.text = element_text(size = 7),
         legend.title = element_text(size =8))
 
-fig2 <- plot_grid(fig2_A, Fig2_B, ncol = 2, align = "h", labels = c("A", "B"))
-fig2
+fig1 <- plot_grid(fig1_A, Fig1_B, ncol = 2, align = "h", labels = c("A", "B"))
+fig1
 ```
+**Figure 1A|B:** Hatchling morphology body size (SVL) and mass are effected by hormonal treatment during development. Panel A shows hatchling SVL (mm) and panel B shows hatchling mass (g). Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of morphometric measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast.
 
-
+\newpage
 ```{r}
 #| echo: FALSE
 #| warning: FALSE
-#| fig-width: 10
+#| fig-width: 9
 #| fig-height: 7
-#| fig-align: center
+#| fig-align: left
 data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))%>% 
   mutate(data_final, hormone = factor(hormone, 
                                       levels = c("control","low","high"))) %>% 
@@ -489,7 +463,7 @@ hormones <- c("#999999", "#E69F00", "brown2")
 my_comparisons <- rev(list(c("control","low"),c("control","high-"),c("low","high")))
 
 
-fig3_A <- ggviolin(data_final, x = "temp", y = "hatch_mass_g",
+fig2_A <- ggviolin(data_final, x = "temp", y = "hatch_mass_g",
                     color = "temp", palette = temps,
                     short.panel.labs = FALSE,
                     font.label = list(size = 14, color = "black"),
@@ -511,7 +485,7 @@ fig3_A <- ggviolin(data_final, x = "temp", y = "hatch_mass_g",
         legend.position = "none")
 
 # body condition and temp
-fig3_B <- ggviolin(data_final, x = "temp", y = "hatch_bc_residuals",
+fig2_B <- ggviolin(data_final, x = "temp", y = "hatch_bc_residuals",
                    color = "temp", palette = temps,
                    short.panel.labs = FALSE,
                    font.label = list(size = 14, color = "black"),
@@ -538,12 +512,61 @@ fig3_B <- ggviolin(data_final, x = "temp", y = "hatch_bc_residuals",
         legend.text = element_text(size = 6),
         legend.title = element_text(size = 8))
 
-fig3 <- plot_grid(fig3_A, fig3_B, ncol = 2, align = "h", labels = c("A", "B"))
-fig3
+fig2 <- plot_grid(fig2_A, fig2_B, ncol = 2, align = "h", labels = c("A", "B"))
+fig2
 ```
+**Figure 2 A|B:** How developmental temperature effects mass (panel A) and body condition (panel B) of hatchling lizards. Colors indicate the incubation temperature that eggs were reared in. Means and SE intervals are provided along with the p-value. Dashed horizontal line in Panel B indicates average condition, points that fall above the line are considered "good" condition and points below line are considered "poor".
+\newpage
 
-**Figure 3**. How developmental temperature effects mass (panel A) and body condition (panel B) of hatchling lizards. Colors indicate the incubation temperature that eggs were reared in. Means and SE intervals are provided along with the p-value. Dashed horizontal line in Panel B indicates average condition, points that fall above the line are considered "good" condition and points below line are considered "poor".
+## Supplementary information
 
+<p>
+```{r, figS1}
+#| echo: FALSE
+#| warning: FALSE
+#| fig-width: 5
+#| fig-height: 5
+#| fig-align: center
+# final raw data that have morphometrics (svl, mass, and BCI residuals) across life stage 
+data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))
+
+#plot set up
+temps <- c("Blue", "Red")
+my_comparisons <- rev(list(c("control","low"),c("control","high-"),c("low","high")))
+
+########## FIGURE 1: temperature and morphology: effects of developmental treatments (temp, cort, interaction) on time to hatch: -	Effect on temperature: warmer temps faster development
+figS1 <- ggviolin(data_final, x = "temp", y = "days_to_hatch",
+                 color = "temp", palette = temps,
+                 short.panel.labs = FALSE,
+                 font.label = list(size = 14, color = "black"),
+                 ggtheme = theme_bw()) + 
+  geom_jitter(aes(color = temp), width = 0.2, alpha = 0.4) +  # Adding raw data points
+  
+  # Adding mean and standard error
+  stat_summary(
+    mapping = aes(x = temp, y = days_to_hatch),
+    fun = "mean", geom = "point", size = 2, color = "black", alpha = 0.6) +
+  stat_summary(
+    mapping = aes(x = temp, y = days_to_hatch),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black",  alpha = 0.6) +
+  
+  stat_compare_means(method = "anova", vjust = -.1, hjust = 0)+ 
+  labs(x = "Temperature (°C)", y = "Incubation time (days)") +
+  labs(color='Incubation Temperature')+
+  scale_y_continuous(breaks=seq(25, 60, 5), limits = c(25,60)) +
+  theme(legend.position = c(.95, .95), # Position the legend inside the plot at the top right corner
+        legend.justification = c("right", "top"), # Justify the legend to the top right
+        panel.grid.major = element_blank(),  # Remove major grid lines
+        panel.grid.minor = element_blank()) + # Remove minor grid lines
+  guides(color = guide_legend(nrow = 2))  # Ensure that legend items are in a single column
+figS1
+```
+**Figure S1:** Incubation temperature effects on developmental time to hatch. Means and SE are provided along with the p-value.
+<p>
+
+
+## Figures to be used....
+<p>
 ```{r}
 #| echo: FALSE
 #| warning: FALSE
@@ -586,7 +609,7 @@ Fig4 <- ggviolin(data_final, x = "hormone", y = "juv3_CORT_Final_Hormone_ng_mL",
 Fig4
 ```
 
-**Figure 4**. Final CORT measurements (ng/mL) of juvinile lizards based off hormonal treatment during development. Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of final CORT measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast.
+**Figure XX**. Final CORT measurements (ng/mL) of juvinile lizards based off hormonal treatment during development. Colors indicate hormonal treatment during development: control (grey), low (gold), and high (red). Bars above plots indicate pairwise comparisons of final CORT measurements across hormonal treatment. Means and SE intervals are provided along with the p-value for each contrast.
 
 ```{r}
 #| echo: FALSE
@@ -651,7 +674,7 @@ fig5 <- plot_grid(fig5_A, fig5_B, ncol = 2, align = "h", labels = c("A", "B"))
 fig5
 ```
 
-**Figure 5**. The relationship final cort measurements and juvenile growth rate. Growth period was determined from hatchling to final measurement (mean = 467 days). Panel A shows SVL change (mm/d) and panel B shows mass change (g/d). Colors show the incubation temperature during development and symbols show the hormonal treatment during development. Overall there were no relationships between incubation temperature during development or hormonal treatment during development and final CORT values. However there was an overall positive relationship between final CORT measurements and growth rate.
+**Figure XX**. The relationship final cort measurements and juvenile growth rate. Growth period was determined from hatchling to final measurement (mean = 467 days). Panel A shows SVL change (mm/d) and panel B shows mass change (g/d). Colors show the incubation temperature during development and symbols show the hormonal treatment during development. Overall there were no relationships between incubation temperature during development or hormonal treatment during development and final CORT values. However there was an overall positive relationship between final CORT measurements and growth rate.
 
 ```{r}
 #| echo: FALSE
@@ -688,7 +711,7 @@ image.plot(s, xlab = "T4_ng_mL", ylab = "Cort_ng_mL",
 contour(s, add = TRUE, col = "white")
 ```
 
-**Figure 6**. Predicted parametric contour plots of mass growth rate as a function of our standardized traits from generalized linear models. Colors indicate the r mass growth rate of individual lizards: dark purple = relative growth rate -1.0 (g) and below, purple = relative growth rate -0.5 and 0.5 (g), red = relative growth rate 0.5 and 1.5 (g), and yellow = relative growth rate greater than 1.5 (g).
+**Figure XX**. Predicted parametric contour plots of mass growth rate as a function of our standardized traits from generalized linear models. Colors indicate the r mass growth rate of individual lizards: dark purple = relative growth rate -1.0 (g) and below, purple = relative growth rate -0.5 and 0.5 (g), red = relative growth rate 0.5 and 1.5 (g), and yellow = relative growth rate greater than 1.5 (g).
 
 ```{r}
 #| echo: FALSE
@@ -727,4 +750,4 @@ fig7 <- ggviolin(t4_dat, x = "sex", y = "juv3_T4_corrected_ng_mL",
 fig7
 ```
 
-**Figure 7**. Differences in T4 levels between male (red) and female (blue) lizards. Means and SE intervals are provided along with the p-value.
+**Figure XX**. Differences in T4 levels between male (red) and female (blue) lizards. Means and SE intervals are provided along with the p-value.

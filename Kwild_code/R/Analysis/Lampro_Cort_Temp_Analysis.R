@@ -79,8 +79,6 @@ data_final <- data_final %>%
          hatch_juv3_MASS_growth = (juv3_mass_g-hatch_mass_g)/hatch_juv3_days)
 
 
-
-
 ################
 #### 1.	What are the effects of developmental treatments (temp, cort, interaction) on time to hatch?
 #### effect of temperature on incubation days - faster hatch warmer temps 
@@ -139,7 +137,7 @@ summary(condition_hatch_mod)
 # temp and BCI plot - poor BCI warm temps
 condition_hatch_mod_emm <- emmeans(condition_hatch_mod, pairwise ~ temp)
 plot(condition_hatch_mod_emm)
-saveRDS(Mass_hatch_mod, "Kwild_code/models/condition_hatch_mod.RDS")
+saveRDS(condition_hatch_mod, "Kwild_code/models/condition_hatch_mod.RDS")
 
 
 
