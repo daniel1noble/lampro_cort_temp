@@ -27,7 +27,7 @@ knitr::opts_chunk$set(message = FALSE)
 options(digits = 3)
 rm(list=ls())
 sessionInfo()
-pacman::p_load(dplyr, flextable, knitr, here, dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, lubridate, performance, cowplot, interp, ggpubr, ggplot2, stats, rotl, dplyr, viridis, patchwork, interp, akima, MASS, magick)
+pacman::p_load(dplyr, flextable, knitr, car, here, dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, lubridate, performance, cowplot, interp, ggpubr, ggplot2, stats, rotl, dplyr, viridis, patchwork, interp, akima, MASS, magick)
 
 # Function for p-value rendering nicely
 #' @title p_value
@@ -79,7 +79,7 @@ hatch_dev_mod <- readRDS(here("Kwild_code/models/hatch_dev_mod.RDS"))
 hatch_dev_mod_summ <- summary(hatch_dev_mod)
 hatch_dev_mod_summ <- as.data.frame(round(hatch_dev_mod_summ$coefficients, 
                                           digits = 2))
-hatch_dev_mod_anova <- as.data.frame(anova(hatch_dev_mod)) %>% 
+hatch_dev_mod_anova <- as.data.frame(Anova(hatch_dev_mod, type = 3)) %>% 
   mutate(across(where(is.numeric), round, digits = 2))
 
 # faster hatch warmer temps
@@ -105,7 +105,7 @@ SVL_hatch_mod <- readRDS(here("Kwild_code/models/SVL_hatch_mod.RDS"))
 SVL_hatch_mod_summ <- summary(SVL_hatch_mod)
 SVL_hatch_mod_summ <- as.data.frame(round(SVL_hatch_mod_summ$coefficients, 
                                           digits = 2))
-SVL_hatch_mod_anova <- as.data.frame(anova(SVL_hatch_mod)) %>% 
+SVL_hatch_mod_anova <- as.data.frame(Anova(SVL_hatch_mod, type = 3)) %>% 
   mutate(across(where(is.numeric), round, digits = 2))
 # high hormone lower SVL
 SVL_hatch_mod_emm <- emmeans(SVL_hatch_mod, pairwise ~ hormone)
@@ -119,7 +119,7 @@ Mass_hatch_mod <- readRDS(here("Kwild_code/models/MASS_hatch_mod.RDS"))
 Mass_hatch_mod_summ <- summary(Mass_hatch_mod)
 Mass_hatch_mod_summ <- as.data.frame(round(Mass_hatch_mod_summ$coefficients, 
                                           digits = 2))
-Mass_hatch_mod_anova <- as.data.frame(anova(Mass_hatch_mod)) %>% 
+Mass_hatch_mod_anova <- as.data.frame(Anova(Mass_hatch_mod, type = 3)) %>% 
   mutate(across(where(is.numeric), round, digits = 2))
 # hormone pairwise comparison - control higher mass
 Mass_hormone_hatch_mod_emm <- emmeans(Mass_hatch_mod, pairwise ~ hormone)
@@ -139,7 +139,7 @@ condition_hatch_mod <- readRDS(here("Kwild_code/models/condition_hatch_mod.RDS")
 condition_hatch_mod_summ <- summary(condition_hatch_mod)
 condition_hatch_mod_summ <- as.data.frame(round(condition_hatch_mod_summ$coefficients, 
                                           digits = 2))
-condition_hatch_mod_anova <- as.data.frame(anova(condition_hatch_mod)) %>% 
+condition_hatch_mod_anova <- as.data.frame(Anova(condition_hatch_mod, type = 3)) %>% 
   mutate(across(where(is.numeric), round, digits = 2))
 # temp and BCI plot - poor BCI warm temps
 condition_hatch_mod_emm <- emmeans(condition_hatch_mod, pairwise ~ temp)
@@ -312,6 +312,10 @@ fig2
 
 
 ### *b) The effects of developmental treatments (temperature and CORT) on juvenile Physiology - CORT, T4, and mitochondrial function*
+Juvenile CORT levels were not the developmental treatment of temperature ($F_{`r cort_development_mod_anova$Df[3]`,`r cort_development_mod_anova$Df[7]`}$ = `r cort_development_mod_anova[3,3]`, p = `r p_value(cort_development_mod_anova[3,5])`) or the developmental treatment of CORT ($F_{`r cort_development_mod_anova$Df[1]`,`r cort_development_mod_anova$Df[3]`}$ = `r cort_development_mod_anova[2,3]`, p = `r p_value(cort_development_mod_anova[2, 4])`; Table SXX). Juvenile CORT levels were positively correlated with mass growth rates ().
+
+
+On average, the incubation duration of the cold treatment was `r hatch_dev_mod_emm_cont[,"estimate"]` days longer than the hot treatment ($\pm SE$: `r hatch_dev_mod_emm_cont[,"SE"]`, *t*-value = `r hatch_dev_mod_emm_cont[,"t.ratio"]`, df = `r hatch_dev_mod_emm_cont[,"df"]`, p = `r p_value(hatch_dev_mod_emm_cont[,"p.value"])`) with the incubation duration for the hot treatment being `r hatch_dev_mod_emm_value[1,2]` days (`r hatch_dev_mod_emm_value[1,3]`$\pm SE$) and the cold treatment `r hatch_dev_mod_emm_value[2,2]` days (`r hatch_dev_mod_emm_value[2,3]`$\pm SE$). 
 ```{r}
 #| echo: false
   #### 3.	What are the developmental temperature and hormonal treatment on juvenile CORT, T4, and Testosterone)?
@@ -362,13 +366,28 @@ fig2
   cort_development_mod_summ <- summary(cort_development_mod)
   cort_development_mod_summ <- as.data.frame(round(cort_development_mod_summ$coefficients, 
                                             digits = 2))
+  cort_development_mod_anova <- as.data.frame(Anova(cort_development_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+  
+  # No differences
+cort_development_mod_emm <- emmeans(cort_development_mod, pairwise ~ hormone)
+cort_development_mod_emm_value <- cort_development_mod_emm$emmeans
+cort_development_mod_emm_cont <- data.frame(cort_development_mod_emm$contrasts)
 
-  # 2)  MASS growth - does cort correlate with mass growth rate and how does this vary across temp and hormone treatment
+
+  
+  # 2)  MASS growth - does Juvinile cort correlate with mass growth rate and how does this vary across temp and hormone treatment
   cort_mass_growth_mod <- readRDS(here("Kwild_code/models/cort_mass_growth_mod.RDS"))
   cort_mass_growth_mod_summ <- summary(cort_mass_growth_mod)
   cort_mass_growth_mod_summ <- as.data.frame(round(cort_mass_growth_mod_summ$coefficients, 
                                             digits = 2))
+  cort_mass_growth_mod_anova <- as.data.frame(Anova(cort_mass_growth_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
 
+  # positive correlation growth and juvenile CORT
+
+  
+  
   ###########
   # T4
   # 1) treatments -  does T4 vary across temp, hormone treatment and sex: Sex differences
