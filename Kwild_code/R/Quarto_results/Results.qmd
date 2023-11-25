@@ -27,7 +27,7 @@ knitr::opts_chunk$set(message = FALSE)
 options(digits = 3)
 rm(list=ls())
 sessionInfo()
-pacman::p_load(dplyr, flextable, knitr, car, here, dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, lubridate, performance, cowplot, interp, ggpubr, ggplot2, stats, rotl, dplyr, viridis, patchwork, interp, akima, MASS, magick)
+pacman::p_load(dplyr, flextable, knitr, tibble, car, here, dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, lubridate, performance, cowplot, interp, ggpubr, ggplot2, stats, rotl, dplyr, viridis, patchwork, interp, akima, MASS, magick, fields)
 
 # Function for p-value rendering nicely
 #' @title p_value
@@ -80,7 +80,7 @@ hatch_dev_mod_summ <- summary(hatch_dev_mod)
 hatch_dev_mod_summ <- as.data.frame(round(hatch_dev_mod_summ$coefficients, 
                                           digits = 2))
 hatch_dev_mod_anova <- as.data.frame(Anova(hatch_dev_mod, type = 3)) %>% 
-  mutate(across(where(is.numeric), round, digits = 2))
+  mutate(across(where(is.numeric), round, digits = 2)) 
 
 # faster hatch warmer temps
 hatch_dev_mod_emm <- emmeans(hatch_dev_mod, pairwise ~ temp)
@@ -106,7 +106,7 @@ SVL_hatch_mod_summ <- summary(SVL_hatch_mod)
 SVL_hatch_mod_summ <- as.data.frame(round(SVL_hatch_mod_summ$coefficients, 
                                           digits = 2))
 SVL_hatch_mod_anova <- as.data.frame(Anova(SVL_hatch_mod, type = 3)) %>% 
-  mutate(across(where(is.numeric), round, digits = 2))
+  mutate(across(where(is.numeric), round, digits = 2)) 
 # high hormone lower SVL
 SVL_hatch_mod_emm <- emmeans(SVL_hatch_mod, pairwise ~ hormone)
 SVL_hatch_mod_emm_value <- SVL_hatch_mod_emm$emmeans
@@ -120,7 +120,7 @@ Mass_hatch_mod_summ <- summary(Mass_hatch_mod)
 Mass_hatch_mod_summ <- as.data.frame(round(Mass_hatch_mod_summ$coefficients, 
                                           digits = 2))
 Mass_hatch_mod_anova <- as.data.frame(Anova(Mass_hatch_mod, type = 3)) %>% 
-  mutate(across(where(is.numeric), round, digits = 2))
+  mutate(across(where(is.numeric), round, digits = 2)) 
 # hormone pairwise comparison - control higher mass
 Mass_hormone_hatch_mod_emm <- emmeans(Mass_hatch_mod, pairwise ~ hormone)
 Mass_hormone_hatch_mod_emm_value <- Mass_hormone_hatch_mod_emm$emmeans
@@ -140,18 +140,18 @@ condition_hatch_mod_summ <- summary(condition_hatch_mod)
 condition_hatch_mod_summ <- as.data.frame(round(condition_hatch_mod_summ$coefficients, 
                                           digits = 2))
 condition_hatch_mod_anova <- as.data.frame(Anova(condition_hatch_mod, type = 3)) %>% 
-  mutate(across(where(is.numeric), round, digits = 2))
+  mutate(across(where(is.numeric), round, digits = 2)) 
 # temp and BCI plot - poor BCI warm temps
 condition_hatch_mod_emm <- emmeans(condition_hatch_mod, pairwise ~ temp)
 condition_hatch_mod_emm_value <- condition_hatch_mod_emm$emmeans
 condition_hatch_mod_emm_value <- condition_hatch_mod_emm$contrasts
 ```
 
-CORT treatment did not affect time to hatch ($F_{`r hatch_dev_mod_anova$Df[2]`,`r hatch_dev_mod_anova$Df[3]`}$ = `r hatch_dev_mod_anova[2,4]`, p = `r p_value(hatch_dev_mod_anova[2,5])`), but as expected, developmental temperature significantly decreased development time ($F_{`r hatch_dev_mod_anova$Df[1]`,`r hatch_dev_mod_anova$Df[3]`}$ = `r hatch_dev_mod_anova[1,4]`, p = `r p_value(hatch_dev_mod_anova[1,5])`; Figure S1). On average, the incubation duration of the cold treatment was `r hatch_dev_mod_emm_cont[,"estimate"]` days longer than the hot treatment ($\pm SE$: `r hatch_dev_mod_emm_cont[,"SE"]`, *t*-value = `r hatch_dev_mod_emm_cont[,"t.ratio"]`, df = `r hatch_dev_mod_emm_cont[,"df"]`, p = `r p_value(hatch_dev_mod_emm_cont[,"p.value"])`) with the incubation duration for the hot treatment being `r hatch_dev_mod_emm_value[1,2]` days (`r hatch_dev_mod_emm_value[1,3]`$\pm SE$) and the cold treatment `r hatch_dev_mod_emm_value[2,2]` days (`r hatch_dev_mod_emm_value[2,3]`$\pm SE$). 
+CORT treatment did not affect time to hatch ($F_{`r hatch_dev_mod_anova$Df[2]`,`r hatch_dev_mod_anova$Df[3]`}$ = `r hatch_dev_mod_anova[2,4]`, p = `r p_value(hatch_dev_mod_anova[2,4])`), but as expected, developmental temperature significantly decreased development time ($F_{`r hatch_dev_mod_anova$Df[1]`,`r hatch_dev_mod_anova$Df[3]`}$ = `r hatch_dev_mod_anova[1,4]`, p = `r p_value(hatch_dev_mod_anova[1,4])`; Figure S1). On average, the incubation duration of the cold treatment was `r hatch_dev_mod_emm_cont[,"estimate"]` days longer than the hot treatment ($\pm SE$: `r hatch_dev_mod_emm_cont[,"SE"]`, *t*-value = `r hatch_dev_mod_emm_cont[,"t.ratio"]`, df = `r hatch_dev_mod_emm_cont[,"df"]`, p = `r p_value(hatch_dev_mod_emm_cont[,"p.value"])`) with the incubation duration for the hot treatment being `r hatch_dev_mod_emm_value[1,2]` days (`r hatch_dev_mod_emm_value[1,3]`$\pm SE$) and the cold treatment `r hatch_dev_mod_emm_value[2,2]` days (`r hatch_dev_mod_emm_value[2,3]`$\pm SE$). 
 
-CORT significantly decreased hatchling mass ($F_{`r Mass_hatch_mod_anova$Df[2]`,`r Mass_hatch_mod_anova$Df[3]`}$ = `r Mass_hatch_mod_anova[2,4]`, p = `r Mass_hatch_mod_anova[2,5]`), but only between control and the highest dose (marginalised mean: `r Mass_hormone_hatch_mod_emm_cont[1,"estimate"]` $\pm SE$ `r Mass_hormone_hatch_mod_emm_cont[1,"SE"]`, t = `r Mass_hormone_hatch_mod_emm_cont[1,"t.ratio"]`, df = `r Mass_hormone_hatch_mod_emm_cont[1,"df"]`, p = `r p_value(Mass_hormone_hatch_mod_emm_cont[1,"p.value"])`). Hatching SVL was similarly affected by CORT ($F_{`r SVL_hatch_mod_anova$Df[2]`,`r SVL_hatch_mod_anova$Df[3]`}$ = `r SVL_hatch_mod_anova[2,4]`, p = `r p_value(SVL_hatch_mod_anova[2,5])`) compared to control treatments, but again, only at high CORT levels (marginalised mean: `r SVL_hatch_mod_emm_cont[1,"estimate"]` $\pm SE$ `r SVL_hatch_mod_emm_cont[1,"SE"]`, t = `r SVL_hatch_mod_emm_cont[1,"t.ratio"]`, df = `r SVL_hatch_mod_emm_cont[1,"df"]`, p = `r p_value(SVL_hatch_mod_emm_cont[1,"p.value"])` @fig-Figure_1).  
+CORT significantly decreased hatchling mass ($F_{`r Mass_hatch_mod_anova$Df[2]`,`r Mass_hatch_mod_anova$Df[3]`}$ = `r Mass_hatch_mod_anova[2,4]`, p = `r Mass_hatch_mod_anova[2,5]`), but only between control and the highest dose (marginalised mean: `r Mass_hormone_hatch_mod_emm_cont[1,"estimate"]` $\pm SE$ `r Mass_hormone_hatch_mod_emm_cont[1,"SE"]`, t = `r Mass_hormone_hatch_mod_emm_cont[1,"t.ratio"]`, df = `r Mass_hormone_hatch_mod_emm_cont[1,"df"]`, p = `r p_value(Mass_hormone_hatch_mod_emm_cont[1,"p.value"])`). Hatching SVL was similarly affected by CORT ($F_{`r SVL_hatch_mod_anova$Df[2]`,`r SVL_hatch_mod_anova$Df[3]`}$ = `r SVL_hatch_mod_anova[2,4]`, p = `r p_value(SVL_hatch_mod_anova[2,4])`) compared to control treatments, but again, only at high CORT levels (marginalised mean: `r SVL_hatch_mod_emm_cont[1,"estimate"]` $\pm SE$ `r SVL_hatch_mod_emm_cont[1,"SE"]`, t = `r SVL_hatch_mod_emm_cont[1,"t.ratio"]`, df = `r SVL_hatch_mod_emm_cont[1,"df"]`, p = `r p_value(SVL_hatch_mod_emm_cont[1,"p.value"])` @fig-Figure_1).  
 
-High temperatures also contributed to decreased hatchling mass ($F_{`r Mass_hatch_mod_anova$Df[1]`,`r Mass_hatch_mod_anova$Df[3]`}$ = `r Mass_hatch_mod_anova[1,4]`, p = `r p_value(Mass_hatch_mod_anova[1,5])`; @fig-Figure_2) and resulted in poorer body condition ($F_{`r condition_hatch_mod_anova$Df[1]`,`r condition_hatch_mod_anova$Df[3]`}$ = `r condition_hatch_mod_anova[1,4]`, p = `r p_value(condition_hatch_mod_anova[1,5])`; @fig-Figure_2 B). Temperature treatment did not have an overall effect on SVL ($F_{`r SVL_hatch_mod_anova$Df[1]`,`r SVL_hatch_mod_anova$Df[3]`}$ = `r SVL_hatch_mod_anova[1,4]`, p = `r p_value(SVL_hatch_mod_anova[1,5])`) and hormonal treatment did not affect body condition ($F_{`r condition_hatch_mod_anova$Df[1]`,`r condition_hatch_mod_anova$Df[3]`}$ = `r condition_hatch_mod_anova[2,4]`, p = `r p_value(condition_hatch_mod_anova[2,5])`).
+High temperatures also contributed to decreased hatchling mass ($F_{`r Mass_hatch_mod_anova$Df[1]`,`r Mass_hatch_mod_anova$Df[3]`}$ = `r Mass_hatch_mod_anova[1,4]`, p = `r p_value(Mass_hatch_mod_anova[1,4])`; @fig-Figure_2) and resulted in poorer body condition ($F_{`r condition_hatch_mod_anova$Df[1]`,`r condition_hatch_mod_anova$Df[3]`}$ = `r condition_hatch_mod_anova[1,4]`, p = `r p_value(condition_hatch_mod_anova[1,4])`; @fig-Figure_2 B). Temperature treatment did not have an overall effect on SVL ($F_{`r SVL_hatch_mod_anova$Df[1]`,`r SVL_hatch_mod_anova$Df[3]`}$ = `r SVL_hatch_mod_anova[1,4]`, p = `r p_value(SVL_hatch_mod_anova[1,4])`) and hormonal treatment did not affect body condition ($F_{`r condition_hatch_mod_anova$Df[1]`,`r condition_hatch_mod_anova$Df[3]`}$ = `r condition_hatch_mod_anova[2,4]`, p = `r p_value(condition_hatch_mod_anova[2,4])`).
 
 ```{r, Figure_1}
 #| label: fig-Figure_1
@@ -195,7 +195,7 @@ fig1_A <- ggviolin(data_final, x = "hormone", y = "hatch_svl_mm",
   stat_compare_means(comparisons = list(c("control","low"), c("control","high"), c("low","high"))) +
   stat_compare_means(method = "anova")+
   labs(x = NULL, y = "Hatchling SVL (mm)") +
-  labs(color='Hormone Treatment')+
+  labs(color='CORT Treatment')+
   scale_y_continuous(breaks=seq(14, 22, 2), limits = c(14, 22))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
@@ -218,7 +218,7 @@ Fig1_B <- ggviolin(data_final, x = "hormone", y = "hatch_mass_g",
   stat_compare_means(comparisons = list(c("control","low"), c("control","high"), c("low","high"))) +
   stat_compare_means(method = "anova") +
   labs(x = NULL, y = "Hatchling mass (g)") +
-  labs(color='Hormone Treatment')+
+  labs(color='CORT Treatment')+
   scale_y_continuous(breaks=seq(0.06, 0.20, .02), limits = c(0.06,0.20))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
@@ -237,7 +237,7 @@ fig1
 
 ```{r, fig-Figure_2}
 #| label: fig-Figure_2
-#| fig-cap: "How developmental temperature effects mass (panel A) and body condition (panel B) of hatchling lizards. Colors indicate the incubation temperature that eggs were reared in. Means and SE intervals are provided along with the p-value. Dashed horizontal line in Panel B indicates average condition, points that fall above the line are considered good condition and points below line are considered poor."
+#| fig-cap: "How developmental temperature effects mass (panel A) and body condition (panel B) of hatchling lizards. Colors indicate the incubation temperature that eggs were reared in. Means and SE intervals are provided along with the p-value. Dashed horizontal line in Panel B indicates average condition, points that fall above the line are considered good condition and points below line are considered poor. Means and SE intervals are provided along with the p-value for each contrast."
 #| warning: FALSE
 #| echo: FALSE
 #| fig-width: 9
@@ -309,13 +309,9 @@ fig2_B <- ggviolin(data_final, x = "temp", y = "hatch_bc_residuals",
 fig2 <- plot_grid(fig2_A, fig2_B, ncol = 2, align = "h", labels = c("A", "B"))
 fig2
 ```
-
+\newpage
 
 ### *b) The effects of developmental treatments (temperature and CORT) on juvenile Physiology - CORT, T4, and mitochondrial function*
-Juvenile CORT levels were not the developmental treatment of temperature ($F_{`r cort_development_mod_anova$Df[3]`,`r cort_development_mod_anova$Df[7]`}$ = `r cort_development_mod_anova[3,3]`, p = `r p_value(cort_development_mod_anova[3,5])`) or the developmental treatment of CORT ($F_{`r cort_development_mod_anova$Df[1]`,`r cort_development_mod_anova$Df[3]`}$ = `r cort_development_mod_anova[2,3]`, p = `r p_value(cort_development_mod_anova[2, 4])`; Table SXX). Juvenile CORT levels were positively correlated with mass growth rates ().
-
-
-On average, the incubation duration of the cold treatment was `r hatch_dev_mod_emm_cont[,"estimate"]` days longer than the hot treatment ($\pm SE$: `r hatch_dev_mod_emm_cont[,"SE"]`, *t*-value = `r hatch_dev_mod_emm_cont[,"t.ratio"]`, df = `r hatch_dev_mod_emm_cont[,"df"]`, p = `r p_value(hatch_dev_mod_emm_cont[,"p.value"])`) with the incubation duration for the hot treatment being `r hatch_dev_mod_emm_value[1,2]` days (`r hatch_dev_mod_emm_value[1,3]`$\pm SE$) and the cold treatment `r hatch_dev_mod_emm_value[2,2]` days (`r hatch_dev_mod_emm_value[2,3]`$\pm SE$). 
 ```{r}
 #| echo: false
   #### 3.	What are the developmental temperature and hormonal treatment on juvenile CORT, T4, and Testosterone)?
@@ -395,6 +391,9 @@ cort_development_mod_emm_cont <- data.frame(cort_development_mod_emm$contrasts)
   T4_sex_temp_hormone_mod_summ <- summary(T4_sex_temp_hormone_mod)
   T4_sex_temp_hormone_mod_summ <- as.data.frame(round(T4_sex_temp_hormone_mod_summ$coefficients, 
                                             digits = 2))
+  T4_sex_temp_hormone_mod_anova <- as.data.frame(Anova(T4_sex_temp_hormone_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+  
   T4_temp_hormone_sex_mod_emm <- emmeans(T4_sex_temp_hormone_mod, pairwise ~ sex)
   T4_temp_hormone_sex_mod_emm_value <- T4_temp_hormone_sex_mod_emm$emmeans
   T4_temp_hormone_sex_mod_emm_cont <- T4_temp_hormone_sex_mod_emm$contrasts
@@ -404,14 +403,437 @@ cort_development_mod_emm_cont <- data.frame(cort_development_mod_emm$contrasts)
   T4_mass_growth_mod_summ <- summary(T4_mass_growth_mod)
   T4_mass_growth_mod_summ <- as.data.frame(round(T4_mass_growth_mod_summ$coefficients, 
                                             digits = 2))
+  T4_mass_growth_mod_anova <- as.data.frame(Anova(T4_mass_growth_mod, 
+                                                  type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+  
+
 ###########
 # Mito function
-  
+mito_dat <- read.csv(here("Kwild_code/data/final_mito_dat_clean.csv"))
+
+##########
+# RCR_L_ETS effects by developmental environment and sex (sex X hormone) with inject_time_sec as a covariate   
+# interaction removed; no effect on covariate of injection time
+RCR_L_ETS_sex_temp_hormone_mod <- readRDS(here("Kwild_code/models/RCR_L_ETS_sex_temp_hormone_mod.RDS"))
+RCR_L_ETS_sex_temp_hormone_mod_summ <- summary(RCR_L_ETS_sex_temp_hormone_mod)
+RCR_L_ETS_sex_temp_hormone_mod_summ <- as.data.frame(round(RCR_L_ETS_sex_temp_hormone_mod_summ$coefficients, 
+                                            digits = 2))
+RCR_L_ETS_sex_temp_hormone_mod_anova <- as.data.frame(Anova(RCR_L_ETS_sex_temp_hormone_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+
+##########
+# RCR (R/ETS): RCR_R_ETS effects by developmental environment and sex (sex:hormone) 
+# with inject_time_sec as a covariate   
+# interaction removed; no effect on covariate of injection time; Sex effects but no developmental effects
+RCR_R_ETS_sex_temp_hormone_mod <- readRDS(here("Kwild_code/models/RCR_R_ETS_sex_temp_hormone_mod.RDS"))
+RCR_R_ETS_sex_temp_hormone_mod_summ <- summary(RCR_R_ETS_sex_temp_hormone_mod)
+RCR_R_ETS_sex_temp_hormone_mod_summ <- as.data.frame(round(RCR_R_ETS_sex_temp_hormone_mod_summ$coefficients, 
+                                                           digits = 2))
+RCR_R_ETS_sex_temp_hormone_mod_anova <- as.data.frame(Anova(RCR_R_ETS_sex_temp_hormone_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+# No differences across treatments or  covariate; but sex effects
+RCR_R_ETS_sex_temp_hormone_mod_emm <- emmeans(RCR_R_ETS_sex_temp_hormone_mod, pairwise ~ sex)
+RCR_R_ETS_sex_temp_hormone_mod_emm_value <- RCR_R_ETS_sex_temp_hormone_mod_emm$emmeans
+RCR_R_ETS_sex_temp_hormone_mod_emm_cont <- data.frame(RCR_R_ETS_sex_temp_hormone_mod_emm$contrasts)
+
+
+#########
+### RCR (L/ETS) VS CORT and T4
+## RCR (L/ETS) VS CORT - NO EFFECTS
+# with inject_time_sec as a covariate   
+# interaction removed; no effect on covariate of injection time; Sex effects but no developmental effects
+RCR_L_ETS_CORT_mod <- readRDS(here("Kwild_code/models/RCR_L_ETS_CORT_mod.RDS"))
+RCR_L_ETS_CORT_mod_summ <- summary(RCR_L_ETS_CORT_mod)
+RCR_L_ETS_CORT_mod_summ <- as.data.frame(round(RCR_L_ETS_CORT_mod_summ$coefficients, 
+                                               digits = 2))
+RCR_L_ETS_CORT_mod_anova <- as.data.frame(Anova(RCR_L_ETS_CORT_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+
+
+## RCR (R/ETS) VS T4 - No differences!
+# with inject_time_sec as a covariate   
+# interaction removed; no effect on covariate of injection time; Sex effects but no developmental effects
+RCR_L_ETS_T4_mod <- readRDS(here("Kwild_code/models/RCR_L_ETS_T4_mod.RDS"))
+RCR_L_ETS_T4_mod_summ <- summary(RCR_L_ETS_T4_mod)
+RCR_L_ETS_T4_mod_summ <- as.data.frame(round(RCR_L_ETS_T4_mod_summ$coefficients, 
+                                             digits = 2))
+RCR_L_ETS_T4_mod_anova <- as.data.frame(Anova(RCR_L_ETS_T4_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+# No differences across treatments effects
+
+
+
+#########
+### RCR (R/ETS) VS CORT and T4
+## RCR (R/ETS) VS CORT - no effect
+RCR_R_ETS_CORT_mod <-readRDS(here("Kwild_code/models/RCR_R_ETS_CORT_mod.RDS"))
+RCR_R_ETS_CORT_mod_summ <- summary(RCR_R_ETS_CORT_mod)
+RCR_R_ETS_CORT_mod_summ <- as.data.frame(round(RCR_R_ETS_CORT_mod_summ$coefficients, 
+                                                           digits = 2))
+RCR_R_ETS_CORT_mod_anova <- as.data.frame(Anova(RCR_R_ETS_CORT_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+
+
+## RCR (R/ETS) VS T4 - negative effect
+RCR_R_ETS_T4_mod <- readRDS(here("Kwild_code/models/RCR_R_ETS_T4_mod.RDS"))
+RCR_R_ETS_T4_mod_summ <- summary(RCR_R_ETS_T4_mod)
+RCR_R_ETS_T4_mod_summ <- as.data.frame(round(RCR_R_ETS_T4_mod_summ$coefficients, 
+                                               digits = 2))
+RCR_R_ETS_T4_mod_anova <- as.data.frame(Anova(RCR_R_ETS_T4_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+
+
+```
+Juvenile CORT levels were not the developmental treatment of temperature ($F_{`r cort_development_mod_anova$Df[3]`,`r cort_development_mod_anova$Df[7]`}$ = `r cort_development_mod_anova[3,3]`, p = `r p_value(cort_development_mod_anova[3,4])`) or the developmental treatment of CORT ($F_{`r cort_development_mod_anova$Df[1]`,`r cort_development_mod_anova$Df[7]`}$ = `r cort_development_mod_anova[2,3]`, p = `r p_value(cort_development_mod_anova[2, 4])`; Table SXX). Juvenile CORT levels were positively correlated with mass growth rates ().
+
+```{r, fig-Figure_3}
+#| label: fig-Figure_3
+#| fig-cap: "The relationship final cort measurements and juvenile growth rate. Growth period was determined from hatchling to final measurement (mean = 467 days). Panel A shows SVL change (mm/d) and panel B shows mass change (g/d). Colors show the incubation temperature during development and symbols show the hormonal treatment during development. Correlation coefficient (r) and p value (p) are provided in each plot. Overall there were no relationships between incubation temperature during development or hormonal treatment during development and final CORT values. However there was an overall positive relationship between final CORT measurements and growth rate."
+#| echo: FALSE
+#| warning: FALSE
+#| fig-width: 10
+#| fig-height: 7
+#| fig-align: center
+data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))
+cort_dat <- data_final %>%
+  drop_na(juv3_CORT_Final_Hormone_ng_mL, temp, hormone, juv3_HandlingTime_sec)
+
+# function for plot to show pvalue and correlation coefficient 
+calc_cor <- function(data, x, y) {
+  cor_test <- cor.test(data[[x]], data[[y]])
+  cor <- cor_test$estimate
+  p_value <- cor_test$p.value
+  return(data.frame(cor = cor, p_value = p_value))
+}
+
+# Calculate correlation and p-values for each plot
+cor_res_A <- calc_cor(cort_dat, "hatch_juv3_SVL_growth", "juv3_CORT_Final_Hormone_ng_mL")
+cor_res_B <- calc_cor(cort_dat, "hatch_juv3_MASS_growth", "juv3_CORT_Final_Hormone_ng_mL")
+
+# Adding p-values and correlation coefficients on the plots
+fig3_A <- ggplot(cort_dat, aes(x = hatch_juv3_SVL_growth, y = juv3_CORT_Final_Hormone_ng_mL)) +
+  geom_point(aes(color = as.factor(temp), shape = hormone), size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = 2) +
+  labs(x = "SVL growth rate (mm/d)", y = "CORT Final Hormone (ng/mL)", 
+       color = "Temperature", shape = "Treatment") +
+  scale_color_discrete(name = "Temperature") + 
+  geom_text(aes(x = .045, y = 500, 
+                label = sprintf("r = %.2f, p = %.3f", cor_res_A$cor, cor_res_A$p_value)), 
+            hjust = 0, vjust = 1) + # Adjust hjust and vjust to position the text
+  theme_bw() +
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+
+# Repeat similar process for fig4_B
+fig3_B <- ggplot(cort_dat, aes(x = hatch_juv3_MASS_growth, y = juv3_CORT_Final_Hormone_ng_mL)) +
+  geom_point(aes(color = as.factor(temp), shape = hormone), size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = 2) +
+  labs(x = "Mass growth rate (g/d)", y = NULL, 
+       color = "Temperature", shape = "Treatment") +
+  scale_color_discrete(name = "Temperature") + 
+  geom_text(aes(x = .0025, y = 500, 
+                label = sprintf("r = %.2f, p = %.3f", cor_res_B$cor, cor_res_B$p_value)), 
+            hjust = 0, vjust = 1) + # Adjust hjust and vjust to position the text
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = c(0.99, 0.99),  # Positions the legend inside the plot
+        legend.justification = c("right", "top"), # Justifies the legend's position
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.box = element_blank(),
+        legend.text = element_text(size = 6),
+        legend.title = element_text(size = 8))
+
+fig3 <- plot_grid(fig3_A, fig3_B, ncol = 2, align = "h", labels = c("A", "B"))
+fig3
 ```
 
 
-### *c) The effects of developmental treatments (temperature and CORT) on juvenile body size, mass, body condition (BCI), survival, and growth rate on juvenile lizards*
 
+```{r, fig-Figure_4}
+#| label: fig-Figure_4
+#| fig-cap: "Differences in T4 levels between male (red) and female (blue) lizards. Means and SE intervals are provided along with the p-value."
+#| echo: FALSE
+#| warning: FALSE
+#| fig-width: 10
+#| fig-height: 7
+#| fig-align: right
+# Bring in T4 data and the model
+t4_dat <- read.csv(here("Kwild_code/data/final_analysis_data.csv")) %>% 
+   drop_na(juv3_T4_corrected_ng_mL, temp, hormone, Lizard_ID)
+
+fig4 <- ggviolin(t4_dat, x = "sex", y = "juv3_T4_corrected_ng_mL",
+                   color = "sex", short.panel.labs = FALSE,
+                   font.label = list(size = 12, color = "black"),
+                   ggtheme = theme_bw()) + 
+  geom_jitter(aes(color = sex), width = 0.2, alpha = 0.4) +  
+  stat_summary(
+    mapping = aes(x = sex, y = juv3_T4_corrected_ng_mL),
+    fun = "mean", geom = "point", size = 2, color = "black", alpha = .5 ) +
+  stat_summary(
+    mapping = aes(x = sex, y = juv3_T4_corrected_ng_mL),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = .5) +
+  stat_compare_means(method = "anova", vjust = -.1, hjust = .5)+ 
+  labs(x = "Sex", y = "T4 (ng/mL)") +
+  labs(color='Sex')+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = c(0.99, 0.99),  # Positions the legend inside the plot
+        legend.justification = c("right", "top"), # Justifies the legend's position
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.box = element_blank(),
+        legend.text = element_text(size = 6),
+        legend.title = element_text(size = 8))
+
+fig4
+```
+
+```{r, fig-Figure_5}
+#| label: fig-Figure_5
+#| fig-cap: " Predicted parametric contour plots of mass growth rate as a function of our standardized traits from generalized linear models. Colors indicate the mass growth rate of individual lizards: dark purple = relative growth rate -1.0 (g) and below, purple = relative growth rate -0.5 and 0.5 (g), red = relative growth rate 0.5 and 1.5 (g), and yellow = relative growth rate greater than 1.5 (g)."
+#| echo: FALSE
+#| warning: FALSE
+#| fig-width: 10
+#| fig-height: 7
+#| fig-align: right
+# Bring in T4 data and the model
+t4_dat <- read.csv(here("Kwild_code/data/final_analysis_data.csv")) %>% 
+   drop_na(juv3_T4_corrected_ng_mL, temp, hormone, Lizard_ID)
+
+T4_mass_growth_mod <-readRDS(here("Kwild_code/models/T4_mass_growth_mod.RDS"))
+# PLOT: predicitions: growth and T4 and cort
+newdata <- data.frame(`juv3_CORT_Final_Hormone_ng_mL` = seq(from = min(t4_dat$juv3_CORT_Final_Hormone_ng_mL), 
+                                                            to = max(t4_dat$juv3_CORT_Final_Hormone_ng_mL),
+                                                            length.out = 100),
+                      `juv3_T4_corrected_ng_mL` = rep(seq(from = min(t4_dat$juv3_T4_corrected_ng_mL), 
+                                                          to = max(t4_dat$juv3_T4_corrected_ng_mL)), 
+                                                      each = 100), temp = 23)
+
+newdata$pred <- predict(T4_mass_growth_mod, newdata = newdata)
+
+# another plot
+s <- interp(x = newdata$juv3_T4_corrected_ng_mL, 
+            y = newdata$juv3_CORT_Final_Hormone_ng_mL, 
+            z = newdata$pred)
+image.plot(s, xlab = "T4_ng_mL", ylab = "Cort_ng_mL", 
+           las = 1, col = viridis(option = "magma", 50), 
+           cex.axis = 1, axis.args = list(cex.axis = 1.5), cex.lab = 1.8,
+           xlim = c(min(newdata$juv3_T4_corrected_ng_mL)+.012, 
+                    max(newdata$juv3_T4_corrected_ng_mL)-.011),  # Explicitly defining x limits
+           ylim = c(min(newdata$juv3_CORT_Final_Hormone_ng_mL)+8, 
+                    max(newdata$juv3_CORT_Final_Hormone_ng_mL)))  # Explicitly defining y limits
+contour(s, add = TRUE, col = "white")
+```
+
+```{r, fig-Figure_6}
+#| label: fig-Figure_6
+#| fig-cap: " RCR(L/ETS) model results from developmental environment - CORT (panel A) and temperature (panel B). These data are from the model which tested how RCR(L/ETS) varies across hormone, temperature, sex, and their interaction. Overall there was no significant effect on developmental environments (Temperature and CORT treatments) nor sex on RCR(L/ETS). We did not detect any interaction effects. We also found there was no relationship between inject time (sec) and RCR(L/ETS) levels. Means and SE intervals are provided along with the p-value."
+#| warning: FALSE
+#| echo: FALSE
+#| fig-width: 9
+#| fig-height: 7
+#| fig-align: left
+
+#### RCR_L_ETS effects by developmental environment and sex (sex X hormone) with inject_time_sec as a covariate   
+# Bring in  data and the model
+mito_dat <- read.csv(here("Kwild_code/data/final_mito_dat_clean.csv"))
+# interaction removed; no effect on covariate of injection time
+RCR_L_ETS_sex_temp_hormone_mod <- readRDS(here("Kwild_code/models/RCR_L_ETS_sex_temp_hormone_mod.RDS"))
+
+########### FIGURE : developmental enviroments (CORT) and it's effects on RCR_L_ETS
+# treatments on body size, condition, and mass at hatching;
+temps <- c("Blue", "Red")
+hormones <- c("#999999", "#E69F00", "brown2")
+my_comparisons <- rev(list(c("control","low"),c("control","high-"),c("low","high")))
+
+Fig_6A <- ggviolin(mito_dat, x = "hormone", y = "RCR_L_ETS",
+                    color = "hormone", palette = hormones,
+                    short.panel.labs = FALSE,
+                    font.label = list(size = 12, color = "black"),
+                    ggtheme = theme_bw())+ 
+  geom_jitter(aes(color = hormone), width = 0.2, alpha = 0.6) +  # Adding raw data points with color and transparency
+  
+  # Adding mean and standard error
+  stat_summary(
+    mapping = aes(x = hormone, y = RCR_L_ETS),
+    fun = "mean", geom = "point", size = 3, color = "black", alpha = 0.6) +
+  stat_summary(
+    mapping = aes(x = hormone, y = RCR_L_ETS),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = 0.6) +
+  
+  stat_compare_means(comparisons = list(c("control","low"), c("control","high"), c("low","high"))) +
+  stat_compare_means(method = "anova")+
+  labs(x = NULL, y = "RCR (L/ETS)") +
+  labs(color='CORT Treatment')+
+  scale_y_continuous(breaks=seq(0, .6, .1), limits = c(-.2, .6))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = "none")
+
+Fig_6B<- ggviolin(mito_dat, x = "temp", y = "RCR_L_ETS",
+                    color = "temp", palette = temps,
+                    short.panel.labs = FALSE,
+                    font.label = list(size = 12, color = "black"),
+                    ggtheme = theme_bw())+ 
+  geom_jitter(aes(color = temp), width = 0.2, alpha = 0.6) +  # Adding raw data points with color and transparency
+  
+  # Adding mean and standard error
+  stat_summary(
+    mapping = aes(x = temp, y = RCR_L_ETS),
+    fun = "mean", geom = "point", size = 3, color = "black", alpha = 0.6) +
+  stat_summary(
+    mapping = aes(x = temp, y = RCR_L_ETS),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = 0.6)  +
+  stat_compare_means(method = "anova")+
+  labs(x = NULL, y = "RCR (L/ETS)") +
+  labs(color='Temperature Treatment')+
+  scale_y_continuous(breaks=seq(-.1, .6, .1), limits = c(-.1, .6))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = "none")
+
+Fig_6 <- plot_grid(Fig_6A, Fig_6B, ncol = 2, align = "h", labels = c("A", "B"))
+Fig_6
+```
+
+
+```{r, fig-Figure_7}
+#| label: fig-Figure_7
+#| fig-cap: " RCR(R/ETS) model results on the effects sex have on RCR(R/ETS). These data are from the model which tested how RCR(R/ETS) varies across hormone, temperature, sex, and their interaction. Overall males had a significantly higher RCR(R/ETS) values in comparision to females. There was no significant effect on developmental environments (Temperature and CORT treatments). We did not detect any interaction effects. We also found there was no relationship between inject time (sec) and RCR(R/ETS) levels. Means and SE intervals are provided along with the p-value."
+#| warning: FALSE
+#| echo: FALSE
+#| fig-width: 9
+#| fig-height: 7
+#| fig-align: left
+
+#### RCR_R_ETS effects by developmental environment and sex (sex X hormone) with inject_time_sec as a covariate   
+# Bring in  data and the model
+mito_dat <- read.csv(here("Kwild_code/data/final_mito_dat_clean.csv"))
+# interaction removed; no effect on covariate of injection time
+RCR_R_ETS_sex_temp_hormone_mod <- readRDS(here("Kwild_code/models/RCR_R_ETS_sex_temp_hormone_mod.RDS"))
+
+########### FIGURE : developmental enviroments (CORT) and it's effects on RCR_R_ETS
+# treatments on body size, condition, and mass at hatching;
+Fig_7 <- ggviolin(mito_dat, x = "sex", y = "RCR_R_ETS",
+                    color = "sex",
+                    short.panel.labs = FALSE,
+                    font.label = list(size = 12, color = "black"),
+                    ggtheme = theme_bw())+ 
+  geom_jitter(aes(color = sex), width = 0.2, alpha = 0.6) +  # Adding raw data points with color and transparency
+  
+  # Adding mean and standard error
+  stat_summary(
+    mapping = aes(x = sex, y = RCR_R_ETS),
+    fun = "mean", geom = "point", size = 3, color = "black", alpha = 0.6) +
+  stat_summary(
+    mapping = aes(x = sex, y = RCR_R_ETS),
+    fun.data = "mean_se", geom = "errorbar", width = 0.1, color = "black", alpha = 0.6) +
+  stat_compare_means(method = "anova")+
+  labs(x = NULL, y = "RCR (R/ETS)") +
+  labs(color='sex')+
+  scale_y_continuous(breaks=seq(-.2, .8, .1), limits = c(-.2, .8))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        legend.position = "none")
+
+Fig_7
+```
+
+```{r, fig-Figure_8}
+#| label: fig-Figure_8
+#| fig-cap: "Panels A and B show the relationship between RCR(R/ETS) and final hormone measurements (panel A: CORT & panel B: T4) for juvenile lizards. Panels C and D show the relationship between RCR(L/ETS) and final hormone measurements (panel C: CORT & panel D: T4) for juvenile lizards. Correlation coefficient (r) and p value (p) are provided in each plot."
+#| warning: FALSE
+#| echo: FALSE
+#| fig-width: 9
+#| fig-height: 7
+#| fig-align: left
+
+#### RCR_R_ETS effects by developmental environment and sex (sex X hormone) with inject_time_sec as a covariate   
+# Bring in  data and the model
+mito_dat <- read.csv(here("Kwild_code/data/final_mito_dat_clean.csv"))
+
+# function for plot to show pvalue and correlation coefficient 
+calc_cor <- function(data, x, y) {
+  cor_test <- cor.test(data[[x]], data[[y]])
+  cor <- cor_test$estimate
+  p_value <- cor_test$p.value
+  return(data.frame(cor = cor, p_value = p_value))
+}
+
+# RCR(L/ETS)  & RCR(R/ETS) Correlation plots
+cor_res_A <- calc_cor(mito_dat, "CORT_Final_Hormone_ng_mL", "RCR_L_ETS")
+cor_res_B <- calc_cor(mito_dat, "T4_corrected_ng_mL", "RCR_L_ETS")
+cor_res_C <- calc_cor(mito_dat, "CORT_Final_Hormone_ng_mL", "RCR_R_ETS")
+cor_res_D <- calc_cor(mito_dat, "T4_corrected_ng_mL", "RCR_R_ETS")
+
+# Adding p-values and correlation coefficients on the plots
+fig8_A <- ggplot(mito_dat, aes(x = CORT_Final_Hormone_ng_mL, y = RCR_L_ETS)) +
+  geom_point(shape = 1, color = "black", size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = 2) +
+  labs(x = "CORT Final Hormone (ng/mL)", y = "RCR (L/ETS)") +
+  scale_color_discrete(name = "Temperature") + 
+  geom_text(aes(x = 300, y = .68, 
+                label = sprintf("r = %.2f, p = %.3f", cor_res_A$cor, cor_res_A$p_value)), 
+            hjust = 0, vjust = 1) + # Adjust hjust and vjust to position the text
+  theme_bw() +
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+# Adding p-values and correlation coefficients on the plots
+fig8_B <- ggplot(mito_dat, aes(x = T4_corrected_ng_mL, y = RCR_L_ETS)) +
+  geom_point(shape = 1, color = "black", size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = 2) +
+  labs(x = "T4_corrected_ng_mL", y = "RCR (L/ETS)") +
+  scale_color_discrete(name = "Temperature") + 
+  geom_text(aes(x = .7, y = .7, 
+                label = sprintf("r = %.2f, p = %.3f", cor_res_B$cor, cor_res_B$p_value)), 
+            hjust = 0, vjust = 1) + # Adjust hjust and vjust to position the text
+  theme_bw() +
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+
+# Adding p-values and correlation coefficients on the plots
+fig8_C <- ggplot(mito_dat, aes(x = CORT_Final_Hormone_ng_mL, y = RCR_R_ETS)) +
+  geom_point(shape = 1, color = "black", size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = 2) +
+  labs(x = "CORT Final Hormone (ng/mL)", y = "RCR (R/ETS)") +
+  scale_color_discrete(name = "Temperature") + 
+  geom_text(aes(x = 300, y = .68, 
+                label = sprintf("r = %.2f, p = %.3f", cor_res_C$cor, cor_res_C$p_value)), 
+            hjust = 0, vjust = 1) + # Adjust hjust and vjust to position the text
+  theme_bw() +
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+# Adding p-values and correlation coefficients on the plots
+fig8_D <- ggplot(mito_dat, aes(x = T4_corrected_ng_mL, y = RCR_R_ETS)) +
+  geom_point(shape = 1, color = "black", size = 2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = 2) +
+  labs(x = "T4_corrected_ng_mL", y = "RCR (R/ETS)") +
+  scale_color_discrete(name = "Temperature") + 
+  geom_text(aes(x = .7, y = .7, 
+                label = sprintf("r = %.2f, p = %.3f", cor_res_D$cor, cor_res_D$p_value)), 
+            hjust = 0, vjust = 1) + # Adjust hjust and vjust to position the text
+  theme_bw() +
+  theme(legend.position = "none", 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+Fig_8 <- plot_grid(fig8_A, fig8_B, fig8_C, fig8_D, ncol = 2, nrow = 2,
+                   align = "h", labels = c("A", "B", "C", "D"))
+Fig_8
+```
+
+### *c) The effects of developmental treatments (temperature and CORT) on juvenile body size, mass, body condition (BCI), survival, and growth rate on juvenile lizards*
 ```{r}
 #| echo: false
 #### 3.	What are the effects of developmental treatments on juvenile body size, condition, and mass (at the 3 points measured after hatching)?
@@ -564,4 +986,61 @@ overall_mass_growth_mod <- readRDS(here("Kwild_code/models/growth4_mass_mod.RDS"
 overall_mass_growth_mod_summ <- summary(overall_mass_growth_mod)
 overall_mass_growth_mod_summ <- as.data.frame(round(overall_mass_growth_mod_summ$coefficients, 
                                           digits = 2))
+```
+
+
+```{r, fig-Figure_9}
+#| label: fig-Figure_9
+#| fig-cap: "Survival frequency by developmental environment. Panel A are the frequencies by CORT developmental environment and panel B are by incubation environment."
+#| echo: FALSE
+#| warning: FALSE
+#| fig-width: 10
+#| fig-height: 7
+#| fig-align: right
+# Bring data for survival to end of study
+data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))
+# format data
+survival<- data_final %>% 
+  filter(liz_status_db != "MISSING") %>% 
+  mutate(Temperature = as.character(temp)) %>% 
+  rename(CORT = hormone)
+survival_tbl <- table(survival$liz_status_db)
+
+# hormone
+survival_final_hormone <- survival %>% 
+  group_by(liz_status_db, CORT) %>%
+  summarise(n = n()) %>% 
+  mutate(freq = n/sum(n))
+# temperature 
+survival_final_temp <- survival %>% 
+  group_by(liz_status_db, Temperature) %>%
+  summarise(n = n()) %>% 
+  mutate(freq = n/sum(n))
+
+
+### figures: 
+# hormone
+fig_survival_hormone <- ggplot(survival_final_hormone, aes(fill=CORT, y=freq, x=liz_status_db)) + 
+  geom_bar(position="fill", stat="identity") +
+  scale_fill_manual(values=c("#999999", "#E69F00", "brown2")) +
+  ylab("% of survival") +
+  xlab("Dead or Alive") +
+  geom_text(aes(label=scales::percent(freq, accuracy = 1)), 
+            position = position_fill(vjust = 0.5), 
+            size = 5, fontface = "bold")+
+  theme_bw()
+# Temp
+fig_survival_temp <- ggplot(survival_final_temp, aes(fill=Temperature, y=freq, x=liz_status_db)) + 
+  geom_bar(position="fill", stat="identity") +
+  scale_fill_manual(values=c("red", "blue")) +
+  ylab("% of survival") +
+  xlab("Dead or Alive") +
+  geom_text(aes(label=scales::percent(freq, accuracy = 1)), 
+            position = position_fill(vjust = 0.5), 
+            size = 5, fontface = "bold")+
+  theme_bw()
+
+fig8 <- plot_grid(fig_survival_hormone, 
+                  fig_survival_temp, ncol = 2, align = "h", labels = c("A", "B"))
+fig8
 ```

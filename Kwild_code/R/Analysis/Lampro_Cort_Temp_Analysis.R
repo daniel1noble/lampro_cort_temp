@@ -367,7 +367,7 @@ ggplot(cort_dat, aes(x = hatch_juv3_SVL_growth, y = juv3_CORT_Final_Hormone_ng_m
 
 ######## 3)  MASS growth - does cort correlate with mass growth rate and how does this vary across temp and hormone treatment
 # high growth associated with high cort 
-cort_mass_growth_mod <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ scale(hatch_juv3_MASS_growth) +hormone, data = cort_dat)
+cort_mass_growth_mod <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ scale(hatch_juv3_MASS_growth) + temp + hormone, data = cort_dat)
 summary(cort_mass_growth_mod)
 saveRDS(cort_mass_growth_mod, "Kwild_code/models/cort_mass_growth_mod.RDS")
 # plot
@@ -454,10 +454,12 @@ summary(T4_growth)
 ########################
 ### 7: Mito function
 ########################
-# data
+# bring in data, rename, and save
 mito_dat <- data_final %>%
   dplyr::select(c("Lizard_ID", "temp", "hormone", "sex", "juv3_bc_resid",
-                  "juv3_inject_time_sec", "juv3_liver_time_sec", "juv3_oroboros", 
+                  "juv3_inject_time_sec", "juv3_liver_time_sec", "juv3_oroboros",
+                  "juv3_T4_plate", "juv3_HandlingTime_sec", "juv3_T4_corrected_ng_mL", 
+                  "juv3_CORT_Final_Hormone_ng_mL",
                   "juv3_chamber","juv3_basal_corrected.pmol..sec.ng..", 
                   "juv3_adp_corrected.pmol..sec.ng..", "juv3_oligo_corrected.pmol..sec.ng..", 
                   "juv3_fccp_corrected.pmol..sec.ng..", "juv3_RCR.L.R.", "juv3_RCR.R.ETS.",
@@ -468,13 +470,17 @@ mito_dat <- data_final %>%
                 oligo_corrected_pmol = juv3_oligo_corrected.pmol..sec.ng..,
                 fccp_corrected_pmol = juv3_fccp_corrected.pmol..sec.ng..,
                 adp_corrected_pmol =  juv3_adp_corrected.pmol..sec.ng..,
+                T4_plate_ID = juv3_T4_plate,
+                HandlingTime_sec = juv3_HandlingTime_sec,
+                T4_corrected_ng_mL = juv3_T4_corrected_ng_mL, 
+                CORT_Final_Hormone_ng_mL = juv3_CORT_Final_Hormone_ng_mL,
                 RCR_L_R = juv3_RCR.L.R., 
                 RCR_R_ETS = juv3_RCR.R.ETS.,
                 RCR_L_ETS = juv3_RCR.L.ETS., 
                 oroboros_comments = juv3_oroboros_comments) %>% 
   mutate(ID_and_Comments = paste(Lizard_ID, oroboros_comments, sep = ": "),
          state2_state3 = basal_corrected_pmol/basal_corrected_pmol)
-
+#write.csv(mito_dat, file = "Kwild_code/data/final_mito_dat_clean.csv")
 
 # Scatter Plot of RCR(R/ETS) VS RCR(L/ETS
 plot_ly(mito_dat, x = ~RCR_R_ETS, y = ~RCR_L_ETS, 
@@ -486,6 +492,96 @@ plot_ly(mito_dat, x = ~RCR_R_ETS, y = ~RCR_L_ETS,
 
 
 
+##########
+# RCR (L/ETS): RCR_L_ETS effects by developmental environment and sex (sex:hormone) 
+# with inject_time_sec as a covariate   
+# interaction removed; no effect on covariate of injection time
+RCR_L_ETS_sex_temp_hormone_mod <- glm(RCR_L_ETS ~ temp + hormone + sex  + inject_time_sec, data = mito_dat)
+RCR_L_ETS_sex_temp_hormone_mod_summ <- summary(RCR_L_ETS_sex_temp_hormone_mod)
+RCR_L_ETS_sex_temp_hormone_mod_summ <- as.data.frame(round(RCR_L_ETS_sex_temp_hormone_mod_summ$coefficients, 
+                                                           digits = 2))
+RCR_L_ETS_sex_temp_hormone_mod_anova <- as.data.frame(Anova(RCR_L_ETS_sex_temp_hormone_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+check_model(RCR_L_ETS_sex_temp_hormone_mod)
+# No differences across treatments or sex or covariet
+saveRDS(RCR_L_ETS_sex_temp_hormone_mod, "Kwild_code/models/RCR_L_ETS_sex_temp_hormone_mod.RDS")
+
+#########
+### RCR (L/ETS) VS CORT and T4
+## RCR (L/ETS) VS CORT - NO EFFECTS
+RCR_L_ETS_CORT_mod <- lm(RCR_L_ETS ~ CORT_Final_Hormone_ng_mL, data = mito_dat)
+RCR_L_ETS_CORT_mod_summ <- summary(RCR_L_ETS_CORT_mod)
+RCR_L_ETS_CORT_mod_summ <- as.data.frame(round(RCR_L_ETS_CORT_mod_summ$coefficients, 
+                                               digits = 2))
+RCR_L_ETS_CORT_mod_anova <- as.data.frame(Anova(RCR_L_ETS_CORT_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+check_model(RCR_L_ETS_CORT_mod)
+saveRDS(RCR_L_ETS_CORT_mod, "Kwild_code/models/RCR_L_ETS_CORT_mod.RDS")
+
+## RCR (R/ETS) VS T4 - EFFECT
+RCR_L_ETS_T4_mod <- lm(RCR_L_ETS ~ T4_corrected_ng_mL, data = mito_dat)
+RCR_L_ETS_T4_mod_summ <- summary(RCR_L_ETS_T4_mod)
+RCR_L_ETS_T4_mod_summ <- as.data.frame(round(RCR_L_ETS_T4_mod_summ$coefficients, 
+                                             digits = 2))
+RCR_L_ETS_T4_mod_anova <- as.data.frame(Anova(RCR_L_ETS_T4_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+check_model(RCR_L_ETS_T4_mod)
+plot(RCR_L_ETS_T4_mod_ano)
+# No differences across treatments effects
+saveRDS(RCR_L_ETS_T4_mod, "Kwild_code/models/RCR_L_ETS_T4_mod.RDS")
+
+
+##########
+# RCR (R/ETS): RCR_R_ETS effects by developmental environment and sex (sex:hormone) 
+# with inject_time_sec as a covariate   
+# interaction removed; no effect on covariate of injection time; Sex effects but no developmental effects
+RCR_R_ETS_sex_temp_hormone_mod <- glm(RCR_R_ETS ~ temp + hormone + sex  + inject_time_sec , data = mito_dat)
+RCR_R_ETS_sex_temp_hormone_mod_summ <- summary(RCR_R_ETS_sex_temp_hormone_mod)
+RCR_R_ETS_sex_temp_hormone_mod_summ <- as.data.frame(round(RCR_R_ETS_sex_temp_hormone_mod_summ$coefficients, 
+                                                           digits = 2))
+RCR_R_ETS_sex_temp_hormone_mod_anova <- as.data.frame(Anova(RCR_R_ETS_sex_temp_hormone_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+check_model(RCR_R_ETS_sex_temp_hormone_mod)
+# No differences across treatments or  covariate; but sex effects
+RCR_R_ETS_sex_temp_hormone_mod_emm <- emmeans(RCR_R_ETS_sex_temp_hormone_mod, pairwise ~ sex)
+plot(RCR_R_ETS_sex_temp_hormone_mod_emm)
+saveRDS(RCR_R_ETS_sex_temp_hormone_mod, "Kwild_code/models/RCR_R_ETS_sex_temp_hormone_mod.RDS")
+
+#########
+### RCR (R/ETS) VS CORT and T4
+## RCR (R/ETS) VS CORT - ONLY SEX DIFFERENCES
+# with inject_time_sec as a covariate   
+# interaction removed; no effect on covariate of injection time; Sex effects but no developmental effects
+RCR_R_ETS_CORT_mod <- lm(RCR_R_ETS ~ CORT_Final_Hormone_ng_mL, data = mito_dat)
+RCR_R_ETS_CORT_mod_summ <- summary(RCR_R_ETS_CORT_mod)
+RCR_R_ETS_CORT_mod_summ <- as.data.frame(round(RCR_R_ETS_CORT_mod_summ$coefficients, 
+                                                           digits = 2))
+RCR_R_ETS_CORT_mod_anova <- as.data.frame(Anova(RCR_R_ETS_CORT_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+check_model(RCR_R_ETS_CORT_mod)
+saveRDS(RCR_R_ETS_CORT_mod, "Kwild_code/models/RCR_R_ETS_CORT_mod.RDS")
+
+## RCR (R/ETS) VS T4 - 
+# with inject_time_sec as a covariate   
+# interaction removed; no effect on covariate of injection time; Sex effects but no developmental effects
+RCR_R_ETS_T4_mod <- lm(RCR_R_ETS ~ T4_corrected_ng_mL, data = mito_dat)
+RCR_R_ETS_T4_mod_summ <- summary(RCR_R_ETS_T4_mod)
+RCR_R_ETS_T4_mod_summ <- as.data.frame(round(RCR_R_ETS_T4_mod_summ$coefficients, 
+                                               digits = 2))
+RCR_R_ETS_T4_mod_anova <- as.data.frame(Anova(RCR_R_ETS_T4_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+check_model(RCR_R_ETS_T4_mod)
+saveRDS(RCR_R_ETS_T4_mod, "Kwild_code/models/RCR_R_ETS_T4_mod.RDS")
+
+
+
+
+
+
+
+############# ############# ############# ############# ############# 
+############# OLD CODE############# ############# ############# ############# 
+############# ############# ############# ############# ############# ############# 
 # Violin Plot of RCR_L_ETS by Hormone treatment
 mito_dat <- mutate(mito_dat, hormone = factor(hormone, levels = c("control","low","high"))) %>%
   group_by(hormone)

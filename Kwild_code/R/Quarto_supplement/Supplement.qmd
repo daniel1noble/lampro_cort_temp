@@ -771,3 +771,45 @@ fig7
 ```
 
 **Figure XX**. Differences in T4 levels between male (red) and female (blue) lizards. Means and SE intervals are provided along with the p-value.
+
+
+
+```{r, Table_1}
+#| label: tbl-Table_1
+#| tbl-cap: "Anova table for hatchling mass by developmental enviroment"
+#| echo: FALSE
+#| warning: FALSE
+Mass_hatch_mod_anova_tbl <- Mass_hatch_mod_anova %>%
+  mutate(test = "Hatchling Mass") %>% 
+  rownames_to_column(var = "variable")
+
+Table_1 <- Mass_hatch_mod_anova_tbl[, c(6, 1,2,3,4, 5)]
+
+Tbl.1 <-flextable(Table_1) %>% 
+  autofit(part = "all") %>% 
+  bold(i = which(Table_1$`Pr(>F)` < 0.05), j = 2:6) %>% 
+  align(align ="center", part = "all") %>% 
+  flextable::font(part = "all", fontname = "Times New Roman") %>% 
+  fix_border_issues() 
+knitr::knit_print(Tbl.1)
+```
+
+```{r, Table_2}
+#| label: tbl-Table_2
+#| tbl-cap: "Anova table for hatchling SVL by developmental enviroment"
+#| echo: FALSE
+#| warning: FALSE
+SVL_hatch_mod_anova_tbl <- SVL_hatch_mod_anova%>%
+  mutate(test = "Hatchling SVL") %>% 
+  rownames_to_column(var = "variable")
+
+Table_2 <- SVL_hatch_mod_anova_tbl[, c(6, 1,2,3,4, 5)]
+
+Tbl.2 <-flextable(Table_2) %>% 
+  autofit(part = "all") %>% 
+  bold(i = which(Table_1$`Pr(>F)` < 0.05), j = 2:6) %>% 
+  align(align ="center", part = "all") %>% 
+  flextable::font(part = "all", fontname = "Times New Roman") %>% 
+  fix_border_issues() 
+knitr::knit_print(Tbl.2)
+```
