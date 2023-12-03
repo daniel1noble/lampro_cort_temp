@@ -348,7 +348,7 @@ saveRDS(cort_development_mod, "Kwild_code/models/cort_development_mod.RDS")
 
 ######## 2)  SVL growth - does cort correlate with growth rate and how does this vary across temp and hormone treatment
 # high svl growth associated with high cort
-cort_SVL_growth_mod <- lm(juv3_CORT_Final_Hormone_ng_mL ~ hatch_juv3_SVL_growth + hormone, data = cort_dat)
+cort_SVL_growth_mod <- lm(juv3_CORT_Final_Hormone_ng_mL ~ scale(hatch_juv3_SVL_growth) + temp + hormone + sex, data = cort_dat)
 summary(cort_SVL_growth_mod)
 saveRDS(cort_SVL_growth_mod, "Kwild_code/models/cort_SVL_growth_mod.RDS")
 # plot 
@@ -367,7 +367,7 @@ ggplot(cort_dat, aes(x = hatch_juv3_SVL_growth, y = juv3_CORT_Final_Hormone_ng_m
 
 ######## 3)  MASS growth - does cort correlate with mass growth rate and how does this vary across temp and hormone treatment
 # high growth associated with high cort 
-cort_mass_growth_mod <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ scale(hatch_juv3_MASS_growth) + temp + hormone, data = cort_dat)
+cort_mass_growth_mod <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ scale(hatch_juv3_MASS_growth) + temp + hormone + sex, data = cort_dat)
 summary(cort_mass_growth_mod)
 saveRDS(cort_mass_growth_mod, "Kwild_code/models/cort_mass_growth_mod.RDS")
 # plot

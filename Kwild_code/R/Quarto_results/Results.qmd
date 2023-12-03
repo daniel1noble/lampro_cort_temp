@@ -63,6 +63,7 @@ n_horm_trt <- final_analysis_data %>%
 
 
 ```
+
 A total of `r n_all[1,1]` eggs were randomly allocated into two incubation treatments (cold 23ºC n = `r n_temp_trt[1,2]`; hot 28ºC n = `r n_temp_trt[2,2]`). Within each temperature treatment, eggs were then randomly allocated into their hormone treatment (control n = `r n_horm_trt[1,2]`; low n = `r n_horm_trt[3,2]`; high n = `r n_horm_trt[2,2]`).
 
 ### *a) Early developmental temperature and CORT impact hatchling phenotype*
@@ -90,7 +91,6 @@ hatch_dev_mod_emm_value <- as.data.frame(hatch_dev_mod_emm$emmeans) %>%
          LCL = round(lower.CL, digits = 2),
          UCL = round(upper.CL, digits = 2))
 hatch_dev_mod_emm_cont <- data.frame(hatch_dev_mod_emm$contrasts)
-
 
 
 ################
@@ -147,11 +147,11 @@ condition_hatch_mod_emm_value <- condition_hatch_mod_emm$emmeans
 condition_hatch_mod_emm_value <- condition_hatch_mod_emm$contrasts
 ```
 
-CORT treatment did not affect time to hatch ($F_{`r hatch_dev_mod_anova$Df[2]`,`r hatch_dev_mod_anova$Df[3]`}$ = `r hatch_dev_mod_anova[2,4]`, p = `r p_value(hatch_dev_mod_anova[2,4])`), but as expected, developmental temperature significantly decreased development time ($F_{`r hatch_dev_mod_anova$Df[1]`,`r hatch_dev_mod_anova$Df[3]`}$ = `r hatch_dev_mod_anova[1,4]`, p = `r p_value(hatch_dev_mod_anova[1,4])`; Figure S1). On average, the incubation duration of the cold treatment was `r hatch_dev_mod_emm_cont[,"estimate"]` days longer than the hot treatment ($\pm SE$: `r hatch_dev_mod_emm_cont[,"SE"]`, *t*-value = `r hatch_dev_mod_emm_cont[,"t.ratio"]`, df = `r hatch_dev_mod_emm_cont[,"df"]`, p = `r p_value(hatch_dev_mod_emm_cont[,"p.value"])`) with the incubation duration for the hot treatment being `r hatch_dev_mod_emm_value[1,2]` days (`r hatch_dev_mod_emm_value[1,3]`$\pm SE$) and the cold treatment `r hatch_dev_mod_emm_value[2,2]` days (`r hatch_dev_mod_emm_value[2,3]`$\pm SE$). 
+CORT treatment did not affect time to hatch ($F_{`r hatch_dev_mod_anova$Df[2]`,`r hatch_dev_mod_anova$Df[4]`}$ = `r hatch_dev_mod_anova[2,3]`, p = `r p_value(hatch_dev_mod_anova[2,4])`), but as expected, developmental temperature significantly decreased development time ($F_{`r hatch_dev_mod_anova$Df[1]`,`r hatch_dev_mod_anova$Df[4]`}$ = `r hatch_dev_mod_anova[1,4]`, p = `r p_value(hatch_dev_mod_anova[1,4])`; Figure S1). On average, the incubation duration of the cold treatment was `r hatch_dev_mod_emm_cont[,"estimate"]` days longer than the hot treatment (±SE: `r hatch_dev_mod_emm_cont[,"SE"]`, *t*-value = `r hatch_dev_mod_emm_cont[,"t.ratio"]`, df = `r hatch_dev_mod_emm_cont[,"df"]`, p = `r p_value(hatch_dev_mod_emm_cont[,"p.value"])`) with the incubation duration for the hot treatment being `r hatch_dev_mod_emm_value[1,2]` days (`r hatch_dev_mod_emm_value[1,3]` ±SE) and the cold treatment `r hatch_dev_mod_emm_value[2,2]` days (`r hatch_dev_mod_emm_value[2,3]`±SE).
 
-CORT significantly decreased hatchling mass ($F_{`r Mass_hatch_mod_anova$Df[2]`,`r Mass_hatch_mod_anova$Df[3]`}$ = `r Mass_hatch_mod_anova[2,4]`, p = `r Mass_hatch_mod_anova[2,5]`), but only between control and the highest dose (marginalised mean: `r Mass_hormone_hatch_mod_emm_cont[1,"estimate"]` $\pm SE$ `r Mass_hormone_hatch_mod_emm_cont[1,"SE"]`, t = `r Mass_hormone_hatch_mod_emm_cont[1,"t.ratio"]`, df = `r Mass_hormone_hatch_mod_emm_cont[1,"df"]`, p = `r p_value(Mass_hormone_hatch_mod_emm_cont[1,"p.value"])`). Hatching SVL was similarly affected by CORT ($F_{`r SVL_hatch_mod_anova$Df[2]`,`r SVL_hatch_mod_anova$Df[3]`}$ = `r SVL_hatch_mod_anova[2,4]`, p = `r p_value(SVL_hatch_mod_anova[2,4])`) compared to control treatments, but again, only at high CORT levels (marginalised mean: `r SVL_hatch_mod_emm_cont[1,"estimate"]` $\pm SE$ `r SVL_hatch_mod_emm_cont[1,"SE"]`, t = `r SVL_hatch_mod_emm_cont[1,"t.ratio"]`, df = `r SVL_hatch_mod_emm_cont[1,"df"]`, p = `r p_value(SVL_hatch_mod_emm_cont[1,"p.value"])` @fig-Figure_1).  
+CORT significantly decreased hatchling mass ($F_{`r Mass_hatch_mod_anova$Df[3]`,`r Mass_hatch_mod_anova$Df[4]`}$ = `r Mass_hatch_mod_anova[2,4]`, p = `r p_value(Mass_hatch_mod_anova[2,4])`), but only between control and the highest dose (marginalised mean: `r Mass_hormone_hatch_mod_emm_cont[1,"estimate"]` ±SE `r Mass_hormone_hatch_mod_emm_cont[1,"SE"]`, t = `r Mass_hormone_hatch_mod_emm_cont[1,"t.ratio"]`, df = `r Mass_hormone_hatch_mod_emm_cont[1,"df"]`, p = `r p_value(Mass_hormone_hatch_mod_emm_cont[1,"p.value"])`). Hatching SVL was similarly affected by CORT ($F_{`r SVL_hatch_mod_anova$Df[3]`,`r SVL_hatch_mod_anova$Df[4]`}$ = `r SVL_hatch_mod_anova[2,3]`, p = `r p_value(SVL_hatch_mod_anova[3,4])`) compared to control treatments, but again, only at high CORT levels (marginalised mean: `r SVL_hatch_mod_emm_cont[1,"estimate"]` ±SE `r SVL_hatch_mod_emm_cont[1,"SE"]`, t = `r SVL_hatch_mod_emm_cont[1,"t.ratio"]`, df = `r SVL_hatch_mod_emm_cont[1,"df"]`, p = `r p_value(SVL_hatch_mod_emm_cont[1,"p.value"])` @fig-Figure_1).
 
-High temperatures also contributed to decreased hatchling mass ($F_{`r Mass_hatch_mod_anova$Df[1]`,`r Mass_hatch_mod_anova$Df[3]`}$ = `r Mass_hatch_mod_anova[1,4]`, p = `r p_value(Mass_hatch_mod_anova[1,4])`; @fig-Figure_2) and resulted in poorer body condition ($F_{`r condition_hatch_mod_anova$Df[1]`,`r condition_hatch_mod_anova$Df[3]`}$ = `r condition_hatch_mod_anova[1,4]`, p = `r p_value(condition_hatch_mod_anova[1,4])`; @fig-Figure_2 B). Temperature treatment did not have an overall effect on SVL ($F_{`r SVL_hatch_mod_anova$Df[1]`,`r SVL_hatch_mod_anova$Df[3]`}$ = `r SVL_hatch_mod_anova[1,4]`, p = `r p_value(SVL_hatch_mod_anova[1,4])`) and hormonal treatment did not affect body condition ($F_{`r condition_hatch_mod_anova$Df[1]`,`r condition_hatch_mod_anova$Df[3]`}$ = `r condition_hatch_mod_anova[2,4]`, p = `r p_value(condition_hatch_mod_anova[2,4])`).
+High temperatures also contributed to marginal decrease in hatchling mass ($F_{`r Mass_hatch_mod_anova$Df[2]`,`r Mass_hatch_mod_anova$Df[3]`}$ = `r Mass_hatch_mod_anova[2,3]`, p = `r p_value(Mass_hatch_mod_anova[2,4])`; @fig-Figure_2) and resulted in poorer body condition ($F_{`r condition_hatch_mod_anova$Df[1]`,`r condition_hatch_mod_anova$Df[4]`}$ = `r condition_hatch_mod_anova[2,3]`, p = `r p_value(condition_hatch_mod_anova[1,4])`; @fig-Figure_2 B). Temperature treatment did not have an overall effect on hatchling SVL ($F_{`r SVL_hatch_mod_anova$Df[1]`,`r SVL_hatch_mod_anova$Df[4]`}$ = `r SVL_hatch_mod_anova[2,3]`, p = `r p_value(SVL_hatch_mod_anova[2,4])`) and hormonal treatment did not affect hatchling body condition ($F_{`r condition_hatch_mod_anova$Df[3]`,`r condition_hatch_mod_anova$Df[4]`}$ = `r condition_hatch_mod_anova[3,3]`, p = `r p_value(condition_hatch_mod_anova[3,4])`).
 
 ```{r, Figure_1}
 #| label: fig-Figure_1
@@ -234,7 +234,6 @@ fig1 <- plot_grid(fig1_A, Fig1_B, ncol = 2, align = "h", labels = c("A", "B"))
 fig1
 ```
 
-
 ```{r, fig-Figure_2}
 #| label: fig-Figure_2
 #| fig-cap: "How developmental temperature effects mass (panel A) and body condition (panel B) of hatchling lizards. Colors indicate the incubation temperature that eggs were reared in. Means and SE intervals are provided along with the p-value. Dashed horizontal line in Panel B indicates average condition, points that fall above the line are considered good condition and points below line are considered poor. Means and SE intervals are provided along with the p-value for each contrast."
@@ -309,9 +308,11 @@ fig2_B <- ggviolin(data_final, x = "temp", y = "hatch_bc_residuals",
 fig2 <- plot_grid(fig2_A, fig2_B, ncol = 2, align = "h", labels = c("A", "B"))
 fig2
 ```
+
 \newpage
 
 ### *b) The effects of developmental treatments (temperature and CORT) on juvenile Physiology - CORT, T4, and mitochondrial function*
+
 ```{r}
 #| echo: false
   #### 3.	What are the developmental temperature and hormonal treatment on juvenile CORT, T4, and Testosterone)?
@@ -377,11 +378,16 @@ cort_development_mod_emm_cont <- data.frame(cort_development_mod_emm$contrasts)
   cort_mass_growth_mod_summ <- summary(cort_mass_growth_mod)
   cort_mass_growth_mod_summ <- as.data.frame(round(cort_mass_growth_mod_summ$coefficients, 
                                             digits = 2))
-  cort_mass_growth_mod_anova <- as.data.frame(Anova(cort_mass_growth_mod, type = 3)) %>% 
+  cort_mass_growth_mod_anova <- as.data.frame(anova(cort_mass_growth_mod)) %>% 
   mutate(across(where(is.numeric), round, digits = 2))
 
-  # positive correlation growth and juvenile CORT
-
+   # 3)  SVL growth - does Juvinile cort correlate with mass growth rate and how does this vary across temp and hormone treatment
+  cort_svl_growth_mod <- readRDS(here("Kwild_code/models/cort_svl_growth_mod.RDS"))
+  cort_svl_growth_mod_summ <- summary(cort_svl_growth_mod)
+  cort_svl_growth_mod_summ <- as.data.frame(round(cort_svl_growth_mod_summ$coefficients, 
+                                            digits = 2))
+  cort_svl_growth_mod_anova <- as.data.frame(anova(cort_svl_growth_mod)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
   
   
   ###########
@@ -391,12 +397,14 @@ cort_development_mod_emm_cont <- data.frame(cort_development_mod_emm$contrasts)
   T4_sex_temp_hormone_mod_summ <- summary(T4_sex_temp_hormone_mod)
   T4_sex_temp_hormone_mod_summ <- as.data.frame(round(T4_sex_temp_hormone_mod_summ$coefficients, 
                                             digits = 2))
-  T4_sex_temp_hormone_mod_anova <- as.data.frame(Anova(T4_sex_temp_hormone_mod, type = 3)) %>% 
+  T4_sex_temp_hormone_mod_anova <- as.data.frame(Anova(T4_sex_temp_hormone_mod, 
+                                                       type = 3)) %>% 
   mutate(across(where(is.numeric), round, digits = 2))
   
   T4_temp_hormone_sex_mod_emm <- emmeans(T4_sex_temp_hormone_mod, pairwise ~ sex)
   T4_temp_hormone_sex_mod_emm_value <- T4_temp_hormone_sex_mod_emm$emmeans
-  T4_temp_hormone_sex_mod_emm_cont <- T4_temp_hormone_sex_mod_emm$contrasts
+  T4_temp_hormone_sex_mod_emm_cont <- T4_temp_hormone_sex_mod_emm$contrasts %>% 
+    as.data.frame()
 
   # 2) MASS growth and the interaction between T4 and cort
   T4_mass_growth_mod <- readRDS(here("Kwild_code/models/T4_mass_growth_mod.RDS"))
@@ -421,6 +429,7 @@ RCR_L_ETS_sex_temp_hormone_mod_summ <- as.data.frame(round(RCR_L_ETS_sex_temp_ho
                                             digits = 2))
 RCR_L_ETS_sex_temp_hormone_mod_anova <- as.data.frame(Anova(RCR_L_ETS_sex_temp_hormone_mod, type = 3)) %>% 
   mutate(across(where(is.numeric), round, digits = 2))
+
 
 ##########
 # RCR (R/ETS): RCR_R_ETS effects by developmental environment and sex (sex:hormone) 
@@ -453,7 +462,7 @@ RCR_L_ETS_CORT_mod_anova <- as.data.frame(Anova(RCR_L_ETS_CORT_mod, type = 3)) %
 
 ## RCR (R/ETS) VS T4 - No differences!
 # with inject_time_sec as a covariate   
-# interaction removed; no effect on covariate of injection time; Sex effects but no developmental effects
+# interaction removed; no effect on covariate of injection time; # No differences across treatments effects
 RCR_L_ETS_T4_mod <- readRDS(here("Kwild_code/models/RCR_L_ETS_T4_mod.RDS"))
 RCR_L_ETS_T4_mod_summ <- summary(RCR_L_ETS_T4_mod)
 RCR_L_ETS_T4_mod_summ <- as.data.frame(round(RCR_L_ETS_T4_mod_summ$coefficients, 
@@ -485,7 +494,17 @@ RCR_R_ETS_T4_mod_anova <- as.data.frame(Anova(RCR_R_ETS_T4_mod, type = 3)) %>%
 
 
 ```
-Juvenile CORT levels were not the developmental treatment of temperature ($F_{`r cort_development_mod_anova$Df[3]`,`r cort_development_mod_anova$Df[7]`}$ = `r cort_development_mod_anova[3,3]`, p = `r p_value(cort_development_mod_anova[3,4])`) or the developmental treatment of CORT ($F_{`r cort_development_mod_anova$Df[1]`,`r cort_development_mod_anova$Df[7]`}$ = `r cort_development_mod_anova[2,3]`, p = `r p_value(cort_development_mod_anova[2, 4])`; Table SXX). Juvenile CORT levels were positively correlated with mass growth rates ().
+
+Juvenile cortisol levels (CORT ng/mL) were were not influenced by their developmental environment of temperature ($F_{`r cort_development_mod_anova$Df[1]`,`r cort_development_mod_anova$Df[7]`}$ = `r cort_development_mod_anova[3,3]`, p = `r p_value(cort_development_mod_anova[3,4])`), CORT ($F_{`r cort_development_mod_anova$Df[2]`,`r cort_development_mod_anova$Df[7]`}$ = `r cort_development_mod_anova[2,3]`, p = `r p_value(cort_development_mod_anova[2,4])`) or between sex ($F_{`r cort_development_mod_anova$Df[4]`,`r cort_development_mod_anova$Df[7]`}$ = `r cort_development_mod_anova[4,3]`, p = `r p_value(cort_development_mod_anova[4,4])`). Because of documented effect of temperature on developmental time, body size was used as a scaled covariate as a proxy for age in the model and there was a significant relationship as expected ($F_{`r cort_development_mod_anova$Df[6]`,`r cort_development_mod_anova$Df[7]`}$ = `r cort_development_mod_anova[6,3]`, p = `r p_value(cort_development_mod_anova[6,4])`). The other covariate, handling time (sec), had no significant relationship with CORT levels ($F_{`r cort_development_mod_anova$Df[5]`,`r cort_development_mod_anova$Df[7]`}$ = `r cort_development_mod_anova[5,3]`, p = `r p_value(cort_development_mod_anova[5,4])`). Juvenile CORT levels were related with SVL growth rates, where juvenile CORT levels significantly increased with SVL growth (@fig-Figure_3 A; $F_{`r cort_svl_growth_mod_anova$Df[1]`,`r cort_svl_growth_mod_anova$Df[5]`}$ = `r cort_svl_growth_mod_anova[1,4]`, p = `r p_value(cort_svl_growth_mod_anova[1,5])`). There was no effect of developmental temperature ($F_{`r cort_svl_growth_mod_anova$Df[2]`,`r cort_svl_growth_mod_anova$Df[5]`}$ = `r cort_svl_growth_mod_anova[2,4]`, p = `r p_value(cort_svl_growth_mod_anova[2,5])`), CORT developmental environment ($F_{`r cort_svl_growth_mod_anova$Df[3]`,`r cort_svl_growth_mod_anova$Df[5]`}$ = `r cort_svl_growth_mod_anova[3,4]`, p = `r p_value(cort_svl_growth_mod_anova[3,5])`), or sex ($F_{`r cort_svl_growth_mod_anova$Df[4]`,`r cort_svl_growth_mod_anova$Df[5]`}$ = `r cort_svl_growth_mod_anova[4,4]`, p = `r p_value(cort_svl_growth_mod_anova[4,5])`) on SVL growth rate. Similarly there was a positive relationship between juvenile CORT levels and mass growth rates (@fig-Figure_3 B; $F_{`r cort_mass_growth_mod_anova$Df[1]`,`r cort_mass_growth_mod_anova$Df[5]`}$ = `r cort_mass_growth_mod_anova[1,4]`, p = `r p_value(cort_mass_growth_mod_anova[1,5])`). There was no effect of developmental temperature ($F_{`r cort_mass_growth_mod_anova$Df[2]`,`r cort_mass_growth_mod_anova$Df[5]`}$ = `r cort_mass_growth_mod_anova[2,4]`, p = `r p_value(cort_mass_growth_mod_anova[2,5])`), CORT developmental environment ($F_{`r cort_mass_growth_mod_anova$Df[3]`,`r cort_mass_growth_mod_anova$Df[5]`}$ = `r cort_mass_growth_mod_anova[3,4]`, p = `r p_value(cort_mass_growth_mod_anova[3,5])`), or sex ($F_{`r cort_mass_growth_mod_anova$Df[4]`,`r cort_mass_growth_mod_anova$Df[5]`}$ = `r cort_mass_growth_mod_anova[4,4]`, p = `r p_value(cort_mass_growth_mod_anova[4,5])`) on mass growth rate. 
+
+Juvenile thyroxine levels (T4 ng/mL) were significantly different between male and female lizards (@fig-Figure_4; $F_{`r T4_sex_temp_hormone_mod_anova$Df[4]`,`r T4_sex_temp_hormone_mod_anova$Df[5]`}$ = `r T4_sex_temp_hormone_mod_anova[4,3]`, p = `r p_value(T4_sex_temp_hormone_mod_anova[4,4])`). On average, T4 levels for male lizards was `r T4_temp_hormone_sex_mod_emm_cont[,"estimate"]` ng/mL higher than female lizards (±SE: `r T4_temp_hormone_sex_mod_emm_cont[1,3]`, *t*-value = `r T4_temp_hormone_sex_mod_emm_cont[,"t.ratio"]`, df = `r T4_temp_hormone_sex_mod_emm_cont[,"df"]`, p = `r p_value(T4_temp_hormone_sex_mod_emm_cont[,"p.value"])`). There were no differences in T4 levels when comparing developmental environment of temperature ($F_{`r T4_sex_temp_hormone_mod_anova$Df[2]`,`r T4_sex_temp_hormone_mod_anova$Df[5]`}$ = `r T4_sex_temp_hormone_mod_anova[2,3]`, p = `r p_value(T4_sex_temp_hormone_mod_anova[2,4])`) or CORT developmental environment ($F_{`r T4_sex_temp_hormone_mod_anova$Df[3]`,`r T4_sex_temp_hormone_mod_anova$Df[5]`}$ = `r T4_sex_temp_hormone_mod_anova[3,3]`, p = `r p_value(T4_sex_temp_hormone_mod_anova[3,4])`). We tested to see how T4 levels, CORT levels, and their interaction were affected by mass growth rate. In this model we also accounted for developmental temperature. We found a significant interaction between CORT and T4 levels (@fig-Figure_5; $F_{`r T4_mass_growth_mod_anova$Df[5]`,`r T4_mass_growth_mod_anova$Df[6]`}$ = `r T4_mass_growth_mod_anova[5,3]`, p = `r p_value(T4_mass_growth_mod_anova[5,4])`). There was no developmental effect of temperature ($F_{`r T4_mass_growth_mod_anova$Df[1]`,`r T4_mass_growth_mod_anova$Df[6]`}$ = `r T4_mass_growth_mod_anova[4,3]`, p = `r p_value(T4_mass_growth_mod_anova[4,4])`). 
+
+Respiratory control ratios RCR$_{L/ETS}$ and RCR$_{R/ETS}$ for juvenile lizards were used to determine if mitochondrial efficiency was effected by developmental temperature, CORT developmental environment, or sex. There was no effect on CORT developmental environment (@fig-Figure_6 A; $F_{`r RCR_L_ETS_sex_temp_hormone_mod_anova$Df[2]`,`r RCR_L_ETS_sex_temp_hormone_mod$df.residual`}$ = `r RCR_L_ETS_sex_temp_hormone_mod_anova[2,1]`, p = `r p_value(RCR_L_ETS_sex_temp_hormone_mod_anova[2,3])`), developmental temperature (@fig-Figure_6 B; $F_{`r RCR_L_ETS_sex_temp_hormone_mod_anova$Df[1]`,`r RCR_L_ETS_sex_temp_hormone_mod$df.residual`}$ = `r RCR_L_ETS_sex_temp_hormone_mod_anova[1,1]`, p = `r p_value(RCR_L_ETS_sex_temp_hormone_mod_anova[1,3])`), or sex ($F_{`r RCR_L_ETS_sex_temp_hormone_mod_anova$Df[2]`,`r RCR_L_ETS_sex_temp_hormone_mod$df.residual`}$ = `r RCR_L_ETS_sex_temp_hormone_mod_anova[3,1]`, p = `r p_value(RCR_L_ETS_sex_temp_hormone_mod_anova[3,3])`) on RCR$_{L/ETS}$ ratios. The covariate, injection time, was non significant ($F_{`r RCR_L_ETS_sex_temp_hormone_mod_anova$Df[4]`,`r RCR_L_ETS_sex_temp_hormone_mod$df.residual`}$ = `r RCR_L_ETS_sex_temp_hormone_mod_anova[4,1]`, p = `r p_value(RCR_L_ETS_sex_temp_hormone_mod_anova[4,3])`). However there were sex differences when comparing RCR$_{R/ETS}$ ratios (@fig-Figure_7; $F_{`r RCR_R_ETS_sex_temp_hormone_mod_anova$Df[3]`,`r RCR_R_ETS_sex_temp_hormone_mod_anova$df.residual`}$ = `r RCR_R_ETS_sex_temp_hormone_mod_anova[3,1]`, p = `r p_value(RCR_R_ETS_sex_temp_hormone_mod_anova[3,3])`), where on average, RCR$_{R/ETS}$ ratios for female lizards was `r RCR_R_ETS_sex_temp_hormone_mod_emm_cont[,"estimate"]` lower than male lizards (±SE: `r RCR_R_ETS_sex_temp_hormone_mod_emm_cont[1,3]`, *t*-value = `r RCR_R_ETS_sex_temp_hormone_mod_emm_cont[,"t.ratio"]`, df = `r RCR_R_ETS_sex_temp_hormone_mod_emm_cont[,"df"]`, p = `r p_value(RCR_R_ETS_sex_temp_hormone_mod_emm_cont[,"p.value"])`). There were no detectable effects of developmental temperature ($F_{`r RCR_R_ETS_sex_temp_hormone_mod_anova$Df[1]`,`r RCR_R_ETS_sex_temp_hormone_mod$df.residual`}$ = `r RCR_R_ETS_sex_temp_hormone_mod_anova[1,1]`, p = `r p_value(RCR_R_ETS_sex_temp_hormone_mod_anova[1,3])`) or CORT developmental environment ($F_{`r RCR_R_ETS_sex_temp_hormone_mod_anova$Df[2]`,`r RCR_R_ETS_sex_temp_hormone_mod$df.residual`}$ = `r RCR_R_ETS_sex_temp_hormone_mod_anova[2,1]`, p = `r p_value(RCR_R_ETS_sex_temp_hormone_mod_anova[2,3])`). The covariate, injection time, was non significant ($F_{`r RCR_R_ETS_sex_temp_hormone_mod_anova$Df[4]`,`r RCR_L_ETS_sex_temp_hormone_mod$df.residual`}$ = `r RCR_R_ETS_sex_temp_hormone_mod_anova[4,1]`, p = `r p_value(RCR_R_ETS_sex_temp_hormone_mod_anova[4,3])`) 
+
+The relationship between respiratory control ratios (RCR$_{L/ETS}$ and RCR$_{R/ETS}$) and juvenile hormone measurements (CORT and T4) was compared RCR$_{L/ETS}$ ratios had no relationship between CORT levels (@fig-Figure_8 A; $F_{`r RCR_L_ETS_CORT_mod_anova$Df[1]`,`r RCR_L_ETS_sex_temp_hormone_mod$df.residual`}$ = `r RCR_L_ETS_CORT_mod_anova[2,3]`, p = `r p_value(RCR_L_ETS_CORT_mod_anova[2,4])`), but  RCR$_{L/ETS}$ significantly decreased as T4 levels increased (@fig-Figure_8 B; $F_{`r RCR_L_ETS_T4_mod_anova$Df[1]`,`r RCR_L_ETS_sex_temp_hormone_mod$df.residual`}$ = `r RCR_L_ETS_T4_mod_anova[2,3]`, p = `r p_value(RCR_L_ETS_T4_mod_anova[2,4])`). Similarly, there was no relationship between RCR$_{L/ETS}$ ratios and CORT levels (@fig-Figure_8 C; $F_{`r RCR_R_ETS_CORT_mod_anova$Df[1]`,`r RCR_R_ETS_CORT_mod_anova$df.residual`}$ = `r RCR_R_ETS_CORT_mod_anova[2,3]`, p = `r p_value(RCR_R_ETS_CORT_mod_anova[2,4])`), but RCR$_{L/ETS}$ marginally decreased as T4 levels increased (@fig-Figure_8 D; $F_{`r RCR_R_ETS_T4_mod_anova$Df[1]`,`r RCR_R_ETS_T4_mod_anova$Df[3]`}$ = `r RCR_R_ETS_T4_mod_anova[2,3]`, p = `r p_value(RCR_R_ETS_T4_mod_anova[2,4])`) 
+
+
+
 
 ```{r, fig-Figure_3}
 #| label: fig-Figure_3
@@ -551,8 +570,6 @@ fig3_B <- ggplot(cort_dat, aes(x = hatch_juv3_MASS_growth, y = juv3_CORT_Final_H
 fig3 <- plot_grid(fig3_A, fig3_B, ncol = 2, align = "h", labels = c("A", "B"))
 fig3
 ```
-
-
 
 ```{r, fig-Figure_4}
 #| label: fig-Figure_4
@@ -632,7 +649,7 @@ contour(s, add = TRUE, col = "white")
 
 ```{r, fig-Figure_6}
 #| label: fig-Figure_6
-#| fig-cap: " RCR(L/ETS) model results from developmental environment - CORT (panel A) and temperature (panel B). These data are from the model which tested how RCR(L/ETS) varies across hormone, temperature, sex, and their interaction. Overall there was no significant effect on developmental environments (Temperature and CORT treatments) nor sex on RCR(L/ETS). We did not detect any interaction effects. We also found there was no relationship between inject time (sec) and RCR(L/ETS) levels. Means and SE intervals are provided along with the p-value."
+#| fig-cap: " RCR$_{L/ETS}$ model results from developmental environment - CORT (panel A) and temperature (panel B). These data are from the model which tested how RCR$_{L/ETS}$ varies across hormone, temperature, sex, and their interaction. Overall there was no significant effect on developmental environments (Temperature and CORT treatments) nor sex on RCR$_{L/ETS}$. We did not detect any interaction effects. We also found there was no relationship between inject time (sec) and RCR$_{L/ETS}$ levels. Means and SE intervals are provided along with the p-value."
 #| warning: FALSE
 #| echo: FALSE
 #| fig-width: 9
@@ -701,10 +718,9 @@ Fig_6 <- plot_grid(Fig_6A, Fig_6B, ncol = 2, align = "h", labels = c("A", "B"))
 Fig_6
 ```
 
-
 ```{r, fig-Figure_7}
 #| label: fig-Figure_7
-#| fig-cap: " RCR(R/ETS) model results on the effects sex have on RCR(R/ETS). These data are from the model which tested how RCR(R/ETS) varies across hormone, temperature, sex, and their interaction. Overall males had a significantly higher RCR(R/ETS) values in comparision to females. There was no significant effect on developmental environments (Temperature and CORT treatments). We did not detect any interaction effects. We also found there was no relationship between inject time (sec) and RCR(R/ETS) levels. Means and SE intervals are provided along with the p-value."
+#| fig-cap: " RCR$_{R/ETS}$ model results on the effects sex have on R$_{R/ETS}$. These data are from the model which tested how R$_{R/ETS}$ varies across hormone, temperature, sex, and their interaction. Overall males had a significantly higher R$_{R/ETS}$ values in comparision to females. There was no significant effect on developmental environments (Temperature and CORT treatments). We did not detect any interaction effects. We also found there was no relationship between inject time (sec) and R$_{R/ETS}$ levels. Means and SE intervals are provided along with the p-value."
 #| warning: FALSE
 #| echo: FALSE
 #| fig-width: 9
@@ -746,7 +762,7 @@ Fig_7
 
 ```{r, fig-Figure_8}
 #| label: fig-Figure_8
-#| fig-cap: "Panels A and B show the relationship between RCR(R/ETS) and final hormone measurements (panel A: CORT & panel B: T4) for juvenile lizards. Panels C and D show the relationship between RCR(L/ETS) and final hormone measurements (panel C: CORT & panel D: T4) for juvenile lizards. Correlation coefficient (r) and p value (p) are provided in each plot."
+#| fig-cap: "Panels A and B show the relationship between R$_{L/ETS}$ and final hormone measurements (panel A: CORT & panel B: T4) for juvenile lizards. Panels C and D show the relationship between R$_{R/ETS}$ and final hormone measurements (panel C: CORT & panel D: T4) for juvenile lizards. Correlation coefficient (r) and p value (p) are provided in each plot."
 #| warning: FALSE
 #| echo: FALSE
 #| fig-width: 9
@@ -834,17 +850,10 @@ Fig_8
 ```
 
 ### *c) The effects of developmental treatments (temperature and CORT) on juvenile body size, mass, body condition (BCI), survival, and growth rate on juvenile lizards*
+
 ```{r}
 #| echo: false
-#### 3.	What are the effects of developmental treatments on juvenile body size, condition, and mass (at the 3 points measured after hatching)?
-#### Juv1_SVL: effect of temperature- cooler temps larger svl
-#### Juv2_SVL: no effects - hormonal effect p = 0.07
-#### Juv3_SVL: high hormone low body size; males smaller than females
-#### Juv1_MASS: low mass with high hormones; low mass with high temperatures
-#### Juv2_MASS: low mass with high temperatures
-#### Juv3_MASS: low mass males
-#### Juv1_BCI: no treatment effects
-#### Juv2_BCI: no treatment effects
+#### 3.	The effects of developmental treatments (temperature and CORT) on juvenile body size, mass, body condition (BCI), survival, and growth rate on juvenile lizards?
 #### Juv3_BCI: Sex effect: male lower BCI than females - could be size difference
 #### SURVIVAL: no differences between treatments
 #### GROWTH SVL (Hatchling-Juvenile): No treatment effects
@@ -853,104 +862,49 @@ Fig_8
 # final raw data that have morphometrics (svl, mass, and BCI residuals) across life stage 
 data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))
 
-##################
-#### SVL ANALYSIS: Juv_1, Juv_2, Juv_3 (sex accounted for last measurement)
-### JUV_1: SVL; interaction removed
-SVL_Juv1_mod <- readRDS(here("Kwild_code/models/SVL_Juv1_mod.RDS"))
-# effect on temperature and day of hatch on body size 
-SVL_Juv1_mod_summ <- summary(SVL_Juv1_mod) 
-SVL_Juv1_mod_summ <- as.data.frame(round(SVL_Juv1_mod_summ$coefficients, 
+###############
+#### SVL growth rate: hatchling to Juv_3 
+# SVL; interaction removed; no differences
+overall_SVL_growth_mod <-  readRDS(here("Kwild_code/models/overall_SVL_growth_mod.RDS"))
+# no treatment effects
+overall_SVL_growth_mod_summ <- summary(overall_SVL_growth_mod)
+overall_SVL_growth_mod_summ <- as.data.frame(round(overall_SVL_growth_mod_summ$coefficients, 
                                           digits = 2))
-# cooler temps larger svl
-SVL_Juv1_mod_emm <- emmeans(SVL_Juv1_mod, pairwise ~ temp)
-SVL_Juv1_mod_emm_value <- SVL_Juv1_mod_emm$emmeans
-SVL_Juv1_mod_emm_con <- SVL_Juv1_mod_emm$contrasts
-
-### JUV_2: SVL; interaction removed
-SVL_Juv2_mod <- readRDS(here("Kwild_code/models/SVL_Juv2_mod.RDS"))
-# marginal hermonal effect on body size p = 0.06
-SVL_Juv2_mod_summ <- summary(SVL_Juv2_mod) 
-SVL_Juv2_mod_summ <- as.data.frame(round(SVL_Juv2_mod_summ$coefficients, 
-                                          digits = 2))
-
-### JUV_3: SVL - NOTE SEX ACCOUTNED for; no interaction
-SVL_Juv3_mod <- readRDS(here("Kwild_code/models/SVL_Juv3_mod.RDS"))
-# effect on hormones and sex
-SVL_Juv3_mod_summ <- summary(SVL_Juv3_mod)
-SVL_Juv3_mod_summ <- as.data.frame(round(SVL_Juv3_mod_summ$coefficients, 
-                                          digits = 2))
-#  high hormone lower svl
-SVL_Juv3_hormone_mod_emm <- emmeans(SVL_Juv3_mod, pairwise ~ hormone)
-SVL_Juv3_hormone_mod_emm_value <- SVL_Juv3_hormone_mod_emm$emmeans
-SVL_Juv3_hormone_mod_emm_cont <- SVL_Juv3_hormone_mod_emm$contrasts
-# plot - males are smaller than females
-SVL_Juv3_sex_mod_emm <- emmeans(SVL_Juv3_mod, pairwise ~ sex)
-SVL_Juv3_sex_mod_emm_value <- SVL_Juv3_sex_mod_emm$emmeans
-SVL_Juv3_sex_mod_emm_cont <- SVL_Juv3_sex_mod_emm$contrasts
+overall_SVL_mod_anova <- as.data.frame(Anova(overall_SVL_growth_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2)) 
+# sex differences
+overall_svl_growth_sex_mod_emm <- emmeans(overall_SVL_growth_mod, pairwise ~ sex)
+overall_svl_growth_sex_mod_emm_value <- overall_svl_growth_sex_mod_emm$emmeans
+overall_svl_growth_sex_mod_emm_cont <- as.data.frame(overall_svl_growth_sex_mod_emm$contrasts)
 
 
-######################
-#### MASS ANALYSIS: Juv_1, Juv_2, Juv_3 (sex accounted for last measurement)
-### Juv_1: MASS - interaction removed
-Mass_Juv1_mod <- readRDS(here("Kwild_code/models/Mass_Juv1_mod.RDS"))
-# effect on temp, and days since hatch
-Mass_Juv1_mod_summ <- summary(Mass_Juv1_mod)
-Mass_Juv1_mod_summ <- as.data.frame(round(Mass_Juv1_mod_summ$coefficients, 
+#### MASS growth rate: hatchling to Juv_3  
+# Mass test; interaction removed
+overall_mass_growth_mod <- readRDS(here("Kwild_code/models/growth4_mass_mod.RDS"))
+overall_mass_growth_mod_summ <- summary(overall_mass_growth_mod)
+overall_mass_growth_mod_summ <- as.data.frame(round(overall_mass_growth_mod_summ$coefficients, 
                                           digits = 2))
-# temp plot - low mass with high temperatures
-Mass_Juv1_temp_mod_emm <- emmeans(Mass_Juv1_mod, pairwise ~ temp)
-Mass_Juv1_temp_mod_emm_value <- Mass_Juv1_temp_mod_emm$emmeans
-Mass_Juv1_temp_mod_emm_cont <- Mass_Juv1_temp_mod_emm$contrasts
-
-#### MASS: Juv_2; interaction removed
-Mass_Juv2_mod <- readRDS(here("Kwild_code/models/Mass_Juv2_mod.RDS"))
-# temp  effect
-Mass_Juv2_mod_summ <- summary(Mass_Juv2_mod)
-Mass_Juv2_mod_summ <- as.data.frame(round(Mass_Juv2_mod_summ$coefficients, 
-                                          digits = 2))
-# temp plot - low mass with high temperatures
-Mass_Juv2_temp_mod_emm <- emmeans(Mass_Juv2_mod, pairwise ~ temp)
-Mass_Juv2_temp_mod_emm_value <-Mass_Juv2_temp_mod_emm$emmeans
-Mass_Juv2_temp_mod_emm_con <-Mass_Juv2_temp_mod_emm$contrasts
-
-#### MASS: Juv_3; NOTE SEX IS ACCOUNTED FOR
-Mass_Juv3_mod <- readRDS(here("Kwild_code/models/Mass_Juv3_mod.RDS"))
-# sex effect
-Mass_Juv3_mod_summ <- summary(Mass_Juv3_mod)
-Mass_Juv3_mod_summ <- as.data.frame(round(Mass_Juv3_mod_summ$coefficients, 
-                                          digits = 2))
-# temp plot - males smaller than females
-Mass_Juv3_sex_mod_emm <- emmeans(Mass_Juv3_mod, pairwise ~ sex)
-Mass_Juv3_sex_mod_emm_value <- Mass_Juv3_sex_mod_emm$emmeans
-Mass_Juv3_sex_mod_emm_cont <- Mass_Juv3_sex_mod_emm$contrasts
+overall_mass_mod_anova <- as.data.frame(Anova(overall_mass_growth_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2)) 
+# sex differences
+overall_mass_growth_sex_mod_emm <- emmeans(overall_mass_growth_mod, pairwise ~ sex)
+overall_mass_growth_sex_mod_emm_value <- overall_mass_growth_sex_mod_emm$emmeans
+overall_mass_growth_sex_mod_emm_cont <- as.data.frame(overall_mass_growth_sex_mod_emm$contrasts)
 
 
 ###############
-#### BCI ANALYSIS: Juv_1, Juv_2, Juv_3 (sex accounted for last measurement)
-### BCI: Juv1 - BCI residuals; interaction removed
-condition_juv1_mod <- readRDS(here("Kwild_code/models/condition_juv_mod.RDS"))
-# no treatment effects 
-condition_juv1_mod_summ <- summary(condition_juv1_mod)
-condition_juv1_mod_summ <- as.data.frame(round(condition_juv1_mod_summ$coefficients, 
-                                          digits = 2))
-
-### BCI: Juv2 - BCI residuals; interaction removed
-condition_juv2_mod <- readRDS(here("Kwild_code/models/condition_juv2_mod.RDS"))
-# no treatment effects 
-condition_juv2_mod_summ <- summary(condition_juv2_mod)
-condition_juv2_mod_summ <- as.data.frame(round(condition_juv2_mod_summ$coefficients, 
-                                          digits = 2))
-
-### BCI: Juv3 - BCI residuals; interaction removed
+#### BCI ANALYSIS: Juv3 - BCI residuals; interaction removed
 condition_juv3_mod <- readRDS(here("Kwild_code/models/condition_juv3_mod.RDS"))
 # sex differences 
 condition_juv3_mod_summ <- summary(condition_juv3_mod)
 condition_juv3_mod_summ <- as.data.frame(round(condition_juv3_mod$coefficients, 
                                           digits = 2))
+condition_juv3_mod_anova <- as.data.frame(Anova(condition_juv3_mod, type = 3)) %>% 
+  mutate(across(where(is.numeric), round, digits = 2)) 
 # sex differences
 condition_juv3_sex_mod_emm <- emmeans(condition_juv3_mod, pairwise ~ sex)
 condition_juv3_sex_mod_emm_value <- condition_juv3_sex_mod_emm$emmeans
-condition_juv3_sex_mod_emm_cont <- condition_juv3_sex_mod_emm$contrasts
+condition_juv3_sex_mod_emm_cont <- as.data.frame(condition_juv3_sex_mod_emm$contrasts)
 
 
 ###############
@@ -960,7 +914,7 @@ survival<- data_final %>%
   filter(liz_status_db != "MISSING")
 survival_tbl <- table(survival$liz_status_db)
 # analysis between temperature and treatment 
-survival_hormone <- kruskal.test(liz_status_db ~ hormone, data = survival)
+survival_hormone <- kruskal.test(liz_status_db ~ hormone, data = survival) 
 survival_temp <- kruskal.test(liz_status_db ~ temp, data = survival)
 # summaries: hormone & temp 
 survival_results <- data.frame(
@@ -969,26 +923,8 @@ survival_results <- data.frame(
   Statistic = c(survival_hormone$statistic, survival_temp$statistic),
   P_value = c(survival_hormone$p.value, survival_temp$p.value))
 
-
-###############
-#### SVL growth rate: hatchling to Juv_3 
-# SVL; interaction removed
-overall_SVL_growth_mod <-  readRDS(here("Kwild_code/models/overall_SVL_growth_mod.RDS"))
-# no treatment effects
-overall_SVL_growth_mod_summ <- summary(overall_SVL_growth_mod)
-overall_SVL_growth_mod_summ <- as.data.frame(round(overall_SVL_growth_mod_summ$coefficients, 
-                                          digits = 2))
-
-#### MASS growth rate: hatchling to Juv_3  
-# Mass test; interaction removed
-overall_mass_growth_mod <- readRDS(here("Kwild_code/models/growth4_mass_mod.RDS"))
-# treatment effect on temp but not hormone
-overall_mass_growth_mod_summ <- summary(overall_mass_growth_mod)
-overall_mass_growth_mod_summ <- as.data.frame(round(overall_mass_growth_mod_summ$coefficients, 
-                                          digits = 2))
 ```
-
-
+Juvenile mass growth rate (mm/d) was significantly different between male and female lizards ($F_{`r overall_mass_mod_anova$Df[4]`,`r overall_mass_mod_anova$Df[6]`}$ = `r overall_mass_mod_anova[4,3]`, p = `r p_value(overall_mass_mod_anova[4,4])`). Where average mass growth rate was `r overall_mass_growth_sex_mod_emm_cont[1,2]` mg/d higher than male lizards (±SE:`r overall_mass_growth_sex_mod_emm_cont[1,3]`, *t*-value = `r overall_mass_growth_sex_mod_emm_cont$t.ratio`, df = `r overall_mass_growth_sex_mod_emm_cont$df`, p = `r p_value(overall_mass_growth_sex_mod_emm_cont$p.value)`). Mass growth rate  was not affected by developmental environment of temperature ($F_{`r overall_mass_mod_anova$Df[3]`,`r overall_mass_mod_anova$Df[6]`}$ = `r overall_mass_mod_anova[3,3]`, p = `r p_value(overall_mass_mod_anova[3,4])`) or CORT developmental environment ($F_{`r overall_mass_mod_anova$Df[2]`,`r overall_mass_mod_anova$Df[6]`}$ = `r overall_mass_mod_anova[2,3]`, p = `r p_value(overall_mass_mod_anova[2,4])`). Similarly, juvenile SVL growth rate (mm/d) was significantly different between male and female lizards ($F_{`r overall_SVL_mod_anova$Df[4]`,`r overall_SVL_mod_anova$Df[6]`}$ = `r overall_SVL_mod_anova[4,3]`, p = `r p_value(overall_SVL_mod_anova[4,4])`). Where average SVL growth rate was `r overall_svl_growth_sex_mod_emm_cont[1,2]` mm/d higher than male lizards (±SE:`r overall_svl_growth_sex_mod_emm_cont[1,3]`, *t*-value = `r overall_svl_growth_sex_mod_emm_cont$t.ratio`, df = `r overall_svl_growth_sex_mod_emm_cont$df`, p = `r p_value(overall_svl_growth_sex_mod_emm_cont$p.value)`). SVL growth rate  was not affected by developmental environment of temperature ($F_{`r overall_SVL_mod_anova$Df[3]`,`r overall_SVL_mod_anova$Df[6]`}$ = `r overall_SVL_mod_anova[3,3]`, p = `r p_value(overall_SVL_mod_anova[3,4])`) or CORT developmental environment ($F_{`r overall_SVL_mod_anova$Df[2]`,`r overall_SVL_mod_anova$Df[6]`}$ = `r overall_SVL_mod_anova[2,3]`, p = `r p_value(overall_SVL_mod_anova[2,4])`). Body condition was estimated from final SVL and mass measurements and there were differences in body condition between sex ($F_{`r condition_juv3_mod_anova$Df[4]`,`r condition_juv3_mod_anova$Df[6]`}$ = `r condition_juv3_mod_anova[4,3]`, p = `r p_value(overall_SVL_mod_anova[4,4])`). Where on average, female body condition was `r condition_juv3_sex_mod_emm_cont[1,2]` higher than male lizards (±SE:`r condition_juv3_sex_mod_emm_cont[1,3]`, *t*-value = `r condition_juv3_sex_mod_emm_cont$t.ratio`, df = `r condition_juv3_sex_mod_emm_cont$df`, p = `r p_value(condition_juv3_sex_mod_emm_cont$p.value)`). Body condition was  not affected by developmental environment of temperature ($F_{`r condition_juv3_mod_anova$Df[2]`,`r condition_juv3_mod_anova$Df[6]`}$ = `r condition_juv3_mod_anova[2,3]`, p = `r p_value(condition_juv3_mod_anova[2,4])`) or CORT developmental environment ($F_{`r condition_juv3_mod_anova$Df[3]`,`r condition_juv3_mod_anova$Df[6]`}$ = `r condition_juv3_mod_anova[3,3]`, p = `r p_value(condition_juv3_mod_anova[3,4])`). A total of 15 lizards died during the duration of our study. However, survival frequency did not vary across CORT developmental environment (@fig-Figure_9 A; Kruskal-Wallis chi-squared = `r survival_results[1,3]`, df = 2, p=`r survival_results[1,4]`) or developmental temperature (@fig-Figure_9 B; Kruskal-Wallis chi-squared = `r survival_results[2,3]`, df = 1, p=`r survival_results[2,4]`). 
 ```{r, fig-Figure_9}
 #| label: fig-Figure_9
 #| fig-cap: "Survival frequency by developmental environment. Panel A are the frequencies by CORT developmental environment and panel B are by incubation environment."
