@@ -1,6 +1,6 @@
 ## Kwild Lampro Cort Temp Analysis
 # WD, packages, data
-pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, MuMIn, glmm, installr, lubridate, performance, cowplot, interp, akima, fields, MASS)
+pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, MuMIn, glmm, installr, lubridate, performance, cowplot, interp, akima, fields, MASS, plotly)
 
 
 #########################
@@ -144,13 +144,13 @@ saveRDS(condition_hatch_mod, "Kwild_code/models/condition_hatch_mod.RDS")
 ################
 #### 3.	What are the effects of developmental treatments on juvenile body size, condition, and mass (at the 3 points measured after hatching)?
 #### Juv1_SVL: effect of temperature- cooler temps larger svl
-#### Juv2_SVL: no effects - hormonal effect p = 0.07
-#### Juv3_SVL: high hormone low body size; males smaller than females
 #### Juv1_MASS: low mass with high hormones; low mass with high temperatures
-#### Juv2_MASS: low mass with high temperatures
-#### Juv3_MASS: low mass males
 #### Juv1_BCI: no treatment effects
+#### Juv2_SVL: no effects - hormonal effect p = 0.07
+#### Juv2_MASS: low mass with high temperatures
 #### Juv2_BCI: no treatment effects
+#### Juv3_MASS: low mass males
+#### Juv3_SVL: high hormone low body size; males smaller than females
 #### Juv3_BCI: Sex effect: male lower BCI than females - could be size difference
 
 ###############
@@ -298,7 +298,7 @@ saveRDS(survival_day_temp, "Kwild_code/models/survival_day_temp.RDS")
 #### OVERALL MASS: effect of temperature-warm temps slower mass growth
 ################
 # SVL overall growth: hatch to juv_3; interaction removed
-overall_SVL_growth_mod <- lm(hatch_juv3_SVL_growth ~hormone + temp + scale(hatch_juv3_days), 
+overall_SVL_growth_mod <- lm(hatch_juv3_SVL_growth ~hormone + temp + sex+ scale(hatch_juv3_days), 
                       data = data_final, na.action=na.exclude)
 check_model(overall_SVL_growth_mod)
 # treatment effect on temp but not hormone
@@ -309,7 +309,7 @@ plot(overall_SVL_growth_mod_emm)
 saveRDS(overall_SVL_growth_mod, "Kwild_code/models/overall_SVL_growth_mod.RDS")
 
 # Mass test; interaction removed
-growth4_mass_mod <- lm( hatch_juv3_MASS_growth~hormone + temp + scale(hatch_juv3_days), 
+growth4_mass_mod <- lm( hatch_juv3_MASS_growth~hormone + temp + sex+ scale(hatch_juv3_days), 
                        data = data_final, na.action=na.exclude) 
 check_model(growth4_mass_mod)
 # treatment effect on temp but not hormone
@@ -459,13 +459,14 @@ mito_dat <- data_final %>%
   dplyr::select(c("Lizard_ID", "temp", "hormone", "sex", "juv3_bc_resid",
                   "juv3_inject_time_sec", "juv3_liver_time_sec", "juv3_oroboros",
                   "juv3_T4_plate", "juv3_HandlingTime_sec", "juv3_T4_corrected_ng_mL", 
-                  "juv3_CORT_Final_Hormone_ng_mL",
+                  "juv3_CORT_Final_Hormone_ng_mL", "juv3_basal_corrected.pmol..sec.ng..",
                   "juv3_chamber","juv3_basal_corrected.pmol..sec.ng..", 
                   "juv3_adp_corrected.pmol..sec.ng..", "juv3_oligo_corrected.pmol..sec.ng..", 
                   "juv3_fccp_corrected.pmol..sec.ng..", "juv3_RCR.L.R.", "juv3_RCR.R.ETS.",
                   "juv3_oroboros_comments", "juv3_RCR.L.ETS.")) %>% 
   dplyr::rename(inject_time_sec = juv3_inject_time_sec, 
                 chamber = juv3_chamber,
+                juv3_basal_corrected = juv3_basal_corrected.pmol..sec.ng..,
                 basal_corrected_pmol = juv3_basal_corrected.pmol..sec.ng..,
                 oligo_corrected_pmol = juv3_oligo_corrected.pmol..sec.ng..,
                 fccp_corrected_pmol = juv3_fccp_corrected.pmol..sec.ng..,
@@ -479,15 +480,16 @@ mito_dat <- data_final %>%
                 RCR_L_ETS = juv3_RCR.L.ETS., 
                 oroboros_comments = juv3_oroboros_comments) %>% 
   mutate(ID_and_Comments = paste(Lizard_ID, oroboros_comments, sep = ": "),
-         state2_state3 = basal_corrected_pmol/basal_corrected_pmol)
+         state2_state3 = basal_corrected_pmol/basal_corrected_pmol) %>% 
+  filter(Lizard_ID != c("LD736_21, LD738_21"))
 #write.csv(mito_dat, file = "Kwild_code/data/final_mito_dat_clean.csv")
 
 # Scatter Plot of RCR(R/ETS) VS RCR(L/ETS
-plot_ly(mito_dat, x = ~RCR_R_ETS, y = ~RCR_L_ETS, 
+plot_ly(mito_dat, x = ~HandlingTime_sec, y = ~CORT_Final_Hormone_ng_mL, 
         text = ~ID_and_Comments, type = 'scatter', mode = 'markers') %>%
-  layout(title = "Scatter Plot of RCR(R/ETS) VS RCR(L/ETS) ",
-         xaxis = list(title = "RCR(R/ETS)"),
-         yaxis = list(title = "RCR(L/ETS)")) %>%
+  layout(title = "Scatter Plot of HandlingTime_sec VS CORT_Final_Hormone_ng_mL ",
+         xaxis = list(title = "HandlingTime_sec"),
+         yaxis = list(title = "CORT_Final_Hormone_ng_mL")) %>%
   add_trace(marker = list(size = 10, opacity = 0.5), textposition = 'top left')
 
 
