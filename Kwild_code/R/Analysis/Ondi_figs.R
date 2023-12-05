@@ -1,6 +1,8 @@
 ##########
+pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, MuMIn, glmm, installr, lubridate, performance, cowplot, here, plotly)
+
 ##### Plots for Ondi talk
-data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))
+data_final <- read.csv("Kwild_code/data/final_analysis_data.csv")
 
 # morphology dataframe
 morph_diffs <- data_final %>% 

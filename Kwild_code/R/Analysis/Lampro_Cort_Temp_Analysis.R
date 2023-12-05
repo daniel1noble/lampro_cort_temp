@@ -1,6 +1,6 @@
 ## Kwild Lampro Cort Temp Analysis
 # WD, packages, data
-pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, car, lmerTest, MuMIn, glmm, installr, lubridate, performance, cowplot, interp, akima, fields, MASS, plotly)
+pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, here, plotly)
 
 
 #########################
