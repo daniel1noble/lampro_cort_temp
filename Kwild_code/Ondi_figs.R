@@ -1,6 +1,6 @@
 ##########
 ##### Plots for Ondi talk
-data_final <- read.csv(here("Kwild_code/data/final_analysis_data.csv"))
+data_lf <- read.csv("C:/Users/U1115575/Documents/delicata_long_format.csv")
 
 # morphology dataframe
 morph_diffs <- data_final %>% 
