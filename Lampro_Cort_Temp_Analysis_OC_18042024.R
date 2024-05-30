@@ -6,6 +6,7 @@ pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, here, plotly, performanc
 library(lubridate)
 library(Hmisc)
 library(ppcor)
+library(ordinal)
 #########################
 # Bring in data from samples and merge together
 #########################
@@ -13,7 +14,7 @@ library(ppcor)
 dat_hatch_juv1_2 <- read.csv ("Kwild_code/data/Cort_hatch_juv1_2_OC.csv")
 
 # 2) bring in data that has final morphology measurement and hormone data: "juv_3"
-dat_juv3 <- read.csv(file = "Kwild_code/data/Cort_juv_3.csv") %>% 
+dat_juv3 <- read.csv(file = "Kwild_code/data/Cort_juv_3_np.csv") %>% 
   rename(sex = juv3_Sex)
 
 # 3) final merge juv 3 data that contains hormonal results and final morph with dat_hatch_juv1_2 
@@ -24,6 +25,7 @@ merged_data <- merge(dat_hatch_juv1_2, dat_juv3, by.x = "Lizard_ID",
 #########################
 # Merge checks
 #########################
+##Ondi: I don't know why this returns 21 alive since juv 2 sample when clearly there are many more alive than that
 # 1) find "new" values in Juv3: # LD745_21???
 new_ids_juv3 <- dat_juv3$juv3_Lizard_ID[!dat_juv3$juv3_Lizard_ID %in% dat_hatch_juv1_2$Lizard_ID]
 
@@ -81,20 +83,16 @@ sd(data_final$Juvenile3_Age, na.rm = TRUE)
 range(data_final$Juvenile3_Age, na.rm = TRUE)
 
 ########
-# growth rate calculations: calculated growth rates by between each time point (e.g., hatching to juvenile 1; juvenile 1 to juvenile 2) and overall
+# growth rate calculations: calculated growth rate over lifespan 
 # dividing change body size (SVL and mass) by the total number of days elapsed
 data_final <- data_final %>% 
-  mutate(hatch_juv3_SVL_growth =  (juv3_SVL_mm-hatch_svl_mm)/Juvenile3_Age,
-         hatch_juv3_MASS_growth = (juv3_mass_g-hatch_mass_g)/Juvenile3_Age,
-         hatch_juv2_SVL_growth = (juv2_SVL_mm-hatch_svl_mm)/Juvenile2_Age,
-         hatch_juv2_MASS_growth = (juv2_mass_g-hatch_mass_g)/Juvenile2_Age,
-         hatch_juv1_SVL_growth = (juv1_SVL_mm-hatch_svl_mm)/Juvenile1_Age,
-         hatch_juv1_MASS_growth = (juv1_mass_g-hatch_mass_g)/Juvenile1_Age, 
-         juv1_juv2_MASS_growth = (juv2_mass_g - juv1_mass_g)/ (Juvenile2_Age - Juvenile1_Age), 
-         juv1_juv2_SVL_growth = (juv2_SVL_mm - juv1_SVL_mm)/ (Juvenile2_Age - Juvenile1_Age), 
-         juv2_juv3_MASS_growth = (juv3_mass_g - juv2_mass_g)/ (Juvenile3_Age - Juvenile2_Age),
-         juv2_juv3_SVL_growth = (juv3_SVL_mm - juv2_SVL_mm)/ (Juvenile3_Age - Juvenile2_Age))
-
+  mutate(hatch_juv3_SVL_growth =  (juv3_SVL_mm - hatch_svl_mm)/Juvenile3_Age,
+         hatch_juv3_MASS_growth = (juv3_mass_g - hatch_mass_g)/Juvenile3_Age, 
+         hatch_juv1_SVL_growth = (juv1_SVL_mm - hatch_svl_mm) / Juvenile1_Age, 
+         hatch_juv1_mass_growth = (juv1_mass_g - hatch_mass_g) / Juvenile1_Age, 
+         juv1_juv3_svl_growth = (juv3_SVL_mm - juv1_SVL_mm) / (Juvenile3_Age - Juvenile1_Age),
+         juv1_juv3_mass_growth = (juv3_mass_g - juv1_mass_g)/ (Juvenile3_Age - Juvenile1_Age))
+        
 ###checking variables
 ###Some variables need to be changed to factors so they are not treated as linear variables in analyses
 data_final$temp <- as.factor(data_final$temp)
@@ -197,7 +195,7 @@ abline(ols_scaled_mass_mod)
 #### effect of temperature on incubation days - faster hatch warmer temps 
 ################
 # temperature effects days to hatch; no effect on hormone or temp x hormone interaction
-hatch_dev_mod <- lmer(days_to_hatch ~ temp + hormone + (1|clutch), data = data_final)
+hatch_dev_mod <- lm(days_to_hatch ~ temp + hormone, data = data_final)
 check_model(hatch_dev_mod) 
 Anova(hatch_dev_mod)
 summary(hatch_dev_mod)
@@ -220,15 +218,15 @@ tapply(data_final$days_to_hatch, data_final$temp, sd, na.rm = TRUE)
 ################
 #### hatchling SVL
 ####hormone treatment affects svl; temp treatment NS; hormone*temp NS
-SVL_hatch_mod <- lmer(hatch_svl_mm ~ temp + hormone + (1|clutch), data = data_final)
+SVL_hatch_mod <- lm(hatch_svl_mm ~ temp + hormone, data = data_final)
 check_model(SVL_hatch_mod)
 Anova(SVL_hatch_mod)
 summary(SVL_hatch_mod)
 
 # high hormone lower SVL
-##High - control: p = 0.003
-##High - low: p = 0.01
-##Low - control: p = 0.87
+##High - control: p = 0.006
+##High - low: p = 0.02
+##Low - control: p = 0.91
 SVL_hatch_mod_emm <- emmeans(SVL_hatch_mod, pairwise ~ hormone)
 plot(SVL_hatch_mod_emm)
 saveRDS(SVL_hatch_mod, "Kwild_code/models/SVL_hatch_mod.RDS")
@@ -236,7 +234,7 @@ saveRDS(SVL_hatch_mod, "Kwild_code/models/SVL_hatch_mod.RDS")
 
 #### MASS at hatching
 ####temp and hormone treatment affect mass; no interaction
-Mass_hatch_mod <- lmer(hatch_mass_g ~ temp + hormone + (1|clutch), data = data_final)
+Mass_hatch_mod <- lm(hatch_mass_g ~ temp + hormone, data = data_final)
 check_model(Mass_hatch_mod)
 Anova(Mass_hatch_mod)
 summary(Mass_hatch_mod)
@@ -255,7 +253,7 @@ saveRDS(Mass_hatch_mod, "Kwild_code/models/MASS_hatch_mod.RDS")
 
 ####Scaled mass at hatching; results are consistent with OLS model of condition
 # temperature has effect on BCI; no effect on hormone (p=0.06), or temp x hormone interaction
-scaled_mass_hatch_mod <- lmer(ScaledMass_hatch ~ temp + hormone + (1|clutch), data = data_final)
+scaled_mass_hatch_mod <- lm(ScaledMass_hatch ~ temp + hormone, data = data_final)
 check_model(scaled_mass_hatch_mod)
 Anova(scaled_mass_hatch_mod)
 summary(scaled_mass_hatch_mod)
@@ -281,7 +279,7 @@ plot(scaled_mass_hatch_mod_emm)
 # SVL ANALYSIS: Juv_1, Juv_2, Juv_3 (sex accounted for last measurement)
 ###############
 #### JUV_1 - SVL: 28 temp has smaller SVL
-SVL_Juv1_mod <- lmer(juv1_SVL_mm ~ temp + hormone + scale(Juvenile1_Age) + (1|clutch), data = data_final)
+SVL_Juv1_mod <- lm(juv1_SVL_mm ~ temp + hormone + scale(Juvenile1_Age), data = data_final)
 check_model(SVL_Juv1_mod)
 # effect on temperature and day of hatch on body size 
 Anova(SVL_Juv1_mod)
@@ -292,13 +290,13 @@ plot(SVL_Juv1_mod_emm)
 saveRDS(SVL_Juv1_mod, "Kwild_code/models/SVL_Juv1_mod.RDS")
 
 #### JUV_2 SVL: no treatment effects
-SVL_Juv2_mod <- lmer(juv2_SVL_mm ~ temp + hormone + scale(Juvenile2_Age) + (1|clutch), data = data_final)
+SVL_Juv2_mod <- lm(juv2_SVL_mm ~ temp + hormone + scale(Juvenile2_Age), data = data_final)
 check_model(SVL_Juv2_mod)
 summary(SVL_Juv2_mod)
 Anova(SVL_Juv2_mod)
 
 #### JUV_3 (adult) SVL -hormone effect
-SVL_Juv3_mod <- lmer(juv3_SVL_mm ~ temp + hormone + sex + scale(Juvenile3_Age) + (1|clutch), data = data_final)
+SVL_Juv3_mod <- lm(juv3_SVL_mm ~ temp + hormone + sex + scale(Juvenile3_Age), data = data_final)
 check_model(SVL_Juv3_mod)
 # effect of hormones and sex
 Anova(SVL_Juv3_mod)
@@ -318,7 +316,7 @@ saveRDS(SVL_Juv3_mod, "Kwild_code/models/SVL_Juv3_mod.RDS")
 # MASS ANALYSIS: Juv_1, Juv_2, Juv_3
 ###############
 #### MASS: Juv_1 - effects of hormone and temp treatment 
-Mass_Juv1_mod <- lmer(juv1_mass_g ~ temp + hormone + scale(Juvenile1_Age) + (1|clutch), data = data_final)
+Mass_Juv1_mod <- lm(juv1_mass_g ~ temp + hormone + scale(Juvenile1_Age), data = data_final)
 check_model(Mass_Juv1_mod)
 # effect on temp, hormone, and days since hatch; no effects on temp x hormone interaction
 summary(Mass_Juv1_mod)
@@ -334,7 +332,7 @@ plot(Mass_Juv1_temp_mod_emm)
 saveRDS(Mass_Juv1_mod, "Kwild_code/models/Mass_Juv1_mod.RDS")
 
 #### MASS: Juv_2 temp effect
-Mass_Juv2_mod <- lmer(juv2_mass_g ~ temp + hormone + scale(Juvenile2_Age) + (1|clutch), data = data_final)
+Mass_Juv2_mod <- lm(juv2_mass_g ~ temp + hormone + scale(Juvenile2_Age), data = data_final)
 check_model(Mass_Juv2_mod)
 summary(Mass_Juv2_mod)
 Anova(Mass_Juv2_mod)
@@ -345,7 +343,7 @@ plot(Mass_Juv2_temp_mod_emm)
 saveRDS(Mass_Juv2_mod, "Kwild_code/models/Mass_Juv2_mod.RDS")
 
 #### MASS: Juv_3 sex effect
-Mass_Juv3_mod <- lmer(juv3_mass_g ~ hormone + temp + sex + scale(Juvenile3_Age) + (1|clutch), data = data_final)
+Mass_Juv3_mod <- lm(juv3_mass_g ~ hormone + temp + sex + scale(Juvenile3_Age), data = data_final)
 check_model(Mass_Juv3_mod)
 Anova(Mass_Juv3_mod)
 summary(Mass_Juv3_mod)
@@ -359,20 +357,20 @@ saveRDS(Mass_Juv3_mod, "Kwild_code/models/Mass_Juv3_mod.RDS")
 # Scaled mass ANALYSIS: Juv_1, Juv_2, Juv_3
 ###############
 ## Juvenile 1- no treatment effects on scaled mass juvenile 1
-condition_juv_mod <- lmer(ScaledMass_juv1 ~ temp + hormone+ scale(Juvenile1_Age) + (1|clutch), data = data_final)
+condition_juv_mod <- lm(ScaledMass_juv1 ~ temp + hormone+ scale(Juvenile1_Age), data = data_final)
 Anova(condition_juv_mod)
 summary(condition_juv_mod)
 check_model(condition_juv_mod)
 
 ### Juvenile 2 - scaled mass - no treatment effects
-condition_juv2_mod <- lmer(ScaledMass_juv2 ~ temp + hormone +scale(Juvenile2_Age) + (1|clutch), data = data_final)
+condition_juv2_mod <- lm(ScaledMass_juv2 ~ temp + hormone +scale(Juvenile2_Age), data = data_final)
 check_model(condition_juv2_mod)
 Anova(condition_juv2_mod)
 summary(condition_juv2_mod)
 saveRDS(condition_juv2_mod, "Kwild_code/models/condition_juv2_mod.RDS")
 
 ### Juvenile 3 scaled mass; no treatment affects; sex effect
-condition_juv3_mod <- lmer(ScaledMass_juv3 ~ temp + hormone + sex + scale(Juvenile3_Age) + (1|clutch), data = data_final)
+condition_juv3_mod <- lm(ScaledMass_juv3 ~ temp + hormone + sex + scale(Juvenile3_Age), data = data_final)
 check_model(condition_juv3_mod)
 # no treatment effects on bci juv1
 Anova(condition_juv3_mod)
@@ -411,86 +409,51 @@ saveRDS(survival_day_temp, "Kwild_code/models/survival_day_temp.RDS")
 
 ################
 #### 5.	Growthrate
-#### CORT effects on mass for hatch and juvenile 1
-#### Temperature effects on SVL for juvenile 1 and 2
-#### Temperature effects on mass for hatch juvenile 1 and 2 
-################
-# SVL growth: hatch to juv_1; 28 temp grow svl more slowly
-juvenile1_svl_growth_mod  <- lmer(hatch_juv1_SVL_growth ~ hormone + temp + (1|clutch), data = data_final)
-check_model(juvenile1_svl_growth_mod)
-Anova(juvenile1_svl_growth_mod)
-summary(juvenile1_svl_growth_mod)
+####hatching to juvenile 1 measurements
+hatch_juv1_SVL_growth_mod <- lm(hatch_juv1_SVL_growth ~ hormone + temp, data = data_final)
+Anova(hatch_juv1_SVL_growth_mod)
+summary(hatch_juv1_SVL_growth_mod)
 
-juvenile1_svl_growth_mod_emm <- emmeans(juvenile1_svl_growth_mod, pairwise ~ temp)
-plot(juvenile1_svl_growth_mod_emm )
-saveRDS(juvenile1_svl_growth_mod, "Kwild_code/models/overall_SVL_growth_mod.RDS")
-
-# Mass growth - look at change in mass from hatching to juvenile 1
-# high CORT gain less mass
-hatch_juv1_mass_growth_mod <- lmer( hatch_juv1_MASS_growth ~ hormone + temp + (1|clutch), 
-                       data = data_final) 
-check_model(hatch_juv1_mass_growth_mod)
-
+hatch_juv1_mass_growth_mod <- lm(hatch_juv1_mass_growth ~ hormone + temp, data = data_final)
 Anova(hatch_juv1_mass_growth_mod)
 summary(hatch_juv1_mass_growth_mod)
-
-#CORT treatment affects growth; high CORT has slower growth than control
 hatch_juv1_mass_growth_mod_emm <- emmeans(hatch_juv1_mass_growth_mod, pairwise ~ hormone)
 plot(hatch_juv1_mass_growth_mod_emm)
-saveRDS(hatch_juv1_mass_growth_mod, "Kwild_code/models/growth4_mass_mod.RDS")
 
-##Growth rate for juvenile 1 to juvenile 2 
-#SVL juv1 - juv 2; temp effect on svl
-juv1_juv2_svl_growth_mod <- lmer(juv1_juv2_SVL_growth ~hormone + temp + (1|clutch), 
-                          data = data_final)
-Anova(juv1_juv2_svl_growth_mod)
-summary(juv1_juv2_svl_growth_mod)
+tapply(data_final$hatch_juv1_SVL_growth, data_final$temp, mean, na.rm = TRUE)
+tapply(data_final$hatch_juv1_SVL_growth, data_final$temp, sd, na.rm = TRUE)
 
-#28 temp has greater increase in svl from juv1 - juv2
-juv1_juv2_svl_growth_mod_emm <- emmeans(juv1_juv2_svl_growth_mod, pairwise ~ temp)
-plot(juv1_juv2_svl_growth_mod_emm)
-
-# mass juv 1 - juv2
-juv1_juv2_mass_growth_mod <- lmer(juv1_juv2_MASS_growth ~ hormone + temp + (1|clutch), 
-                          data = data_final)
-Anova(juv1_juv2_mass_growth_mod)
-summary(juv1_juv2_mass_growth_mod)
-#28 temp has more mass gain between juv 1 and juv2
-juv1_juv2_mass_growth_mod_emm <- emmeans(juv1_juv2_mass_growth_mod, pairwise ~ temp)
-plot(juv1_juv2_mass_growth_mod_emm)
+tapply(data_final$hatch_juv1_mass_growth, data_final$temp, mean, na.rm = TRUE)
+tapply(data_final$hatch_juv1_mass_growth, data_final$temp, sd, na.rm = TRUE)
 
 
-###SVL growth from juvenile 2 to juvenile 3
-juv2_juv3_svl_growth_mod <- lmer(juv2_juv3_SVL_growth ~hormone + temp + sex + (1|clutch), 
-                               data = data_final)
-Anova(juv2_juv3_svl_growth_mod)
-summary(juv2_juv3_svl_growth_mod)
-
-juvenile3_svl_growth_mod_emm <- emmeans(juvenile3_svl_growth_mod, pairwise ~ temp)
-plot(juvenile3_svl_growth_mod_emm )
-
-##Mass growth from juvenile 2 to juvenile 3
-juv2_juv3_mass_growth_mod <- lmer(juv2_juv3_MASS_growth ~ hormone + temp + sex + (1|clutch), 
-                                data = data_final)
-Anova(juv2_juv3_mass_growth_mod)
-summary(juv2_juv3_mass_growth_mod)
-juv2_juv3_mass_growth_mod_emm <- emmeans(juv2_juv3_mass_growth_mod, pairwise ~ temp)
-plot(juv2_juv3_mass_growth_mod_emm)
-
+#### Look at overall growth from hatch to adulthood
+################
 ###Overall growth hatch to juvenile 3; sex included
-hatch_juv3_SVL_growth_mod <- lmer(hatch_juv3_SVL_growth ~hormone + temp + sex + (1|clutch), 
-                               data = data_final)
+hatch_juv3_SVL_growth_mod <- lm(hatch_juv3_SVL_growth ~hormone + temp + sex, data = data_final)
 Anova(hatch_juv3_SVL_growth_mod)
 summary(hatch_juv3_SVL_growth_mod)
+check_model(hatch_juv3_SVL_growth_mod)
 
 hatch_juv3_SVL_growth_mod_emm <- emmeans(hatch_juv3_SVL_growth_mod, pairwise ~ temp)
 plot(hatch_juv3_SVL_growth_mod_emm)
 
-hatch_juv3_MASS_growth_mod <- lmer(hatch_juv3_MASS_growth ~hormone + temp + sex + (1|clutch), 
-                                data = data_final)
+hatch_juv3_MASS_growth_mod <- lm(hatch_juv3_MASS_growth ~ hormone + temp + sex, data = data_final)
 Anova(hatch_juv3_MASS_growth_mod)
 summary(hatch_juv3_MASS_growth_mod)
 
+
+###growth between juvenile and adult
+juv1_juv3_svl_growth_mod  <- lm(juv1_juv3_svl_growth ~ hormone + temp + sex, data = data_final)
+Anova(juv1_juv3_svl_growth_mod)
+summary(juv1_juv3_svl_growth_mod)
+
+juv1_juv3_mass_growth_mod  <- lm(juv1_juv3_mass_growth ~ hormone + temp + sex, data = data_final)
+Anova(juv1_juv3_mass_growth_mod)
+summary(juv1_juv3_mass_growth_mod)
+
+tapply(data_final$juv1_juv3_svl_growth, data_final$temp, mean, na.rm = TRUE)
+tapply(data_final$juv1_juv3_svl_growth, data_final$temp, sd, na.rm = TRUE)
 
 ########################
 ### 6: CORT, T4, testosterone
@@ -507,43 +470,87 @@ plot(juv3_CORT_Final_Hormone_ng_mL ~ hormone, data = cort_dat)
 plot(juv3_CORT_Final_Hormone_ng_mL ~ temp, data = cort_dat)
 
 ###Checking plate ID and handling time for effects on CORT; handling time = ns; plate ID is p=.007
-cort_factors <- lm((log(juv3_CORT_Final_Hormone_ng_mL)) ~ juv3_HandlingTime_sec + Plate_CORT_juv3, data = cort_dat)
+cort_factors <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ juv3_HandlingTime_sec + Plate_CORT_juv3, data = cort_dat)
 Anova(cort_factors)
 summary(cort_factors)
 
-###Get residuals from model of CORT levels and plate and save as new variable
-cort_residuals <- lm((log(juv3_CORT_Final_Hormone_ng_mL)) ~ Plate_CORT_juv3, data = cort_dat)
-Anova(cort_residuals)
-summary(cort_residuals)
-cort_dat$CORT_residuals <- residuals(cort_residuals)
 
 ######## 1) treatments- how does cort vary across temp and hormone treatment; handling time not used because ns in model of CORT factors
-cort_development_mod <- lmer(log(juv3_CORT_Final_Hormone_ng_mL) ~ hormone + temp + Plate_CORT_juv3 + sex + (1|clutch), data = cort_dat)
+cort_development_mod <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Juvenile3_Age) + Plate_CORT_juv3, data = cort_dat)
 check_model(cort_development_mod)
 Anova(cort_development_mod)
 summary(cort_development_mod)
-
-##low CORT treatment has higher baseline CORT than control treatment
+##low CORT treatment has higher baseline CORT than control treatment; but ns
 cort_development_mod_emm <- emmeans(cort_development_mod, pairwise ~ hormone)
 plot(cort_development_mod_emm)
 
-saveRDS(cort_development_mod, "Kwild_code/models/cort_development_mod.RDS")
+###Visualize baseline CORT levels
+Boxplot(cort_dat$juv3_CORT_Final_Hormone_ng_mL, cort_dat$hormone, na.action = na.exclude)
+
+###summarise data for bar plot
+sum.dat <- cort_dat  %>%
+  
+  group_by(hormone) %>%
+  
+  summarise(mean.value = mean(juv3_CORT_Final_Hormone_ng_mL, na.rm = TRUE),
+            
+            sd = sd(juv3_CORT_Final_Hormone_ng_mL, na.rm = TRUE),
+            
+            se=mean.value/sqrt(n()))
+
+
+
+Bar.plot <- ggplot(sum.dat, aes(x=hormone, y=mean.value, fill=hormone)) +
+  
+  geom_bar(stat="identity", color="black",
+           
+           position=position_dodge()) +
+  
+  geom_errorbar(aes(ymin=mean.value -se, ymax=mean.value + se), width=.2,
+                
+                position=position_dodge(.9))+
+  
+  labs(title="Figure 3. Baselinecorticosterone levels in adults", y="CORT (pg/mg)", x="Corticosteorne treatment")+
+  
+  theme_classic()+
+  
+  
+  scale_fill_manual(values = c("white", "grey46", "black"))
+
+Bar.plot + theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14),
+                 axis.title = element_text(size = 14), legend.text = element_text(size = 14), 
+                 legend.title = element_text(size = 14))
+
+
+### using a glm with gamma distribution; results equivalent
+Gam_cort <- glm(juv3_CORT_Final_Hormone_ng_mL ~ hormone + temp + Plate_CORT_juv3 + sex + scale(Juvenile3_Age), family = Gamma (link = log), data = cort_dat)
+Anova(Gam_cort)
+summary(Gam_cort)
+check_model(Gam_cort)
+Gam_cort_emm <- emmeans(Gam_cort, pairwise ~ hormone)
+plot(Gam_cort_emm)
+
+
+##calculate residuals of plate ID and CORT levels
+cort_residuals <- lm(juv3_CORT_Final_Hormone_ng_mL ~ Plate_CORT_juv3, data = cort_dat, na.action=na.exclude) # fit the model for residuals
+cort_dat$cort_residuals <- residuals(cort_residuals, na.action=na.exclude) # Save the residual values
+
 
 ####Body size and condition at juvenile 3 related to CORT levels; 'handling time not included because it did not affect baseline CORT levels as above)
 ##CORT and scaled mass at juvenile 3; treatments not included because they have no effect on body condition at this time point
-cort_body_condition_mod <- lmer(ScaledMass_juv3 ~ CORT_residuals + sex + scale(Juvenile3_Age) + sex + (1|clutch), data = cort_dat)
+cort_body_condition_mod <- lm(ScaledMass_juv3 ~ cort_residuals + sex + scale(Juvenile3_Age) + sex, data = cort_dat)
 Anova(cort_body_condition_mod)
 summary(cort_body_condition_mod)
 check_model(cort_body_condition_mod)
 
 ###SVL with CORT; adult SVL positive association with CORT
-cort_svl_juvenile3_mod <- lmer(juv3_SVL_mm ~ CORT_residuals + sex + scale(Juvenile3_Age) + (1|clutch), data = cort_dat)
+cort_svl_juvenile3_mod <- lm(juv3_SVL_mm ~ cort_residuals + sex + scale(Juvenile3_Age), data = cort_dat)
 Anova(cort_svl_juvenile3_mod)
 summary(cort_svl_juvenile3_mod)
 check_model(cort_svl_juvenile3_mod)
 
 ###Mass at juvenile 3 tested against CORT levels; CORT positive association with adult mass
-cort_mass_juvenile3_mod <- lmer(juv3_mass_g ~ CORT_residuals + sex + scale(Juvenile3_Age) + (1|clutch), data = cort_dat)
+cort_mass_juvenile3_mod <- lm(juv3_mass_g ~ cort_residuals + sex + scale(Juvenile3_Age), data = cort_dat)
 Anova(cort_mass_juvenile3_mod)
 summary(cort_mass_juvenile3_mod)
 check_model(cort_mass_juvenile3_mod)
@@ -562,10 +569,11 @@ Anova(T4_factors)
 summary(T4_factors)
 
 # 1) treatments -  does T4 vary across temp and hormone treatment: NS
-T4_temp_hormone_sex_mod <- lmer(log(juv3_T4_corrected_ng_mL) ~hormone + temp + sex + (1|clutch), data = t4_dat)
+T4_temp_hormone_sex_mod <- lm(log(juv3_T4_corrected_ng_mL) ~ hormone + temp + sex + scale(Juvenile3_Age), data = t4_dat)
 check_model(T4_temp_hormone_sex_mod)
 Anova(T4_temp_hormone_sex_mod)
 summary(T4_temp_hormone_sex_mod)
+
 # sex differences: females have higher T4
 T4_temp_hormone_sex_mod_emm <- emmeans(T4_temp_hormone_sex_mod, pairwise ~ sex)
 plot(T4_temp_hormone_sex_mod_emm)
@@ -573,14 +581,13 @@ saveRDS(T4_temp_hormone_sex_mod, "Kwild_code/models/T4_temp_hormone_sex_mod.RDS"
 
 
 # 2) SVL and associations with T4 and cort
-T4_SVL_mod <- lmer(juv3_SVL_mm  ~ ((log(juv3_T4_corrected_ng_mL))) + sex + scale(Juvenile3_Age) + (1|clutch), 
-             data = t4_dat)
+T4_SVL_mod <- lm(juv3_SVL_mm  ~ log(juv3_T4_corrected_ng_mL) + sex + scale(Juvenile3_Age), data = t4_dat)
 check_model(T4_SVL_mod )
 summary(T4_SVL_mod )
 Anova(T4_SVL_mod )
 
 # 3) MASS and associations between T4
-T4_mass_growth_mod <- lm(juv3_mass_g  ~ (log(juv3_T4_corrected_ng_mL)) + sex + scale(Juvenile3_Age), 
+T4_mass_growth_mod <- lm(juv3_mass_g  ~ log(juv3_T4_corrected_ng_mL) + sex + scale(Juvenile3_Age), 
                         data = t4_dat)
 check_model(T4_mass_growth_mod)
 Anova(T4_mass_growth_mod)
@@ -594,9 +601,11 @@ test_dat <- data_final %>%
   drop_na(juv3_Testosterone_Final_ng_ml) %>% 
   filter(juv3_Sample_volume_ul > 4 ) # remove values below 4 ul juv3_Sample_volume_ul
 
+test_dat$rank_test <- rank(test_dat$juv3_Testosterone_Final_ng_ml, ties.method = "first")
+
 
 ###Look at the effects of plate and handling time on testosterone levels; handling time affects T levels (p=0.02); plate is NS
-Test_factor <- lm (juv3_Testosterone_Final_ng_ml ~ juv3_Testosterone_plate+ juv3_HandlingTime_sec, data = test_dat)
+Test_factor <- lm (log(juv3_Testosterone_Final_ng_ml) ~ juv3_Testosterone_plate+ juv3_HandlingTime_sec, data = test_dat)
 Anova(Test_factor)
 summary(Test_factor)
 
@@ -611,6 +620,21 @@ test_dat$test_residuals <- residuals(test_residuals)
 ##No effect of treatments on adult T levels 
 test_hormone <- kruskal.test(test_residuals ~ hormone, data = test_dat)
 test_temp <- kruskal.test(test_residuals ~ temp, data = test_dat)
+
+test_mod <- lm(log(juv3_Testosterone_Final_ng_ml) ~ hormone + temp + scale(Juvenile3_Age) + juv3_HandlingTime_sec, data = test_dat)
+check_model(test_mod)
+Anova(test_mod)
+summary(test_mod)
+
+Test_SVL_mod <- lm(juv3_SVL_mm  ~ log(juv3_Testosterone_Final_ng_ml) + scale(Juvenile3_Age), data = test_dat)
+check_model(Test_SVL_mod)
+summary(Test_SVL_mod)
+Anova(Test_SVL_mod)
+
+Test_mass_mod <- lm(juv3_mass_g   ~ log(juv3_Testosterone_Final_ng_ml) + scale(Juvenile3_Age), data = test_dat)
+check_model(Test_mass_mod)
+summary(Test_mass_mod)
+Anova(Test_mass_mod)
 
 
 ##correlation between testosterone and CORT levels
@@ -628,7 +652,7 @@ abline(cort_T_mod)
 ###if looking at relationships with hormone levels - use cort_dat or equivalent to exclude samples with 
 ##low volumes
 mito_dat <- data_final %>%
-  dplyr::select(c("Lizard_ID", "clutch", "temp", "hormone", "Juvenile3_Age", "sex","hatch_juv3_MASS_growth",
+  dplyr::select(c("Lizard_ID", "clutch", "temp", "hormone", "Juvenile3_Age", "sex","hatch_juv3_MASS_growth", "hatch_juv3_SVL_growth",
                   "juv3_inject_time_sec", "juv3_liver_time_sec", "juv3_oroboros",
                   "juv3_T4_plate", "juv3_HandlingTime_sec", "juv3_T4_corrected_ng_mL", 
                   "juv3_CORT_Final_Hormone_ng_mL", "juv3_basal_corrected.pmol..sec.ng..",
@@ -636,9 +660,9 @@ mito_dat <- data_final %>%
                   "juv3_adp_corrected.pmol..sec.ng..", "juv3_oligo_corrected.pmol..sec.ng..", 
                   "juv3_fccp_corrected.pmol..sec.ng..", "juv3_RCR.L.R.", "juv3_RCR.R.ETS.",
                   "juv3_oroboros_comments", "juv3_RCR.L.ETS.", "juv3_date", "Plate_CORT_juv3",
-                  "juv3_Sample_volume_ul",
-                  "juv3_mass_g", "juv3_SVL_mm", "juv2_juv3_MASS_growth", "ScaledMass_juv3",
-                  "juv3_HandlingTime_sec", "juv2_juv3_SVL_growth", "juv3_chamber")) %>% 
+                  "juv3_Sample_volume_ul", "hatch_svl_mm",
+                  "juv3_mass_g", "juv3_SVL_mm",  "ScaledMass_juv3",
+                  "juv3_HandlingTime_sec",  "juv3_chamber")) %>% 
   dplyr::rename(inject_time_sec = juv3_inject_time_sec, 
                 chamber = juv3_chamber,
                 juv3_basal_corrected = juv3_basal_corrected.pmol..sec.ng..,
@@ -657,22 +681,17 @@ mito_dat <- data_final %>%
   mutate(ID_and_Comments = paste(Lizard_ID, oroboros_comments, sep = ": "),
          OXPHOS = fccp_corrected_pmol - oligo_corrected_pmol,
          RCR = adp_corrected_pmol/oligo_corrected_pmol) %>% 
-    
-  filter(Lizard_ID != c("LD736_21")) %>%
-  filter(Lizard_ID != c("LD738_21")) %>%
-  filter(Lizard_ID != c("LD829_21")) %>%
-  filter(Lizard_ID != c("LD784_21")) %>%
-  filter(Lizard_ID != c("LD828_21")) %>%
-  filter(Lizard_ID != c ("LD786_21"))
 
-####LD736_21 and LD738_21 were first samples assayed; values are extremely high; filtered from analysis 
+  filter(Lizard_ID != c("LD784_21"))
+####LD784_21 had extremely high values and lab notes suggest should be filtered from analyses 
 
 view(mito_dat)
 ###Checking factors that could affect oxygen consumption measurements - handling times, Oroboros, and chamber
 ###'chamber' is nested within Oroboros; there are three measurements of time (time to inject the drug, time to euthanize the animal
-###'and time to collect liver, have opted to only use time to collect liver because it will encorporate all other time measurements and 
+###'and time to collect liver, have opted to only use time to collect liver because it will incorporate all other time measurements and 
 ###'likely all time measures are correlated and so shouldn't all be going in the model anyway)
 ###all factors NS
+
 
 #RCR - all NS
 RCR_factors <- lm(RCR ~ juv3_liver_time_sec + juv3_oroboros/chamber, data = mito_dat)
@@ -697,48 +716,32 @@ Anova(Oligo_factors)
 summary (Oligo_factors)
 hist(mito_dat$oligo_corrected_pmol)
 
-###FCCP - all factors = NS
-FCCP_factors <- lm(fccp_corrected_pmol ~ juv3_liver_time_sec + juv3_oroboros/chamber, data = mito_dat) 
-Anova(FCCP_factors)
-summary (FCCP_factors)
-hist(mito_dat$fccp_corrected_pmol)
 
 #####Effects of treatments on mitochondrial function 
-###Basal - all NS; interaction removed
-Basal_treatment_mod <- lmer(basal_corrected_pmol ~ temp + hormone + sex + juv3_oroboros/chamber + (1|clutch), data = mito_dat)
+###Basal - interaction removed ns and removed; sex p = 0.005 males higher than females
+Basal_treatment_mod <- lm(basal_corrected_pmol ~ temp + hormone + sex + scale(Juvenile3_Age) + juv3_oroboros/chamber, data = mito_dat)
 Anova(Basal_treatment_mod)
 summary(Basal_treatment_mod)
 check_model(Basal_treatment_mod)
 
-###ADP - treatment effects; all NS, interaction removed
-ADP_treatment_mod <- lmer(adp_corrected_pmol ~ temp*hormone + sex  + juv3_oroboros/chamber + (1|clutch), data = mito_dat)
+###ADP - treatment effects; interaction ns and removed; sex p = 0.045 males higher than females
+ADP_treatment_mod <- lm(adp_corrected_pmol ~ temp + hormone + sex + scale(Juvenile3_Age) + juv3_oroboros/chamber, data = mito_dat)
 Anova(ADP_treatment_mod)
 summary(ADP_treatment_mod)
 check_model(ADP_treatment_mod)
 
-##Oligo mito by treatment; all factors NS
-Oligo_treatment_mod <- lmer(oligo_corrected_pmol ~ temp*hormone + sex + (1|clutch), data = mito_dat)
+##Oligo mito by treatment; interaction ns and removed; sex p = 0.008
+Oligo_treatment_mod <- lm(oligo_corrected_pmol ~ temp + hormone + sex + scale(Juvenile3_Age) + juv3_oroboros/chamber, data = mito_dat)
 Anova(Oligo_treatment_mod)
 summary(Oligo_treatment_mod)
 check_model(Oligo_treatment_mod)
 
-##FCCP mito by treatment; all factors NS 
-FCCP_treatment_mod <- lmer(fccp_corrected_pmol ~ temp*hormone + sex  + (1|clutch), data = mito_dat)
-Anova(FCCP_treatment_mod)
-summary(FCCP_treatment_mod)
-check_model(FCCP_treatment_mod)
-
 ##RCR calculated as state 3 (ADP)/ state 4(olgio)
-RCR_mod <- lmer(RCR ~ temp*hormone + sex  + (1|clutch), data = mito_dat)
+RCR_mod <- lm(RCR ~ temp + hormone + sex + scale(Juvenile3_Age) + juv3_oroboros/chamber, data = mito_dat)
 Anova(RCR_mod)
 summary (RCR_mod)
 check_model(RCR_mod)
 
-##OXPHOS
-OXPHOS_mod <- lmer(OXPHOS ~ temp*hormone + sex + (1|clutch), data = mito_dat)
-Anova(OXPHOS_mod)
-summary(OXPHOS_mod)
-check_model(OXPHOS_mod)
 
 ###For models with hormone levels - need to filter n=7 data points from 
 ###samples with less than 7ul 
@@ -748,29 +751,32 @@ mito_hormone <- mito_dat %>%
 view(mito_hormone)
 
 
-##save residuals of CORT levels corrected for plate ID (significant above)
-CORT_residuals_mito <- lm(CORT_Final_Hormone_ng_mL ~ Plate_CORT_juv3, data = mito_hormone)
-mito_hormone$CORT_residuals_mito_hormone <- residuals(CORT_residuals_mito)
+##CORT and plate ID and handling time; NS
+plot(mito_hormone$CORT_Final_Hormone_ng_mL, mito_hormone$HandlingTime_sec)
+B_handling <- lm(CORT_Final_Hormone_ng_mL ~ HandlingTime_sec, data = mito_hormone)
+Anova(B_handling)
+abline(B_handling)
 
-###Save residuals of T4 levels corrected for handling time (significant above)
-T4_residuals_mod <- lm(T4_corrected_ng_mL ~ HandlingTime_sec, data = mito_hormone, na.action = na.exclude)
-mito_hormone$T4_residuals_mito_hormone <- residuals (T4_residuals_mod)
+CORT_residuals_mito <- lm(CORT_Final_Hormone_ng_mL ~ Plate_CORT_juv3, data = mito_hormone)
+Anova(CORT_residuals_mito)
+
+###T4 plate ID and handling time; NS
+T4_residuals_mod <- lm(T4_corrected_ng_mL ~ HandlingTime_sec + T4_plate_ID, data = mito_hormone, na.action = na.exclude)
+Anova(T4_residuals_mod)
+summary(T4_residuals_mod)
 
 ###Associations between mitochondrial bioenergetics and hormones levels
 ###random effect of clutch is small for small models (should we remove it?)
 
-##Basal; near sig postive association with T4 (p=0.051) 
-Basal_hormone_mod <- lm(basal_corrected_pmol ~ scale(CORT_residuals_mito_hormone) + scale(T4_residuals_mito_hormone) + sex + juv3_oroboros/chamber, data = mito_hormone)
+##Basal; 
+Basal_hormone_mod <- lm(basal_corrected_pmol ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + juv3_oroboros/chamber, data = mito_hormone)
 Anova(Basal_hormone_mod)
 summary(Basal_hormone_mod)
 check_model(Basal_hormone_mod)
 
-plot(mito_hormone$T4_residuals_mito_hormone, mito_hormone$basal_corrected_pmol)
-T4_basal_mod <- lm(mito_hormone$basal_corrected_pmol ~ T4_residuals_mito_hormone, data = mito_hormone)
-abline(T4_basal_mod)
 
 ###ADP -  T4 positive association with ADP mito 
-ADP_hormone_mod <- lm(adp_corrected_pmol ~ scale(CORT_Final_Hormone_ng_mL) + scale(T4_residuals_mito_hormone) + sex + juv3_oroboros/chamber, data = mito_hormone)
+ADP_hormone_mod <- lm(adp_corrected_pmol ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + juv3_oroboros/chamber, data = mito_hormone)
 Anova(ADP_hormone_mod)
 summary(ADP_hormone_mod)
 check_model(ADP_hormone_mod)
@@ -780,78 +786,87 @@ T4_ADP_mod <- lm(mito_hormone$adp_corrected_pmol ~ T4_residuals_mito_hormone, da
 abline(T4_ADP_mod)
 
 ##oligo - T4 near positive association (p=0.051)
-Oligo_hormone_mod <- lm(oligo_corrected_pmol ~ scale(CORT_residuals_mito_hormone) + scale(T4_residuals_mito_hormone) + sex + juv3_oroboros/chamber, data = mito_hormone)
+Oligo_hormone_mod <- lm(oligo_corrected_pmol ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + juv3_oroboros/chamber, data = mito_hormone)
 Anova(Oligo_hormone_mod)
 summary(Oligo_hormone_mod)
 check_model(Oligo_hormone_mod)
 
-plot(mito_hormone$T4_residuals_mito_hormone, mito_hormone$oligo_corrected_pmol)
-T4_oligo_mod <- lm(mito_hormone$oligo_corrected_pmol ~ T4_residuals_mito_hormone, data = mito_hormone)
-abline(T4_oligo_mod)
-
-##oxphos : T4 positive association 
-oxphos_hormone_mod <- lm(OXPHOS  ~ scale(CORT_residuals_mito_hormone) + scale(T4_residuals_mito_hormone) + sex  + juv3_oroboros/chamber, data = mito_hormone)
-Anova(oxphos_hormone_mod)
-summary(oxphos_hormone_mod)
-check_model(oxphos_hormone_mod)
-
-plot(mito_hormone$T4_residuals_mito_hormone, mito_hormone$OXPHOS)
-T4_oxphos_mod <- lm(mito_hormone$OXPHOS ~ T4_residuals_mito_hormone, data = mito_hormone)
-abline(T4_oxphos_mod)
-
-##FCCP - positive association with T4 
-FCCP_hormone_mod <- lm(fccp_corrected_pmol ~ scale(CORT_residuals_mito_hormone) + scale(T4_residuals_mito_hormone) + sex  + juv3_oroboros/chamber, data = mito_hormone)
-Anova(FCCP_hormone_mod)
-summary(FCCP_hormone_mod)
-check_model(FCCP_hormone_mod)
-
 #RCR - T4 positive association 
-RCR_hormone_mod <- lm(RCR ~ scale(CORT_residuals_mito_hormone) + scale(T4_residuals_mito_hormone) + sex + juv3_oroboros/chamber, data = mito_hormone)
+RCR_hormone_mod <- lm(RCR ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + juv3_oroboros/chamber, data = mito_hormone)
 Anova(RCR_hormone_mod)
 summary (RCR_hormone_mod)
 check_model(RCR_hormone_mod)
 
 ###Growth and body size and mito function 
-basal_growth_residuals <- lm(basal_corrected_pmol ~ juv3_oroboros/chamber, data = mito_dat, na.action = na.exclude)
-Anova(basal_growth_residuals)
-mito_dat$basal_growth_residuals_mito_hormone <- residuals(basal_growth_residuals)
-
 ###Basal - postive association with basal and growth (p = 0.02)
-Growth_Basal <- lmer(hatch_juv3_MASS_growth ~ basal_growth_residuals_mito_hormone + sex + (1|clutch), data = mito_dat)
-Anova(Growth_Basal)
-summary(Growth_Basal)
-check_model(Growth_Basal)
+Mass_basal <- lm(hatch_juv3_MASS_growth ~ basal_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
+Anova(Mass_basal)
+summary(Mass_basal)
+check_model(Mass_basal)
 
-###
-adp_growth_residuals <- lm(adp_corrected_pmol ~ juv3_oroboros/chamber, data = mito_dat, na.action = na.exclude)
-Anova(adp_growth_residuals)
-mito_dat$adp_growth_residuals_mito_hormone <- residuals(adp_growth_residuals)
+SVL_basal <- lm(hatch_juv3_SVL_growth~ basal_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
+Anova(SVL_basal)
+summary(SVL_basal)
+check_model(SVL_basal)
 
-##ADP - positive association with ADP and growth (p = 0.04)
-Growth_ADP <- lmer(hatch_juv3_MASS_growth ~ adp_growth_residuals_mito_hormone + sex + (1|clutch), data = mito_dat)
+##ADP 
+Growth_ADP <- lm(hatch_juv3_MASS_growth ~ adp_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
 Anova(Growth_ADP)
 summary(Growth_ADP)
 check_model(Growth_ADP)
 
-###Oligo - NS (p=0.07)
-Growth_Oligo <- lmer(hatch_juv3_MASS_growth ~ (log(oligo_corrected_pmol)) + sex + (1|clutch), data = mito_dat)
+Growth_ADP <- lm(hatch_juv3_SVL_growth ~ adp_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
+Anova(Growth_ADP)
+summary(Growth_ADP)
+check_model(Growth_ADP)
+
+
+###Oligo 
+Growth_Oligo <- lm(hatch_juv3_MASS_growth ~ oligo_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
 Anova(Growth_Oligo)
 summary(Growth_Oligo)
 
-###FCCP NS p = 0.06
-Growth_FCCP <- lmer(hatch_juv3_MASS_growth ~ (log(fccp_corrected_pmol)) + sex + (1|clutch), data = mito_dat)
-Anova(Growth_FCCP)
-summary(Growth_FCCP)
+Growth_Oligo <- lm(hatch_juv3_SVL_growth ~ oligo_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
+Anova(Growth_Oligo)
+summary(Growth_Oligo)
 
-###NS for all RCR but sex sig for all with males growing slower
-Growth_RCR <- lmer(hatch_juv3_MASS_growth ~ (log(RCR)) + sex + (1|clutch), data = mito_dat)
+
+###RCR
+Growth_RCR <- lm (hatch_juv3_MASS_growth~ RCR + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
 Anova(Growth_RCR)
 summary(Growth_RCR)
 
-Growth_OXPHOS <- lmer (hatch_juv3_MASS_growth ~ (log(OXPHOS)) + sex + (1|clutch), data = mito_dat)
-Anova(Growth_OXPHOS)
-summary(Growth_OXPHOS)
+Growth_RCR <- lm (hatch_juv3_SVL_growth ~ RCR + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
+Anova(Growth_RCR)
+summary(Growth_RCR)
 
+
+
+cor_mito <- mito_dat %>%
+  dplyr::select(c("oligo_corrected_pmol", "adp_corrected_pmol", "basal_corrected_pmol", "RCR")) %>%
+  filter(if_all(c(oligo_corrected_pmol), complete.cases))
+
+cor_mat <- rcorr(as.matrix(cor_mito))
+cor_mat$r
+cor_mat$P
+
+view(cor_mito)
+
+flatten_cor_mat <- function (cor_mat, pmat) {
+  ut <- upper.tri(cor_mat)
+  data.frame(
+    row = rownames (cor_mat)[row(cor_mat)[ut]],
+    column = rownames (cor_mat)[col(cor_mat)[ut]],
+    cor = (cor_mat)[ut],
+    P = pmat[ut]
+  )
+}
+
+adjust_cor <- flatten_cor_mat(cor_mat$r, (p.adjust (cor_mat$P, method = 'bonferroni')))
+print(adjust_cor, digits = 5)
+                  
+cor.test(cor_mito$oligo_corrected_pmol, cor_mito$adp_corrected_pmol, method = ("pearson"))
+                  
 ############# ############# ############# ############# ############# 
 ############# OLD CODE############# ############# ############# ############# 
 ############# ############# ############# ############# ############# ############# 

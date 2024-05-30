@@ -1,6 +1,6 @@
 ## Kwild Lampro Cort Temp Analysis
 # WD, packages, data
-pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, here, plotly)
+pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, here, plotly, performance, car)
 
 
 #########################
@@ -191,13 +191,15 @@ saveRDS(SVL_Juv3_mod, "Kwild_code/models/SVL_Juv3_mod.RDS")
 
 ###############
 # MASS ANALYSIS: Juv_1, Juv_2, Juv_3
-###############
+###############summary(Mass_Juv1_mod)
+
 #### MASS: Juv_1 - interaction removed
 Mass_Juv1_mod <- lm(juv1_mass_g ~ temp + hormone + scale(hatch_juv1_days), data = data_final)
+Anova(Mass_Juv1_mod)
+summary(Mass_Juv1_mod)
 check_model(Mass_Juv1_mod)
 # effect on temp, hormone, and days since hatch; no effects on temp x hormone interaction
-summary(Mass_Juv1_mod)
-anova(Mass_Juv1_mod)
+
 # hormone plot - low mass with high hormones
 Mass_Juv1_hormone_mod_emm <- emmeans(Mass_Juv1_mod, pairwise ~ hormone)
 plot(Mass_Juv1_hormone_mod_emm)
