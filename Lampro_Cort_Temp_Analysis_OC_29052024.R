@@ -1,6 +1,7 @@
 ## Kwild Lampro Cort Temp Analysis
 # WD, packages, data
-pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, here, plotly, performance, car)
+pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, here, plotly, 
+               performance, car, patchwork)
 
 
 library(lubridate)
@@ -312,6 +313,7 @@ plot(SVL_Juv3_sex_mod_emm)
 saveRDS(SVL_Juv3_mod, "Kwild_code/models/SVL_Juv3_mod.RDS")
 
 
+
 ###############
 # MASS ANALYSIS: Juv_1, Juv_2, Juv_3
 ###############
@@ -352,6 +354,380 @@ summary(Mass_Juv3_mod)
 Sex_Juv3_temp_mod_emm <- emmeans(Mass_Juv3_mod, pairwise ~ hormone)
 plot(Sex_Juv3_temp_mod_emm)
 saveRDS(Mass_Juv3_mod, "Kwild_code/models/Mass_Juv3_mod.RDS")
+
+
+###############################################################
+####### !!!KRIS Figure 2 model - I know this is above but didnt want to get rid of your figure; Well go with Mass since there were differneces across the board
+cort_dat$hormone <- factor(cort_dat$hormone, levels = c("control", "low", "high"))
+
+####################
+###### MASS - Hormone 
+######
+### hatch model 
+Mass_hatch_mod <- lm(hatch_mass_g ~ temp + hormone, data = data_final)
+
+### Data from model for mean and wiskers 'cort_development_mod'  output
+# hormone data - hatchling
+Mass_hatch_mod_emm_hormone <- emmeans(Mass_hatch_mod, pairwise ~ hormone)
+Mass_hatch_dat_emm_hormone <- as.data.frame(Mass_hatch_mod_emm_hormone$emmeans) %>% 
+  mutate(Age = "hatchling",
+         Treatment = "Hormone")
+# sample size per group
+Mass_hatch_dat_sum_hormone <- data_final %>%
+  dplyr::select(Lizard_ID, hormone, hatch_mass_g) %>% 
+  dplyr::filter(!is.na(hatch_mass_g)) %>%
+  group_by(hormone) %>%
+  summarise(n = n())
+# df for plotting
+mass_hatch_hormone <- left_join(Mass_hatch_dat_emm_hormone, 
+                                Mass_hatch_dat_sum_hormone,
+                                by = "hormone")
+
+
+# temp data  - hatchling
+Mass_hatch_mod_emm_temp <- emmeans(Mass_hatch_mod, pairwise ~ temp)
+Mass_hatch_dat_emm_temp <- as.data.frame(Mass_hatch_mod_emm_temp$emmeans) %>% 
+  mutate(Age = "hatchling",
+         Treatment = "Temperature")
+# sample size per group
+Mass_hatch_dat_sum_temp <- data_final %>%
+  dplyr::select(Lizard_ID, temp, hatch_mass_g) %>% 
+  dplyr::filter(!is.na(hatch_mass_g)) %>%
+  group_by(temp) %>%
+  summarise(n = n())
+# df for plotting
+mass_hatch_temp<- left_join(Mass_hatch_dat_emm_temp, 
+                            Mass_hatch_dat_sum_temp,
+                                by = "temp") 
+
+######
+### JUV1 model 
+Mass_Juv1_mod <- lm(juv1_mass_g ~ temp + hormone + scale(Juvenile1_Age), data = data_final)
+
+# Hormone - Juvenile
+Mass_Juv1_mod_emm_hormone <- emmeans(Mass_Juv1_mod, pairwise ~ hormone)
+Mass_Juv1_emm_hormone <- as.data.frame(Mass_Juv1_mod_emm_hormone$emmeans) %>% 
+  mutate(Age = "juvenile",
+         Treatment = "Hormone")
+# sample size per group
+Mass_Juv1_dat_sum_hormone <- data_final %>%
+  dplyr::select(Lizard_ID, hormone,temp,juv1_mass_g) %>% 
+  dplyr::filter(!is.na(juv1_mass_g)) %>%
+  group_by(hormone) %>%
+  summarise(n = n())
+# df for plotting
+mass_juv_hormone <- left_join(Mass_Juv1_emm_hormone, 
+                              Mass_Juv1_dat_sum_hormone,
+                                by = "hormone")
+
+# temp data  - juvenile
+Mass_Juv1_mod_emm_temp <- emmeans(Mass_Juv1_mod, pairwise ~ temp)
+Mass_Juv1_dat_emm_temp <- as.data.frame(Mass_Juv1_mod_emm_temp$emmeans) %>% 
+  mutate(Age = "juvenile",
+         Treatment = "Temperature")
+# sample size per group
+Mass_Juv1_dat_sum_temp <- data_final %>%
+  dplyr::select(Lizard_ID, temp, juv1_mass_g) %>% 
+  dplyr::filter(!is.na(juv1_mass_g)) %>%
+  group_by(temp) %>%
+  summarise(n = n())
+# df for plotting
+mass_juv_temp<- left_join(Mass_Juv1_dat_emm_temp, 
+                            Mass_Juv1_dat_sum_temp,
+                            by = "temp")
+
+
+######
+### MASS: Adult mod 
+Mass_Juv3_mod <- lm(juv3_mass_g ~ hormone + temp + sex + 
+                      scale(Juvenile3_Age), data = data_final)
+
+# Data from model for mean and wiskers 'cort_development_mod'  output
+Mass_Juv3_mod_emm_hormone <- emmeans(Mass_Juv3_mod, pairwise ~ hormone)
+Mass_Juv3_emm_hormone <- as.data.frame(Mass_Juv3_mod_emm_hormone$emmeans) %>% 
+  mutate(Age = "adult",
+         Treatment = "Hormone")
+# sample size per group
+Mass_Juv3_dat_sum_hormone <- data_final %>%
+  dplyr::select(Lizard_ID, hormone,temp,juv3_mass_g) %>% 
+  dplyr::filter(!is.na(juv3_mass_g)) %>%
+  group_by(hormone) %>%
+  summarise(n = n())
+# df for plotting
+mass_adult_hormone <- left_join(Mass_Juv3_emm_hormone, 
+                              Mass_Juv3_dat_sum_hormone,
+                              by = "hormone")
+
+# temp data  - Adult
+Mass_Juv3_mod_emm_temp <- emmeans(Mass_Juv3_mod, pairwise ~ temp)
+Mass_Juv3_dat_emm_temp <- as.data.frame(Mass_Juv3_mod_emm_temp$emmeans) %>% 
+  mutate(Age = "adult",
+         Treatment = "Temperature")
+# sample size per group
+Mass_Juv3_dat_sum_temp <- data_final %>%
+  dplyr::select(Lizard_ID, temp, juv3_mass_g) %>% 
+  dplyr::filter(!is.na(juv3_mass_g)) %>%
+  group_by(temp) %>%
+  summarise(n = n())
+# df for plotting
+mass_adult_temp<- left_join(Mass_Juv3_dat_emm_temp, 
+                           Mass_Juv3_dat_sum_temp,
+                           by = "temp")
+
+#####
+### final df for plotting
+# hormone data
+fig_2_plot_dat_hormone <- rbind(mass_hatch_hormone, 
+                                 mass_juv_hormone, 
+                                 mass_adult_hormone)%>% 
+  dplyr::rename(Treatment_group = hormone)
+# temperature data
+fig_2_plot_dat_temp <- rbind(mass_hatch_temp, 
+                             mass_juv_temp, 
+                             mass_adult_temp) %>% 
+  dplyr::rename(Treatment_group = temp)
+# final plot data
+figure_2_plot_dat <- rbind(fig_2_plot_dat_hormone, 
+                           fig_2_plot_dat_temp) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3)))
+
+###########
+#### !!Figure 2 plot
+# reorder data
+figure_2_plot_dat$Treatment_group <- factor(figure_2_plot_dat$Treatment_group, 
+                                    levels = c("control", "low", "high",
+                                               '23', '28'))
+figure_2_plot_dat$Age <- factor(figure_2_plot_dat$Age, 
+                                    levels = c("hatchling", 
+                                               "juvenile", 
+                                               "adult"))
+###############
+# 2A: hatchling plot - Temp
+hatch_temp_data <- figure_2_plot_dat %>% filter(Age == 'hatchling',
+                                                   Treatment == 'Temperature')
+figure_2A <- ggplot() +
+  geom_point(data = hatch_temp_data, aes(x = Treatment_group, 
+                                            y = emmean, 
+                                            fill = Treatment_group), 
+             shape = 22, color = "black", size = 5) +
+  geom_errorbar(data = hatch_temp_data, 
+                aes(x = Treatment_group, 
+                    ymin = emmean - SE, ymax = emmean + SE), 
+                width = 0.2, position = position_dodge(0.9)) +
+  geom_text(data = hatch_temp_data, aes(x = Treatment_group, y = emmean + 
+                                             SE + .00005, label = paste("n =", n)), 
+            vjust = -0.5, size = 4) +
+  labs(y = "Mass (g)", 
+       x = NULL,
+       fill = 'Treatment') +
+  geom_segment(aes(x = 1, xend =2, 
+                   y = .128, yend =.128 ), color = "black") +
+  annotate("text", x = 1.5, 
+           y = .1283, label = "*", 
+           size =8, fontface = "bold") +
+  theme_classic() +
+  scale_y_continuous(limits = c(0.112, 0.1285), breaks = seq(0.112, 0.128, by = 0.004)) +
+  scale_fill_manual(values = c("dodgerblue", "tomato2")) +
+  theme(axis.text.y = element_text(size = 14),
+        axis.title.y = element_text(size = 14), 
+        axis.title.x = element_blank(), 
+        axis.ticks.x = element_line(),  # Ensure ticks are kept
+        legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.position = c(.01, .45), # Position legend in the top left corner
+        legend.justification = c(0, 1),
+        legend.background = element_rect(fill = "transparent", color = NA), # Make legend background transparent
+        axis.text.x = element_blank()) 
+
+
+
+###############
+# hatchling plot - hormone
+hatch_hormone_data <- figure_2_plot_dat %>% filter(Age == 'hatchling',
+                                                   Treatment == 'Hormone')
+figure_2B <- ggplot() +
+  geom_point(data = hatch_hormone_data, aes(x = Treatment_group, 
+                                            y = emmean, 
+                                            fill = Treatment_group), 
+             shape = 22, color = "black", size = 5) +
+  geom_errorbar(data = hatch_hormone_data, 
+                aes(x = Treatment_group, 
+                    ymin = emmean - SE, ymax = emmean + SE), 
+                width = 0.2, position = position_dodge(0.9)) +
+  geom_text(data = hatch_hormone_data, aes(x = Treatment_group, y = emmean + 
+                                             SE + .00005, label = paste("n =", n)), 
+            vjust = -0.5, size = 4) +
+  labs(y = "Mass (g)", 
+       x = NULL,
+       fill = 'Treatment') +
+  geom_segment(aes(x = 1, xend =3, 
+                   y = .128, yend =.128 ), color = "black") +
+  annotate("text", x = 2, 
+           y = .1283, label = "*", 
+           size =8, fontface = "bold")+
+  theme_classic() +
+  scale_y_continuous(limits = c(0.112, 0.1285), breaks = seq(0.112, 0.128, by = 0.004)) +
+  scale_fill_manual(values = c("white", "lightgreen", "darkgreen")) +
+  theme(axis.text.y = element_blank(),
+        axis.title.y = element_blank(), 
+        axis.title.x = element_blank(), 
+        axis.ticks.x = element_line(),  # Ensure ticks are kept
+        legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.position = c(.01, .45), # Position legend in the top left corner
+        legend.justification = c(0, 1),
+        legend.background = element_rect(fill = "transparent", color = NA), # Make legend background transparent
+        axis.text.x = element_blank())  # Adjust the anchor point of the legend
+
+###############
+# 2C: juvenile plot - Temp
+juv_temp_data <- figure_2_plot_dat %>% filter(Age == 'juvenile',
+                                                Treatment == 'Temperature')
+figure_2C <- ggplot() +
+  geom_point(data = juv_temp_data, aes(x = Treatment_group, 
+                                         y = emmean, 
+                                         fill = Treatment_group), 
+             shape = 22, color = "black", size = 5) +
+  geom_errorbar(data = juv_temp_data, 
+                aes(x = Treatment_group, 
+                    ymin = emmean - SE, ymax = emmean + SE), 
+                width = 0.2, position = position_dodge(0.9)) +
+  geom_text(data = juv_temp_data, aes(x = Treatment_group, y = emmean + 
+                                          SE + .00005, label = paste("n =", n)), 
+            vjust = -0.5, size = 4) +
+  labs(y = "Mass (g)", 
+       x = NULL,
+       fill = 'Treatment') +
+  geom_segment(aes(x = 1, xend =2, 
+                   y = .54, yend =.54 ), color = "black") +
+  annotate("text", x = 1.5, 
+           y = .545, label = "*", 
+           size =8, fontface = "bold") +
+  theme_classic() +
+  scale_y_continuous(limits = c(0.38, .55), breaks = seq(0.4, 0.55, by = 0.05)) +
+  scale_fill_manual(values = c("dodgerblue", "tomato2")) +
+  theme(axis.text.y = element_text(size = 14),
+        axis.title.y = element_text(size = 14), 
+        axis.title.x = element_blank(), 
+        axis.ticks.x = element_line(),  # Ensure ticks are kept
+        legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.position = 'none', # Position legend in the top left corner
+        legend.justification = c(0, 1),
+        axis.text.x = element_blank()) # Adjust the anchor point of the legend
+figure_2C
+
+
+###############
+# juvenile plot - hormone
+juv_hormone_data <- figure_2_plot_dat %>% filter(Age == 'juvenile',
+                                                   Treatment == 'Hormone')
+figure_2D <- ggplot() +
+  geom_point(data = juv_hormone_data, aes(x = Treatment_group, 
+                                            y = emmean, 
+                                            fill = Treatment_group), 
+             shape = 22, color = "black", size = 5) +
+  geom_errorbar(data = juv_hormone_data, 
+                aes(x = Treatment_group, 
+                    ymin = emmean - SE, ymax = emmean + SE), 
+                width = 0.2, position = position_dodge(0.9)) +
+  labs(y = "Mass (g)", 
+       x = NULL,
+       fill = 'Treatment') +
+  geom_text(data = juv_hormone_data, aes(x = Treatment_group, y = emmean + 
+                                             SE + .00005, label = paste("n =", n)), 
+            vjust = -0.5, size = 4) +
+  theme_classic() +
+  scale_y_continuous(limits = c(0.38, .55), breaks = seq(0.4, 0.55, by = 0.05)) +
+  scale_fill_manual(values = c("white", "lightgreen", "darkgreen")) +
+  theme(axis.text.y = element_blank(),
+        axis.title.y = element_blank(), 
+        axis.title.x = element_blank(), 
+        axis.ticks.x = element_line(),  # Ensure ticks are kept
+        legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.position = 'none', # Position legend in the top left corner
+        legend.justification = c(0, 1),
+        axis.text.x = element_blank()) # Adjust the anchor point of the legend
+figure_2D
+
+###############
+# 2E: adult plot - Temp
+adult_temp_data <- figure_2_plot_dat %>% filter(Age == 'adult',
+                                              Treatment == 'Temperature')
+figure_2E <- ggplot() +
+  geom_point(data = adult_temp_data, aes(x = Treatment_group, 
+                                       y = emmean, 
+                                       fill = Treatment_group), 
+             shape = 22, color = "black", size = 5) +
+  geom_errorbar(data = adult_temp_data, 
+                aes(x = Treatment_group, 
+                    ymin = emmean - SE, ymax = emmean + SE), 
+                width = 0.2, position = position_dodge(0.9)) +
+  geom_text(data = adult_temp_data, aes(x = Treatment_group, y = emmean + 
+                                        SE + .00005, label = paste("n =", n)), 
+            vjust = -0.5, size = 4) +
+  labs(y = "Mass (g)", 
+       x = NULL,
+       fill = 'Treatment') +
+  theme_classic() +
+  scale_y_continuous(limits = c(1.4, 1.62), breaks = seq(1.4, 1.6, by = 0.05)) +
+  scale_fill_manual(values = c("dodgerblue", "tomato2")) +
+  theme(axis.text.y = element_text(size = 14),
+        axis.title.y = element_text(size = 14), 
+        axis.title.x = element_blank(), 
+        axis.ticks.x = element_line(),  # Ensure ticks are kept
+        legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.position = 'none', # Position legend in the top left corner
+        legend.justification = c(0, 1),
+        axis.text.x = element_text(size = 14, face = "bold")) # Adjust the anchor point of the legend
+figure_2E
+
+
+###############
+# adult plot - hormone
+adult_hormone_data <- figure_2_plot_dat %>% filter(Age == 'adult',
+                                                 Treatment == 'Hormone')
+figure_2F <- ggplot() +
+  geom_point(data = adult_hormone_data, aes(x = Treatment_group, 
+                                          y = emmean, 
+                                          fill = Treatment_group), 
+             shape = 22, color = "black", size = 5) +
+  geom_errorbar(data = adult_hormone_data, 
+                aes(x = Treatment_group, 
+                    ymin = emmean - SE, ymax = emmean + SE), 
+                width = 0.2, position = position_dodge(0.9)) +
+  geom_text(data = adult_hormone_data, aes(x = Treatment_group, y = emmean + 
+                                          SE + .00005, label = paste("n =", n)), 
+            vjust = -0.5, size = 4) +
+  labs(y = "Mass (g)", 
+       x = NULL,
+       fill = 'Treatment') +
+  theme_classic() +
+  scale_y_continuous(limits = c(1.4, 1.62), breaks = seq(1.4, 1.6, by = 0.05)) +
+  scale_fill_manual(values = c("white", "lightgreen", "darkgreen")) +
+  theme(axis.text.y = element_blank(),
+        axis.title.y = element_blank(), 
+        axis.title.x = element_blank(),  # Remove the x-axis title
+        axis.ticks.x = element_line(),  # Ensure ticks are kept
+        legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.position = 'none',  # Position legend in the top left corner
+        legend.justification = c(0, 1),
+        axis.text.x = element_text(size = 14, face = "bold")) # Adjust the anchor point of the legend
+figure_2F
+##################
+# Final figure
+figure_2AB <- plot_grid(figure_2A, figure_2B, labels = c("A"), label_size = 16, label_fontface = "bold", ncol = 2)
+figure_2CD <- plot_grid(figure_2C, figure_2D, labels = c("B"), label_size = 16, label_fontface = "bold", ncol = 2)
+figure_2EF <- plot_grid(figure_2E, figure_2F, labels = c("C"), label_size = 16, label_fontface = "bold", ncol = 2)
+
+# Combine all the rows into one figure
+Figure_2 <- plot_grid(figure_2AB, figure_2CD, figure_2EF, ncol = 1, align = 'v')
+
+# Display the combined plot
+print(Figure_2)
 
 ###############
 # Scaled mass ANALYSIS: Juv_1, Juv_2, Juv_3
@@ -520,6 +896,56 @@ Bar.plot <- ggplot(sum.dat, aes(x=hormone, y=mean.value, fill=hormone)) +
 Bar.plot + theme(axis.text.x = element_text(size = 14), axis.text.y = element_text(size = 14),
                  axis.title = element_text(size = 14), legend.text = element_text(size = 14), 
                  legend.title = element_text(size = 14))
+
+
+###############################################################
+####### !!!KRIS Figure 3 model - I know this is above but didnt want to get rid of your figure
+cort_development_mod <- lm(log(juv3_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Juvenile3_Age) + Plate_CORT_juv3, data = cort_dat)
+check_model(cort_development_mod)
+Anova(cort_development_mod)
+summary(cort_development_mod)
+##low CORT treatment has higher baseline CORT than control treatment; but ns
+cort_development_mod_emm <- emmeans(cort_development_mod, pairwise ~ hormone)
+
+
+###################
+####### Figure 3
+# Reorder the factor levels
+cort_dat$hormone <- factor(cort_dat$hormone, levels = c("control", "low", "high"))
+
+# Data from model for mean and wiskers 'cort_development_mod'  output
+sum.dat.emm <- as.data.frame(cort_development_mod_emm$emmeans) %>% 
+  mutate(across(where(is.numeric), ~ round(.x, 2)))
+# sample size per group
+sum.dat <- cort_dat %>%
+  group_by(hormone) %>%
+  summarise(n = n())
+# combine for plot
+fig.3.emm.dat <- left_join(sum.dat.emm, sum.dat, by = "hormone")
+
+
+# Plot
+Figure_3 <- ggplot() +
+  geom_point(data = fig.3.emm.dat, aes(x = hormone, y = emmean, fill = hormone), 
+             shape = 22, color = "black", size = 5) +
+  geom_errorbar(data = fig.3.emm.dat, aes(x = hormone, ymin = emmean - SE, ymax = emmean + SE), 
+                width = 0.2, position = position_dodge(0.9)) +
+  geom_text(data = fig.3.emm.dat, aes(x = hormone, y = emmean + SE + .01, label = paste("n =", n)), 
+            vjust = -0.5, size = 4) +
+  labs(y = "Log CORT", 
+       x = "Corticosterone treatment") +
+  theme_classic() +
+  scale_fill_manual(values = c("white", "lightgreen", "darkgreen")) +
+  theme(axis.text.x = element_text(size = 14), 
+        axis.text.y = element_text(size = 14),
+        axis.title = element_text(size = 14), 
+        legend.text = element_text(size = 14), 
+        legend.title = element_text(size = 14),
+        legend.position = c(0.02, 0.98), # Position legend in the top left corner
+        legend.justification = c(0, 1)) # Adjust the anchor point of the legend
+Figure_3
+
+
 
 
 ### using a glm with gamma distribution; results equivalent
@@ -742,7 +1168,6 @@ Anova(RCR_mod)
 summary (RCR_mod)
 check_model(RCR_mod)
 
-
 ###For models with hormone levels - need to filter n=7 data points from 
 ###samples with less than 7ul 
 mito_hormone <- mito_dat %>%
@@ -767,13 +1192,11 @@ summary(T4_residuals_mod)
 
 ###Associations between mitochondrial bioenergetics and hormones levels
 ###random effect of clutch is small for small models (should we remove it?)
-
 ##Basal; 
 Basal_hormone_mod <- lm(basal_corrected_pmol ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + juv3_oroboros/chamber, data = mito_hormone)
 Anova(Basal_hormone_mod)
 summary(Basal_hormone_mod)
 check_model(Basal_hormone_mod)
-
 
 ###ADP -  T4 positive association with ADP mito 
 ADP_hormone_mod <- lm(adp_corrected_pmol ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + juv3_oroboros/chamber, data = mito_hormone)
@@ -797,12 +1220,233 @@ Anova(RCR_hormone_mod)
 summary (RCR_hormone_mod)
 check_model(RCR_hormone_mod)
 
+
+###############################################################
+####### !!!KRIS Figure 4 model
+mito_hormone$sex <- as.factor(mito_hormone$sex)
+
+# Recode the levels of the 'sex' factor
+Fig4_dat <- mito_hormone %>%
+  mutate(sex = recode_factor(sex, "M" = "Male", "F" = "Female"))
+
+
+######### Fig 4 A - BASAL
+Basal_hormone_mod <- lm(basal_corrected_pmol ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + juv3_oroboros/chamber, data = mito_hormone)
+anova_result <- Anova(Basal_treatment_mod)
+# Extract the p-value for the 'sex' variable
+# Convert the ANOVA table to a data frame
+anova_df <- as.data.frame(anova_result)
+# Extract the p-value for 'sex'
+sex_pvalue <- anova_df["sex", "Pr(>F)"]
+# Round the p-value
+rounded_sex_pvalue <- round(sex_pvalue, 3)
+# Save as a vector
+Fig_4A_pvalue <- rounded_sex_pvalue
+#### Plot
+Fig_4A <-   ggplot(Fig4_dat, aes(x = log(CORT_Final_Hormone_ng_mL), y = basal_corrected_pmol)) +
+  geom_point(aes(color = sex, shape = sex)) +
+  geom_smooth(method = "lm", aes(color = sex), se = FALSE) +
+  scale_shape_manual(values = c("Male" = 16, "Female" = 17)) +  # 16 is circle, 17 is upside-down triangle
+  scale_color_manual(values = c("Male" = "aquamarine4", "Female" = '#9567FE')) +
+  annotate("text", x = 6, 
+           y = .7, label = paste0("Sex: P =",Fig_4A_pvalue),  
+           size =3, fontface = "bold") +
+  theme_classic() +
+  labs(x = "Log(CORT Final Hormone)",
+       y = "Basal Corrected (pmol)",
+       color = "Sex",
+       shape = "Sex")+
+  theme( axis.text.y = element_text(size = 14),
+         axis.text.x = element_blank(),
+         axis.title.y = element_text(size = 14), 
+         axis.title.x = element_blank(), 
+         axis.ticks.x = element_line(), 
+         legend.text = element_text(size = 14), 
+         legend.title = element_text(size = 14, face = "bold"),
+         legend.position = c(0.05, 0.98),  # Position legend in the top left corner
+         legend.justification = c(0, 1))
+  
+Fig_4A
+
+######
+# Fig 4B ADP
+ADP_hormone_mod <- lm(adp_corrected_pmol ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + juv3_oroboros/chamber, data = mito_hormone)
+# Perform ANOVA
+anova_result_adp <- Anova(ADP_hormone_mod)
+# Extract the p-value for the 'sex' variable
+# Convert the ANOVA table to a data frame
+anova_df_adp <- as.data.frame(anova_result_adp)
+# Extract the p-value for 'sex'
+sex_pvalue_adp <- anova_df_adp["sex", "Pr(>F)"]
+# Round the p-value
+rounded_sex_pvalue_adp <- round(sex_pvalue_adp, 3)
+# Save as a vector
+Fig_4B_pvalue_adp <- rounded_sex_pvalue_adp
+# plot
+Fig_4B <-   ggplot(Fig4_dat, aes(x = log(CORT_Final_Hormone_ng_mL), y = adp_corrected_pmol)) +
+  geom_point(aes(color = sex, shape = sex)) +
+  geom_smooth(method = "lm", aes(color = sex), se = FALSE) +
+  scale_shape_manual(values = c("Male" = 16, "Female" = 17)) +  # 16 is circle, 17 is upside-down triangle
+  scale_color_manual(values = c("Male" = "aquamarine4", "Female" = '#9567FE')) +
+  theme_classic()+
+  labs(x = "Log(CORT Final Hormone)",
+       y = "ADP Corrected (pmol)",
+       color = "Sex",
+       shape = "Sex") +
+  annotate("text", x = 6, 
+           y = 6, label = paste0("Sex: P =",Fig_4B_pvalue_adp),  
+           size =3, fontface = "bold") +
+  theme( axis.text.y = element_text(size = 14),
+         axis.text.x = element_blank(),
+         axis.title.y = element_text(size = 14), 
+         axis.title.x = element_blank(), 
+         axis.ticks.x = element_line(),  
+         legend.text = element_text(size = 14), 
+         legend.title = element_text(size = 14, face = "bold"),
+         legend.position = 'none',  # Position legend in the top left corner
+         legend.justification = c(0, 1))
+Fig_4B
+
+########################
+###### Fig 4C Oligo
+Oligo_hormone_mod <- lm(oligo_corrected_pmol ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + juv3_oroboros/chamber, data = mito_hormone)
+# Perform ANOVA
+anova_result_oligo <- Anova(Oligo_hormone_mod)
+# Extract the p-value for the 'sex' variable
+# Convert the ANOVA table to a data frame
+anova_df_oligo <- as.data.frame(anova_result_oligo)
+# Extract the p-value for 'sex'
+sex_pvalue_oligo <- anova_df_oligo["sex", "Pr(>F)"]
+# Round the p-value
+rounded_sex_pvalue_oligo <- round(sex_pvalue_oligo, 3)
+Fig_4C_pvalue_oligo <- rounded_sex_pvalue_oligo
+
+# Fig 4C plot
+Fig_4C <-   ggplot(Fig4_dat, aes(x = log(CORT_Final_Hormone_ng_mL), y = oligo_corrected_pmol)) +
+  geom_point(aes(color = sex, shape = sex)) +
+  geom_smooth(method = "lm", aes(color = sex), se = FALSE) +
+  scale_shape_manual(values = c("Male" = 16, "Female" = 17)) +  # 16 is circle, 17 is upside-down triangle
+  scale_color_manual(values = c("Male" = "aquamarine4", "Female" = '#9567FE')) +
+  theme_classic() +
+  labs(x = "Log(CORT Final Hormone)",
+       y = "Oligo Corrected (pmol)",
+       color = "Sex",
+       shape = "Sex") +
+  annotate("text", x = 6, 
+          y = .7, label = paste0("Sex: P =",Fig_4C_pvalue_oligo),  
+          size =3, fontface = "bold") +
+  theme( axis.text.y = element_text(size = 14),
+         axis.text.x = element_text(size = 14),
+         axis.title.y = element_text(size = 14), 
+         axis.title.x = element_text(size = 14), 
+         legend.text = element_text(size = 14), 
+         legend.title = element_text(size = 14, face = "bold"),
+         legend.position = 'none',  # Position legend in the top left corner
+         legend.justification = c(0, 1))
+Fig_4C
+
+########################
+# Fig 4D - RCR
+RCR_hormone_mod <- lm(RCR ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + juv3_oroboros/chamber, data = mito_hormone)
+# Perform ANOVA
+anova_result_rcr <- Anova(RCR_hormone_mod)
+# Extract the p-value for the 'sex' variable
+# Convert the ANOVA table to a data frame
+anova_df_rcr <- as.data.frame(anova_result_rcr)
+# Extract the p-value for 'sex'
+sex_pvalue_rcr <- anova_df_rcr["sex", "Pr(>F)"]
+# Round the p-value
+rounded_sex_pvalue_rcr <- round(sex_pvalue_rcr, 3)
+# Save as a vector
+Fig_4D_pvalue_rcr <- rounded_sex_pvalue_rcr
+
+# plot
+Fig_4D <-   ggplot(Fig4_dat, aes(x = log(CORT_Final_Hormone_ng_mL), y = RCR)) +
+  geom_point(aes(color = sex, shape = sex)) +
+  geom_smooth(method = "lm", aes(color = sex), se = FALSE) +
+  scale_shape_manual(values = c("Male" = 16, "Female" = 17)) +  # 16 is circle, 17 is upside-down triangle
+  scale_color_manual(values = c("Male" = "aquamarine4", "Female" = '#9567FE')) +
+  theme_classic() +
+  labs(x = "Log(CORT Final Hormone)",
+       y = "RCR",
+       color = "Sex",
+       shape = "Sex") +
+  annotate("text", x = 6, 
+           y = 23, label = paste0("Sex: P =",Fig_4D_pvalue_rcr),  
+           size =3, fontface = "bold") +
+  theme( axis.text.y = element_text(size = 14),
+         axis.text.x = element_text(size = 14),
+         axis.title.y = element_text(size = 14), 
+         axis.title.x = element_text(size = 14), 
+         legend.text = element_text(size = 14), 
+         legend.title = element_text(size = 14, face = "bold"),
+         legend.position = 'none',  # Position legend in the top left corner
+         legend.justification = c(0, 1))
+Fig_4D
+
+################################
+####### Figure 4 Final !!!Kris
+Figure_4 <- plot_grid(
+  Fig_4A + ggtitle("A") + theme(plot.title = element_text(hjust = -0.1, vjust = 1.5, face = 'bold')),
+  Fig_4B + ggtitle("B") + theme(plot.title = element_text(hjust = -0.1, vjust = 1.5, face = 'bold')),
+  Fig_4C + ggtitle("C") + theme(plot.title = element_text(hjust = -0.1, vjust = 1.5, face = 'bold')),
+  Fig_4D + ggtitle("D") + theme(plot.title = element_text(hjust = -0.1, vjust = 1.5, face = 'bold')),
+  ncol = 2, nrow = 2, labels = NULL)
+
+
+
+
+
+######################
+####
 ###Growth and body size and mito function 
 ###Basal - postive association with basal and growth (p = 0.02)
 Mass_basal <- lm(hatch_juv3_MASS_growth ~ basal_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
 Anova(Mass_basal)
 summary(Mass_basal)
 check_model(Mass_basal)
+
+
+######################
+#### Figure 5 !!!Kris  
+# Perform ANOVA
+anova_result_mass_growth <- Anova(Mass_basal)
+# Extract the p-value for the 'sex' variable
+# Convert the ANOVA table to a data frame
+anova_df_mass_growth <- as.data.frame(anova_result_mass_growth)
+# Extract the p-value for 'sex'
+sex_pvalue_mass_growth <- anova_df_mass_growth["sex", "Pr(>F)"]
+# Round the p-value
+rounded_sex_pvalue_mass_growth <- round(sex_pvalue_mass_growth, 3)
+# Save as a vector
+Fig_5_pvalue_mass_growth <- '<0.001'
+
+# Plot
+Fig5_dat <- Fig4_dat
+Figure_5 <- ggplot(Fig5_dat, aes(x = log(CORT_Final_Hormone_ng_mL), 
+                                 y = hatch_juv3_MASS_growth)) +
+  geom_point(aes(color = sex, shape = sex)) +
+  geom_smooth(method = "lm", aes(color = sex), se = FALSE) +
+  scale_shape_manual(values = c("Male" = 16, "Female" = 17)) +  # 16 is circle, 17 is upside-down triangle
+  scale_color_manual(values = c("Male" = "aquamarine4", "Female" = '#9567FE')) +
+  theme_classic() +
+  labs(x = "Log(CORT Final Hormone)",
+       y = "Mass Growth Rate (g/d)",
+       color = "Sex",
+       shape = "Sex") +
+  annotate("text", x = 6, 
+           y = .0045, label = paste0("Sex: P =",Fig_5_pvalue_mass_growth),  
+           size =4.5, fontface = "bold") +
+  theme( axis.text.y = element_text(size = 14),
+         axis.text.x = element_text(size = 14),
+         axis.title.y = element_text(size = 14), 
+         axis.title.x = element_text(size = 14), 
+         legend.text = element_text(size = 14), 
+         legend.title = element_text(size = 14, face = "bold"),
+         legend.position = c(.1, 0.98),   # Position legend in the top left corner
+         legend.justification = c(0, 1))
+
+
 
 SVL_basal <- lm(hatch_juv3_SVL_growth~ basal_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
 Anova(SVL_basal)
