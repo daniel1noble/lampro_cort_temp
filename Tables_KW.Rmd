@@ -19,7 +19,7 @@ pacman::p_load(car, dplyr,ggplot2, flextable, lubridate, knitr, here, stringr, b
 
 ## Tables
 
-**Table S1**. Basal treatment ANOVA model output. 
+**Table S1**. Basal, OXPHOS, LEAK, RCR  ANOVA model output. 
 ```{r}
 #| echo: false
 
@@ -31,224 +31,108 @@ RCR_mod <- readRDS('Kwild_code/models/RCR_mod.RDS')
 # combinde data
 ANOVA_Basal_treatment_mod <- tidy(Anova(Basal_treatment_mod)) %>% 
   mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3))
+  mutate(across(where(is.numeric), round, 3)) %>% 
+  mutate(Test = 'Basal')
 ANOVA_ADP_treatment_mod <- tidy(Anova(ADP_treatment_mod))%>% 
   mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3))
+  mutate(across(where(is.numeric), round, 3))  %>% 
+  mutate(Test = 'OXPHOS')
 ANOVA_Oligo_treatment_mod <- tidy(Anova(Oligo_treatment_mod))%>% 
   mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3))
+  mutate(across(where(is.numeric), round, 3)) %>% 
+  mutate(Test = 'LEAK')
 ANOVA_RCR_mod <- tidy(Anova(RCR_mod))%>% 
   mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3))
-
-TblS1<-flextable(ANOVA_Basal_treatment_mod) %>%
+  mutate(across(where(is.numeric), round, 3)) %>% 
+  mutate(Test = 'RCR')
+S1_mods <- rbind(ANOVA_Basal_treatment_mod,
+                 ANOVA_ADP_treatment_mod,
+                 ANOVA_Oligo_treatment_mod,
+                 ANOVA_RCR_mod)
+S1_mods <- S1_mods[,c(7, 1, 2, 3, 4, 5, 6)]
+TblS1<-flextable(S1_mods) %>%
   flextable::font(part = "all", fontname = "Times New Roman") %>%
+  hline(i=c(8,16, 24, 32), j = 1:7, part="body") %>% 
   set_table_properties(layout = "autofit") %>%
   fix_border_issues(part = "body") %>%
   bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
-  delete_columns(j = 'significant')
+  delete_columns(j = 'significant') %>% 
+  merge_v(j = "Test")
 
 knitr::knit_print(TblS1)
 ```
 
 \newpage
-**Table S2**. ADP treatment ANOVA model output. 
+**Table S2**. Mass ANOVA model output. 
 ```{r}
 #| echo: false
-ADP_treatment_mod <- readRDS('Kwild_code/models/ADP_treatment_mod.RDS')
+Mass_basal <- Anova(readRDS('Kwild_code/models/Mass_basal.RDS'))%>% 
+  tidy() %>% 
+  mutate(Test = 'Basal')
+Mass_Growth_ADP <- Anova(readRDS('Kwild_code/models/Mass_Growth_ADP.RDS'))%>%
+  tidy() %>% 
+  mutate(Test = 'OXPHOS')
+Mass_Growth_Oligo <- Anova(readRDS('Kwild_code/models/Mass_Growth_Oligo.RDS'))%>%
+  tidy() %>% 
+  mutate(Test = 'Leak')
+Mass_Growth_RCR <- Anova(readRDS('Kwild_code/models/Mass_Growth_RCR.RDS'))%>%
+  tidy() %>% 
+  mutate(Test = 'RCR')
 
-# combinde data
-ANOVA_ADP_treatment_mod <- tidy(Anova(ADP_treatment_mod))%>% 
+
+#### Table
+Mass_table <- rbind(Mass_basal, Mass_Growth_ADP, Mass_Growth_Oligo, Mass_Growth_RCR)%>% 
   mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
   mutate(across(where(is.numeric), round, 3))
 
-TblS2<-flextable(ANOVA_ADP_treatment_mod) %>%
+# combine and rearrange
+Table_S2 <- Mass_table[,c(6, 1, 2, 3, 4, 5, 7)]
+
+TblS2<-flextable(Table_S2) %>%
   flextable::font(part = "all", fontname = "Times New Roman") %>%
-  set_table_properties(layout = "autofit") %>%
-  fix_border_issues(part = "body") %>%
+  hline(i=c(5, 10, 15, 20), j = 1:7, part="body") %>% 
   bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
-  delete_columns(j = 'significant')
+  delete_columns(j = 'significant') %>%
+  merge_v(j = "Test") %>% 
+  set_table_properties(layout = "autofit") %>%
+  fix_border_issues(part = "body")
 
 knitr::knit_print(TblS2)
 ```
-
 \newpage
-**Table S3**. Oligo treatment ANOVA model output. 
+
+**Table S3** SVL ANOVA model output. 
 ```{r}
 #| echo: false
-Oligo_treatment_mod<- readRDS('Kwild_code/models/Oligo_treatment_mod.RDS')
+SVL_basal <- Anova(readRDS('Kwild_code/models/Mass_basal.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'BASAL')
+SVL_Growth_ADP <- Anova(readRDS('Kwild_code/models/SVL_Growth_ADP.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'OXPHOS')
+SVL_Growth_Oligo <- Anova(readRDS('Kwild_code/models/SVL_Growth_Oligo.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'Leak')
+SVL_Growth_RCR <- Anova(readRDS('Kwild_code/models/SVL_Growth_RCR.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'RCR')
 
-# combinde data
-ANOVA_Oligo_treatment_mod <- tidy(Anova(Oligo_treatment_mod))%>% 
+
+# combine and rearrange
+SVL_Growth_ADP_table <- rbind(SVL_basal, SVL_Growth_ADP, SVL_Growth_Oligo, SVL_Growth_RCR)%>% 
   mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3))
+  mutate(across(where(is.numeric), round, 3)) 
+Table_S3 <- SVL_Growth_ADP_table[,c(6, 1, 2, 3, 4, 5, 7)]
 
-TblS3<-flextable(ANOVA_Oligo_treatment_mod) %>%
+
+TblS3<-flextable(Table_S3) %>%
   flextable::font(part = "all", fontname = "Times New Roman") %>%
-  set_table_properties(layout = "autofit") %>%
-  fix_border_issues(part = "body") %>%
+  hline(i=c(5, 10, 15, 20), j = 1:7, part="body") %>% 
   bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
-  delete_columns(j = 'significant')
+  delete_columns(j = 'significant') %>%
+  merge_v(j = "Test") %>% 
+  set_table_properties(layout = "autofit") %>%
+  fix_border_issues(part = "body")
 
 knitr::knit_print(TblS3)
-```
-
-\newpage
-**Table S4**. RCR treatment ANOVA model output. 
-```{r}
-#| echo: false
-RCR_mod <- readRDS('Kwild_code/models/RCR_mod.RDS')
-
-ANOVA_RCR_mod <- tidy(Anova(RCR_mod))%>% 
-  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3))
-
-TblS4<-flextable(ANOVA_RCR_mod) %>%
-  flextable::font(part = "all", fontname = "Times New Roman") %>%
-  set_table_properties(layout = "autofit") %>%
-  fix_border_issues(part = "body") %>%
-  bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
-  delete_columns(j = 'significant')
-
-knitr::knit_print(TblS4)
-```
-
-\newpage
-
-**Table S5**. Mass and SVL basal ANOVA model output. 
-```{r}
-#| echo: false
-Mass_basal <- readRDS('Kwild_code/models/Mass_basal.RDS')
-SVL_basal <- readRDS('Kwild_code/models/Mass_basal.RDS')
-
-#### Table
-Mass_basal_table <- tidy(Anova(Mass_basal))%>% 
-  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3)) %>%
-  mutate(Test = 'Mass')
-
-SVL_basal_table <- tidy(Anova(SVL_basal))%>% 
-  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3)) %>%
-  mutate(Test = 'SVL')
-
-# combine and rearrange
-Table_S5 <- rbind(Mass_basal_table, SVL_basal_table)
-Table_S5 <- Table_S5[,c(7, 1, 2, 3, 4, 5, 6)]
-
-TblS5<-flextable(Table_S5) %>%
-  flextable::font(part = "all", fontname = "Times New Roman") %>%
-  hline(i=5, j = 1:7, part="body") %>% 
-  bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
-  delete_columns(j = 'significant') %>%
-  merge_v(j = "Test") %>% 
-  set_table_properties(layout = "autofit") %>%
-  fix_border_issues(part = "body")
-
-knitr::knit_print(TblS5)
-```
-\newpage
-
-**Table S6** Mass and SVL ADP ANOVA model output. 
-```{r}
-#| echo: false
-Mass_Growth_ADP <- readRDS('Kwild_code/models/Mass_Growth_ADP.RDS')
-SVL_Growth_ADP <- readRDS('Kwild_code/models/SVL_Growth_ADP.RDS')
-
-#### Table
-Mass_Growth_ADP_table <- tidy(Anova(Mass_Growth_ADP))%>% 
-  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3)) %>%
-  mutate(Test = 'Mass')
-
-SVL_Growth_ADP_table <- tidy(Anova(SVL_Growth_ADP))%>% 
-  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3)) %>%
-  mutate(Test = 'SVL')
-
-# combine and rearrange
-Table_S6 <- rbind(Mass_Growth_ADP_table, SVL_Growth_ADP_table)
-Table_S6 <- Table_S6[,c(7, 1, 2, 3, 4, 5, 6)]
-
-TblS6<-flextable(Table_S6) %>%
-  flextable::font(part = "all", fontname = "Times New Roman") %>%
-  hline(i=5, j = 1:7, part="body") %>% 
-  bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
-  delete_columns(j = 'significant') %>%
-  merge_v(j = "Test") %>% 
-  set_table_properties(layout = "autofit") %>%
-  fix_border_issues(part = "body")
-
-knitr::knit_print(TblS6)
-```
-
-\newpage
-
-**Table S7** Mass and SVL Oligo ANOVA model output. 
-```{r}
-#| echo: false
-Mass_Growth_Oligo <- readRDS('Kwild_code/models/Mass_Growth_Oligo.RDS')
-SVL_Growth_Oligo <- readRDS('Kwild_code/models/SVL_Growth_Oligo.RDS')
-
-#### Table
-Mass_Growth_Oligo_table <- tidy(Anova(Mass_Growth_Oligo))%>% 
-  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3)) %>%
-  mutate(Test = 'Mass')
-
-SVL_Growth_Oligo_table <- tidy(Anova(SVL_Growth_Oligo))%>% 
-  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3)) %>%
-  mutate(Test = 'SVL')
-
-# combine and rearrange
-TblS7 <- rbind(Mass_Growth_Oligo_table, SVL_Growth_Oligo_table)
-TblS7 <- TblS7[,c(7, 1, 2, 3, 4, 5, 6)]
-
-TblS7<-flextable(TblS7) %>%
-  flextable::font(part = "all", fontname = "Times New Roman") %>%
-  hline(i=5, j = 1:7, part="body") %>% 
-  bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
-  delete_columns(j = 'significant') %>%
-  merge_v(j = "Test") %>% 
-  set_table_properties(layout = "autofit") %>%
-  fix_border_issues(part = "body")
-
-knitr::knit_print(TblS7)
-```
-
-\newpage
-
-**Table S8** Mass and SVL RCR ANOVA model output. 
-```{r}
-#| echo: false
-Mass_Growth_RCR <- readRDS('Kwild_code/models/Mass_Growth_RCR.RDS')
-SVL_Growth_RCR <- readRDS('Kwild_code/models/SVL_Growth_RCR.RDS')
-
-#### Table
-Mass_Growth_RCR_table <- tidy(Anova(Mass_Growth_RCR))%>% 
-  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3)) %>%
-  mutate(Test = 'Mass')
-
-SVL_Growth_RCR_table <- tidy(Anova(SVL_Growth_RCR))%>% 
-  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
-  mutate(across(where(is.numeric), round, 3)) %>%
-  mutate(Test = 'SVL')
-
-# combine and rearrange
-TblS8 <- rbind(Mass_Growth_RCR_table, SVL_Growth_RCR_table)
-TblS8 <- TblS8[,c(7, 1, 2, 3, 4, 5, 6)]
-
-TblS8<-flextable(TblS8) %>%
-  flextable::font(part = "all", fontname = "Times New Roman") %>%
-  hline(i=5, j = 1:7, part="body") %>% 
-  bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
-  delete_columns(j = 'significant') %>%
-  merge_v(j = "Test") %>% 
-  set_table_properties(layout = "autofit") %>%
-  fix_border_issues(part = "body")
-
-knitr::knit_print(TblS8)
 ```
