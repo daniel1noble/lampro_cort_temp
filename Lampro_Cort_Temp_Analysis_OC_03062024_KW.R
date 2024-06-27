@@ -767,16 +767,15 @@ Basal_hormone_mod <- lm(mass_basal ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corr
 Anova(Basal_hormone_mod)
 summary(Basal_hormone_mod)
 check_model(Basal_hormone_mod)
-
 Boxplot(mito_hormone$mass_basal, mito_hormone$sex, na.action = na.exclude)
-
+saveRDS(Basal_hormone_mod, 'Kwild_code/models/Basal_hormone_mod.RDS')
 
 ###ADP -  T4 positive association with ADP mito 
 ADP_hormone_mod <- lm(mass_ADP ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + juv3_oroboros/chamber, data = mito_hormone)
 Anova(ADP_hormone_mod)
 summary(ADP_hormone_mod)
 check_model(ADP_hormone_mod)
-
+saveRDS(ADP_hormone_mod, 'Kwild_code/models/ADP_hormone_mod.RDS')
 
 
 ##oligo - T4 near positive association
@@ -784,12 +783,15 @@ Oligo_hormone_mod <- lm(mass_oligo ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corr
 Anova(Oligo_hormone_mod)
 summary(Oligo_hormone_mod)
 check_model(Oligo_hormone_mod)
+saveRDS(Oligo_hormone_mod, 'Kwild_code/models/Oligo_hormone_mod.RDS')
+
 
 #RCR - 
 RCR_hormone_mod <- lm(mass_RCR ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + juv3_oroboros/chamber, data = mito_hormone)
 Anova(RCR_hormone_mod)
 summary (RCR_hormone_mod)
 check_model(RCR_hormone_mod)
+saveRDS(RCR_hormone_mod, 'Kwild_code/models/RCR_hormone_mod.RDS')
 
 
 ###Growth and body size and mito function 
@@ -958,6 +960,12 @@ text(x = 440,
 ###############################################################
 library(cowplot) # combines your plots into panels 
 cort_dat$hormone <- factor(cort_dat$hormone, levels = c("control", "low", "high"))
+scale_of_inference_dat <- data_final %>% dplyr::select(Lizard_ID, temp, hormone)
+scale_of_inference <- scale_of_inference_dat %>%
+  group_by(temp, hormone) %>%
+  summarise(count = n()) %>%
+  spread(hormone, count, fill = 0)
+
 
 ####################
 ###### FIGURE 2) MASS - Hormone 

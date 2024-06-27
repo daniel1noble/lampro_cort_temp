@@ -104,7 +104,7 @@ knitr::knit_print(TblS2)
 **Table S3** SVL ANOVA model output. 
 ```{r}
 #| echo: false
-SVL_basal <- Anova(readRDS('Kwild_code/models/Mass_basal.RDS')) %>% 
+SVL_basal <- Anova(readRDS('Kwild_code/models/SVL_basal.RDS')) %>% 
   tidy() %>% 
   mutate(Test = 'BASAL')
 SVL_Growth_ADP <- Anova(readRDS('Kwild_code/models/SVL_Growth_ADP.RDS')) %>% 
@@ -135,4 +135,40 @@ TblS3<-flextable(Table_S3) %>%
   fix_border_issues(part = "body")
 
 knitr::knit_print(TblS3)
+```
+\newpage
+**Table SXX** Mitochondrial parameters and their relationships between CORT, T4, and Sex. Mitochondrial parameters were adjusted for individual mass, and CORT and T4 were log-transformed to meet assumptions for normality. Finally, oroboros chamber was accounted for in the model.
+```{r}
+#| echo: false
+mito_basal <- Anova(readRDS('Kwild_code/models/Basal_hormone_mod.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'BASAL')
+mito_ADP <- Anova(readRDS('Kwild_code/models/ADP_hormone_mod.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'OXPHOS')
+mito_Oligo <- Anova(readRDS('Kwild_code/models/Oligo_hormone_mod.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'Leak')
+mito_RCR <- Anova(readRDS('Kwild_code/models/RCR_hormone_mod.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'RCR')
+
+
+# combine and rearrange
+mito_Growth_ADP_table <- rbind(mito_basal, mito_ADP, mito_Oligo, mito_RCR)%>% 
+  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
+  mutate(across(where(is.numeric), round, 3)) 
+Table_SXX <- mito_Growth_ADP_table[,c(6, 1, 2, 3, 4, 5, 7)]
+
+
+TblSXX<-flextable(Table_SXX) %>%
+  flextable::font(part = "all", fontname = "Times New Roman") %>%
+  hline(i=c(6, 12, 18), j = 1:7, part="body") %>% 
+  bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
+  delete_columns(j = 'significant') %>%
+  merge_v(j = "Test") %>% 
+  set_table_properties(layout = "autofit") %>%
+  fix_border_issues(part = "body")
+
+knitr::knit_print(TblSXX)
 ```
