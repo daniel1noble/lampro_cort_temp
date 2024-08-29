@@ -8,7 +8,8 @@
 
 # packages
 pacman::p_load(dplyr, tidyverse, ggpubr, lme4, emmeans, here, plotly, performance, car,
-               scales, Hmisc, ppcor, ordinal, cowplot, lubridate, Hmisc, ppcor, ordinal)
+               scales, Hmisc, ppcor, ordinal, cowplot, lubridate, Hmisc, ppcor, ordinal,
+               lmerTest)
 
 
 #######################
@@ -49,8 +50,6 @@ tapply(CORT$CORT_value, CORT$treatment, sd, na.rm = TRUE)
 # quick plot
 Boxplot(CORT$CORT_value, CORT$treatment, na.action = na.exclude)
 Boxplot(CORT$LogCORT, CORT$treatment, na.action = na.exclude)
-
-
 
 
 ###########################################################################
@@ -98,10 +97,7 @@ data_final <- merged_data %>%
          juv1_SVL_mm = juv1_measure_SVL_mm,
          juv1_mass_g = juv1_measure_mass_g) 
 
-
-
-
-
+str(data_final)
 
 
 ################################################################################
@@ -242,8 +238,14 @@ abline(ols_scaled_mass_mod)
 #### effect of temperature on incubation days - faster hatch warmer temps 
 ################
 # temperature effects days to hatch; no effect on hormone or temp x hormone interaction
-hatch_dev_mod <- lm(days_to_hatch ~ temp + hormone, data = data_final)
-check_model(hatch_dev_mod) 
+#hatch_dev_mod <- lm(days_to_hatch ~ temp + hormone, data = data_final)
+hatch_dev_mod_int <- lmer(days_to_hatch ~ temp + hormone + temp*hormone + (1 | clutch), 
+                          data = data_final)
+hatch_dev_mod <- lmer(days_to_hatch ~ temp + hormone + (1 | clutch), data = data_final)
+# Update the models to use Maximum Likelihood
+hatch_dev_mod_int_ml <- update(hatch_dev_mod_int, REML = FALSE)
+hatch_dev_mod_ml <- update(hatch_dev_mod, REML = FALSE)
+AIC(hatch_dev_mod_int_ml, hatch_dev_mod_ml) # go with hatch_dev_mod_ml
 Anova(hatch_dev_mod)
 summary(hatch_dev_mod)
 
@@ -268,10 +270,14 @@ tapply(data_final$days_to_hatch, data_final$hormone, sd, na.rm = TRUE)
 ################
 #### hatchling SVL
 ####hormone treatment affects svl; temp treatment NS; hormone*temp NS
-SVL_hatch_mod <- lm(hatch_svl_mm ~ temp + hormone, data = data_final)
-check_model(SVL_hatch_mod)
+#SVL_hatch_mod <- lm(hatch_svl_mm ~ temp + hormone, data = data_final)
+SVL_hatch_mod <- lmer(hatch_svl_mm ~ temp + hormone + (1 | clutch), data = data_final)
+SVL_hatch_mod_ml <- update(SVL_hatch_mod, REML = FALSE)
+SVL_hatch_mod_int <- lmer(hatch_svl_mm ~ temp + hormone +temp*hormone + (1 | clutch), 
+                          data = data_final)
+SVL_hatch_mod_int_ml <- update(SVL_hatch_mod_int, REML = FALSE)
+AIC(SVL_hatch_mod_ml, SVL_hatch_mod_int_ml) # go SVL_hatch_mod_ml 
 Anova(SVL_hatch_mod)
-summary(SVL_hatch_mod)
 # high hormone lower SVL
 SVL_hatch_mod_emm <- emmeans(SVL_hatch_mod, pairwise ~ hormone)
 plot(SVL_hatch_mod_emm)
@@ -280,10 +286,19 @@ saveRDS(SVL_hatch_mod, "models/SVL_hatch_mod.RDS")
 
 #### MASS at hatching
 ####temp and hormone treatment affect mass; no interaction
-Mass_hatch_mod <- lm(hatch_mass_g ~ temp + hormone, data = data_final)
+#Mass_hatch_mod <- lm(hatch_mass_g ~ temp + hormone, data = data_final)
+# Initial mixed-effects model with random effect
+Mass_hatch_mod <- lmer(hatch_mass_g ~ temp + hormone + (1 | clutch), data = data_final)
+Mass_hatch_mod_ml <- update(Mass_hatch_mod, REML = FALSE)
+# Mixed-effects model with interaction term
+Mass_hatch_mod_int <- lmer(hatch_mass_g ~ temp + hormone + temp*hormone + (1 | clutch), 
+                           data = data_final)
+Mass_hatch_mod_int_ml <- update(Mass_hatch_mod_int, REML = FALSE)
+# AIC comparison
+AIC(Mass_hatch_mod_ml, Mass_hatch_mod_int_ml) # go with Mass_hatch_mod_ml
+# model checks
 check_model(Mass_hatch_mod)
 Anova(Mass_hatch_mod)
-summary(Mass_hatch_mod)
 # hormone pairwise comparison - high CORT lower mass compared to control
 Mass_hormone_hatch_mod_emm <- emmeans(Mass_hatch_mod, pairwise ~ hormone)
 plot(Mass_hormone_hatch_mod_emm)
@@ -294,7 +309,17 @@ saveRDS(Mass_hatch_mod, "models/MASS_hatch_mod.RDS")
 
 
 ####Scaled mass at hatching
-scaled_mass_hatch_mod <- lm(ScaledMass_hatch ~ temp + hormone, data = data_final)
+#scaled_mass_hatch_mod <- lm(ScaledMass_hatch ~ temp + hormone, data = data_final)
+# Initial mixed-effects model with random effect
+scaled_mass_hatch_mod <- lmer(ScaledMass_hatch ~ temp + hormone + (1 | clutch), data = data_final)
+scaled_mass_hatch_mod_ml <- update(scaled_mass_hatch_mod, REML = FALSE)
+
+# Mixed-effects model with interaction term
+scaled_mass_hatch_mod_int <- lmer(ScaledMass_hatch ~ temp + hormone + temp*hormone + (1 | clutch), data = data_final)
+scaled_mass_hatch_mod_int_ml <- update(scaled_mass_hatch_mod_int, REML = FALSE)
+
+AIC(scaled_mass_hatch_mod_ml, scaled_mass_hatch_mod_int_ml)
+
 check_model(scaled_mass_hatch_mod)
 Anova(scaled_mass_hatch_mod)
 summary(scaled_mass_hatch_mod)
@@ -317,8 +342,17 @@ plot(scaled_mass_hatch_mod_emm)
 # SVL ANALYSIS: Juv_1, adult (sex accounted for last measurement)
 ###############
 #### JUV_1 - SVL: 28 temp has smaller SVL
-SVL_Juv1_mod <- lm(juv1_SVL_mm ~ temp + hormone + scale(Juvenile1_Age), data = data_final)
-check_model(SVL_Juv1_mod)
+#SVL_Juv1_mod <- lm(juv1_SVL_mm ~ temp + hormone + scale(Juvenile1_Age), data = data_final)
+# Initial mixed-effects model with random effect
+SVL_Juv1_mod <- lmer(juv1_SVL_mm ~ temp + hormone + scale(Juvenile1_Age) + (1 | clutch), data = data_final)
+SVL_Juv1_mod_ml <- update(SVL_Juv1_mod, REML = FALSE)
+
+#Mixed-effects model with interaction term
+SVL_Juv1_mod_int <- lmer(juv1_SVL_mm ~ temp + hormone + scale(Juvenile1_Age) + temp*hormone + (1 | clutch), data = data_final)
+SVL_Juv1_mod_int_ml <- update(SVL_Juv1_mod_int, REML = FALSE)
+
+AIC(SVL_Juv1_mod_ml, SVL_Juv1_mod_int)
+
 # effect on temperature and day of hatch on body size 
 Anova(SVL_Juv1_mod)
 summary(SVL_Juv1_mod)
@@ -328,7 +362,18 @@ plot(SVL_Juv1_mod_emm)
 saveRDS(SVL_Juv1_mod, "models/SVL_Juv1_mod.RDS")
 
 #### adult  SVL -hormone effect
-SVL_adult_mod <- lm(adult_SVL_mm ~ temp + hormone + sex + scale(Adult_Age), data = data_final)
+# SVL_adult_mod <- lm(adult_SVL_mm ~ temp + hormone + sex + scale(Adult_Age), data = data_final)
+# Initial mixed-effects model with random effect
+SVL_adult_mod <- lmer(adult_SVL_mm ~ temp + hormone + sex + scale(Adult_Age) + (1 | clutch), data = data_final)
+SVL_adult_mod_ml <- update(SVL_adult_mod, REML = FALSE)
+
+# Mixed-effects model with interaction term
+SVL_adult_mod_int <- lmer(adult_SVL_mm ~ temp + hormone + sex + scale(Adult_Age) + temp*hormone + (1 | clutch), data = data_final)
+SVL_adult_mod_int_ml <- update(SVL_adult_mod_int, REML = FALSE)
+
+# Compare models using AIC
+AIC(SVL_adult_mod_ml, SVL_adult_mod_int_ml)
+
 check_model(SVL_adult_mod)
 # effect of hormones and sex
 Anova(SVL_adult_mod)
@@ -351,9 +396,19 @@ saveRDS(SVL_adult_mod, "models/SVL_adult_mod.RDS")
 # MASS ANALYSIS: Juv_1, adult
 ###############
 #### MASS: Juv_1 - effects of hormone and temp treatment 
-Mass_Juv1_mod <- lm(juv1_mass_g ~ temp + hormone + scale(Juvenile1_Age), data = data_final)
+#Mass_Juv1_mod <- lm(juv1_mass_g ~ temp + hormone + scale(Juvenile1_Age), data = data_final)
+# Initial mixed-effects model with random effect
+Mass_Juv1_mod <- lmer(juv1_mass_g ~ temp + hormone + scale(Juvenile1_Age) + (1 | clutch), data = data_final)
+Mass_Juv1_mod_ml <- update(Mass_Juv1_mod, REML = FALSE)
+
+# Mixed-effects model with interaction term
+Mass_Juv1_mod_int <- lmer(juv1_mass_g ~ temp + hormone + scale(Juvenile1_Age) + temp*hormone + (1 | clutch), data = data_final)
+Mass_Juv1_mod_int_ml <- update(Mass_Juv1_mod_int, REML = FALSE)
+
+AIC(Mass_Juv1_mod_ml, Mass_Juv1_mod_int)
+
 check_model(Mass_Juv1_mod)
-# effect on temp, hormone, and days since hatch; no effects on temp x hormone interaction
+# summary
 summary(Mass_Juv1_mod)
 Anova(Mass_Juv1_mod)
 # hormone plot - high CORT lower mass than control 
@@ -365,7 +420,17 @@ plot(Mass_Juv1_temp_mod_emm)
 saveRDS(Mass_Juv1_mod, "models/Mass_Juv1_mod.RDS")
 
 #### MASS: adult sex effect
-Mass_adult_mod <- lm(adult_mass_g ~ hormone + temp + sex + scale(Adult_Age), data = data_final)
+# Mass_adult_mod <- lm(adult_mass_g ~ hormone + temp + sex + scale(Adult_Age), data = data_final)
+# Initial mixed-effects model with random effect
+Mass_adult_mod <- lmer(adult_mass_g ~ hormone + temp + sex + scale(Adult_Age) + (1 | clutch), data = data_final)
+Mass_adult_mod_ml <- update(Mass_adult_mod, REML = FALSE)
+
+# Mixed-effects model with interaction term
+Mass_adult_mod_int <- lmer(adult_mass_g ~ hormone + temp + sex + scale(Adult_Age) + temp*hormone + (1 | clutch), data = data_final)
+Mass_adult_mod_int_ml <- update(Mass_adult_mod_int, REML = FALSE)
+
+# Compare models using AIC
+AIC(Mass_adult_mod_ml, Mass_adult_mod_int_ml)
 check_model(Mass_adult_mod)
 Anova(Mass_adult_mod)
 summary(Mass_adult_mod)
@@ -378,31 +443,41 @@ saveRDS(Mass_adult_mod, "models/Mass_adult_mod.RDS")
 
 
 ###############
-# MASS ANALYSIS: Juv_1, adult
+# Scaled mass  ANALYSIS: Juv_1, adult
 ###############
-#### MASS: Juv_1 - effects of hormone and temp treatment 
-Mass_Juv1_mod <- lm(juv1_mass_g ~ temp + hormone + scale(Juvenile1_Age), data = data_final)
-check_model(Mass_Juv1_mod)
-# effect on temp, hormone, and days since hatch; no effects on temp x hormone interaction
-summary(Mass_Juv1_mod)
-Anova(Mass_Juv1_mod)
-# hormone plot - high CORT lower mass than control 
-Mass_Juv1_hormone_mod_emm <- emmeans(Mass_Juv1_mod, pairwise ~ hormone)
-plot(Mass_Juv1_hormone_mod_emm)
-# temp plot - 28 temp has lower mass
-Mass_Juv1_temp_mod_emm <- emmeans(Mass_Juv1_mod, pairwise ~ temp)
-plot(Mass_Juv1_temp_mod_emm)
-saveRDS(Mass_Juv1_mod, "models/Mass_Juv1_mod.RDS")
+#### Scaled mass : Juv_1 - effects of hormone and temp treatment 
+####Scaled mass 
+#scaled_ScaledMass_juv1_mod <- lm(ScaledMass_juv1 ~ temp + hormone, data = data_final)
+# Initial mixed-effects model with random effect
+scaledScaledMass_juv1_mod <- lmer(ScaledMass_juv1 ~ temp + hormone + (1 | clutch), data = data_final)
+scaledScaledMass_juv1_mod_ml <- update(scaledScaledMass_juv1_mod, REML = FALSE)
 
-#### MASS: adult sex effect
-Mass_adult_mod <- lm(adult_mass_g ~ hormone + temp + sex + scale(Adult_Age), data = data_final)
-check_model(Mass_adult_mod)
-Anova(Mass_adult_mod)
-summary(Mass_adult_mod)
-# temp plot - males smaller than females
-Sex_adult_temp_mod_emm <- emmeans(Mass_adult_mod, pairwise ~ hormone)
-plot(Sex_adult_temp_mod_emm)
-saveRDS(Mass_adult_mod, "models/Mass_adult_mod.RDS")
+# Mixed-effects model with interaction term
+scaledScaledMass_juv1_mod_int <- lmer(ScaledMass_hatch ~ temp + hormone + temp*hormone + (1 | clutch), data = data_final)
+scaledScaledMass_juv1_mod_int_ml <- update(scaledScaledMass_juv1_mod_int, REML = FALSE)
+
+AIC(scaled_mass_hatch_mod_ml, scaled_mass_hatch_mod_int_ml)
+
+summary(scaledScaledMass_juv1_mod)
+Anova(scaledScaledMass_juv1_mod)
+
+
+#### Scaled mass : Juv_1 - effects of hormone and temp treatment 
+####Scaled mass 
+#scaled_ScaledMass_juv1_mod <- lm(ScaledMass_adult ~ temp + hormone, data = data_final)
+# Initial mixed-effects model with random effect
+ScaledMass_adult_mod <- lmer(ScaledMass_adult ~ temp + hormone + (1 | clutch), data = data_final)
+ScaledMass_adult_mod_ml <- update(ScaledMass_adult_mod, REML = FALSE)
+
+# Mixed-effects model with interaction term
+ScaledMass_adult_mod_int <- lmer(ScaledMass_hatch ~ temp + hormone + temp*hormone + (1 | clutch), data = data_final)
+ScaledMass_adult_mod_int_ml <- update(ScaledMass_adult_mod_int, REML = FALSE)
+
+AIC(scaled_mass_hatch_mod_ml, scaled_mass_hatch_mod_int_ml)
+summary(ScaledMass_adult_mod)
+Anova(ScaledMass_adult_mod)
+
+
 
 # save final data with BCI residuals for figures and quarto doc
 data_final <-  mutate(data_final, hormone = factor(hormone, 
@@ -433,12 +508,31 @@ saveRDS(survival_day_temp, "models/survival_day_temp.RDS")
 ################
 #### 5.	Growthrate
 ####hatching to juvenile 1 measurements
-hatch_juv1_SVL_growth_mod <- lm(hatch_juv1_SVL_growth ~ hormone + temp, data = data_final)
+# Initial mixed-effects model with random effect
+hatch_juv1_SVL_growth_mod <- lmer(hatch_juv1_SVL_growth ~ hormone + temp + (1 | clutch), data = data_final)
+hatch_juv1_SVL_growth_mod_ml <- update(hatch_juv1_SVL_growth_mod, REML = FALSE)
+# Mixed-effects model with interaction term
+hatch_juv1_SVL_growth_mod_int <- lmer(hatch_juv1_SVL_growth ~ hormone + temp + temp*hormone + (1 | clutch), data = data_final)
+hatch_juv1_SVL_growth_mod_int_ml <- update(hatch_juv1_SVL_growth_mod_int, REML = FALSE)
+# Compare models using AIC
+AIC(hatch_juv1_SVL_growth_mod_ml, hatch_juv1_SVL_growth_mod_int_ml)
 Anova(hatch_juv1_SVL_growth_mod)
 summary(hatch_juv1_SVL_growth_mod)
-# mass growth
-hatch_juv1_mass_growth_mod <- lm(hatch_juv1_mass_growth ~ hormone + temp, data = data_final)
+
+
+####### mass growth hatch to Juv1
+# hatch_juv1_mass_growth_mod <- lm(hatch_juv1_mass_growth ~ hormone + temp, data = data_final)
+# Initial mixed-effects model with random effect
+hatch_juv1_mass_growth_mod <- lmer(hatch_juv1_mass_growth ~ hormone + temp + (1 | clutch), data = data_final)
+hatch_juv1_mass_growth_mod_ml <- update(hatch_juv1_mass_growth_mod, REML = FALSE)
+# Mixed-effects model with interaction term
+hatch_juv1_mass_growth_mod_int <- lmer(hatch_juv1_mass_growth ~ hormone + temp + temp*hormone + (1 | clutch), data = data_final)
+hatch_juv1_mass_growth_mod_int_ml <- update(hatch_juv1_mass_growth_mod_int, REML = FALSE)
+# Compare models using AIC
+AIC(hatch_juv1_mass_growth_mod_ml, hatch_juv1_mass_growth_mod_int_ml)
+
 Anova(hatch_juv1_mass_growth_mod)
+
 summary(hatch_juv1_mass_growth_mod)
 hatch_juv1_mass_growth_mod_emm <- emmeans(hatch_juv1_mass_growth_mod, pairwise ~ hormone)
 plot(hatch_juv1_mass_growth_mod_emm)
@@ -447,33 +541,46 @@ tapply(data_final$hatch_juv1_SVL_growth, data_final$temp, sd, na.rm = TRUE)
 tapply(data_final$hatch_juv1_mass_growth, data_final$temp, mean, na.rm = TRUE)
 tapply(data_final$hatch_juv1_mass_growth, data_final$temp, sd, na.rm = TRUE)
 
+
+
+
+
 ################
 #### Growth from hatch to adulthood
 # SVL Growth
-hatch_adult_SVL_growth_mod <- lm(hatch_adult_SVL_growth ~hormone + temp + sex, data = data_final)
+# hatch_adult_SVL_growth_mod <- lm(hatch_adult_SVL_growth ~ hormone + temp + sex, data = data_final)
+# Initial mixed-effects model with random effect
+hatch_adult_SVL_growth_mod <- lmer(hatch_adult_SVL_growth ~ hormone + temp + sex + (1 | clutch), data = data_final)
+hatch_adult_SVL_growth_mod_ml <- update(hatch_adult_SVL_growth_mod, REML = FALSE)
+# Mixed-effects model with interaction term
+hatch_adult_SVL_growth_mod_int <- lmer(hatch_adult_SVL_growth ~ hormone + temp + sex + temp*hormone + (1 | clutch), data = data_final)
+hatch_adult_SVL_growth_mod_int_ml <- update(hatch_adult_SVL_growth_mod_int, REML = FALSE)
+# Compare models using AIC
+AIC(hatch_adult_SVL_growth_mod_ml, hatch_adult_SVL_growth_mod_int_ml)
+
+
 Anova(hatch_adult_SVL_growth_mod)
 summary(hatch_adult_SVL_growth_mod)
 check_model(hatch_adult_SVL_growth_mod)
 hatch_adult_SVL_growth_mod_emm <- emmeans(hatch_adult_SVL_growth_mod, pairwise ~ temp)
 plot(hatch_adult_SVL_growth_mod_emm)
-# mass growth
-hatch_adult_MASS_growth_mod <- lm(hatch_adult_MASS_growth ~ hormone + temp + sex, data = data_final)
+
+
+######## mass growth : hatch to adult
+# hatch_adult_MASS_growth_mod <- lm(hatch_adult_MASS_growth ~ hormone + temp + sex, data = data_final)
+# Initial mixed-effects model with random effect
+hatch_adult_MASS_growth_mod <- lmer(hatch_adult_MASS_growth ~ hormone + temp + sex + (1 | clutch), data = data_final)
+hatch_adult_MASS_growth_mod_ml <- update(hatch_adult_MASS_growth_mod, REML = FALSE)
+# Mixed-effects model with interaction term
+hatch_adult_MASS_growth_mod_int <- lmer(hatch_adult_MASS_growth ~ hormone + temp + sex + temp*hormone + (1 | clutch), data = data_final)
+hatch_adult_MASS_growth_mod_int_ml <- update(hatch_adult_MASS_growth_mod_int, REML = FALSE)
+# Compare models using AIC
+AIC(hatch_adult_MASS_growth_mod_ml, hatch_adult_MASS_growth_mod_int_ml)
+
 Anova(hatch_adult_MASS_growth_mod)
 summary(hatch_adult_MASS_growth_mod)
 
 
-################
-#### Growth from juvenile to adulthood
-# SVL
-juv1_adult_svl_growth_mod  <- lm(juv1_adult_svl_growth ~ hormone + temp + sex, data = data_final)
-Anova(juv1_adult_svl_growth_mod)
-summary(juv1_adult_svl_growth_mod)
-# MASS
-juv1_adult_mass_growth_mod  <- lm(juv1_adult_mass_growth ~ hormone + temp + sex, data = data_final)
-Anova(juv1_adult_mass_growth_mod)
-summary(juv1_adult_mass_growth_mod)
-tapply(data_final$juv1_adult_svl_growth, data_final$temp, mean, na.rm = TRUE)
-tapply(data_final$juv1_adult_svl_growth, data_final$temp, sd, na.rm = TRUE)
 
 
 
@@ -497,13 +604,18 @@ summary(cort_factors)
 
 
 ######## 1) treatments- how does cort vary across temp and hormone treatment; handling time not used because ns in model of CORT factors
-cort_development_mod <- lm(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Adult_Age) + Plate_CORT_adult, data = cort_dat)
+#cort_development_mod <- lm(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Adult_Age) +Plate_CORT_adult, data = cort_dat)
+cort_development_mod <- lmer(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Adult_Age) +Plate_CORT_adult + (1 | clutch), data = cort_dat)
 check_model(cort_development_mod)
 Anova(cort_development_mod)
 summary(cort_development_mod)
-##low CORT treatment has higher baseline CORT than control treatment; but ns
+##hormone
 cort_development_mod_emm <- emmeans(cort_development_mod, pairwise ~ hormone)
 plot(cort_development_mod_emm)
+# sex
+cort_development_sex_mod_emm <- emmeans(cort_development_mod, pairwise ~ sex)
+plot(cort_development_sex_mod_emm)
+
 ###Visualize baseline CORT levels
 Boxplot(cort_dat$adult_CORT_Final_Hormone_ng_mL, cort_dat$hormone, na.action = na.exclude)
 
@@ -554,8 +666,8 @@ Anova(T4_factors)
 summary(T4_factors)
 
 
-# 1) treatments -  does T4 vary across temp and hormone treatment: NS
-T4_temp_hormone_sex_mod <- lm(log(adult_T4_corrected_ng_mL) ~ hormone + temp + sex + scale(Adult_Age), data = t4_dat)
+# 1) treatments - 
+T4_temp_hormone_sex_mod <- lmer(log(adult_T4_corrected_ng_mL) ~ hormone + temp + sex + scale(Adult_Age) + (1|clutch), data = t4_dat)
 check_model(T4_temp_hormone_sex_mod)
 Anova(T4_temp_hormone_sex_mod)
 summary(T4_temp_hormone_sex_mod)
@@ -653,7 +765,7 @@ mito_dat <- data_final %>%
   
   filter(Lizard_ID != c("LD784_21")) ####LD784_21 had extremely high values and lab notes suggest should be filtered from analyses 
 
-
+mito_dat$cham_oro <- with(mito_dat, interaction(adult_oroboros, chamber))
 
 ###Checking factors that could affect oxygen consumption measurements - handling times, Oroboros, and chamber
 ###'chamber' is nested within Oroboros; there are three measurements of time (time to inject the drug, time to euthanize the animal
@@ -661,31 +773,24 @@ mito_dat <- data_final %>%
 ###'likely all time measures are correlated and so shouldn't all be going in the model anyway)
 ###all factors NS
 #RCR - all NS
-RCR_factors <- lm(RCR ~ adult_liver_time_sec + adult_oroboros/chamber, data = mito_dat)
+RCR_factors <- lm(RCR ~ adult_liver_time_sec + cham_oro, data = mito_dat)
 Anova(RCR_factors)
 summary(RCR_factors)
 hist(mito_dat$RCR)
-
-
 ###Basal; all factors NS
 basal_factors <- lm(basal_corrected_pmol ~ adult_liver_time_sec + adult_oroboros/chamber, data = mito_dat)
 Anova(basal_factors)
 summary (basal_factors)
 hist(mito_dat$basal_corrected_pmol)
-
-
 ##ADP - all factors NS
 ADP_factors <- lm(adp_corrected_pmol ~ adult_liver_time_sec + adult_oroboros/chamber, data = mito_dat)
 Anova(ADP_factors)
 summary (ADP_factors)
-
 ##Oligo - all factors NS but time to collect liver p = 0.06
 Oligo_factors <- lm (oligo_corrected_pmol ~ adult_liver_time_sec + adult_oroboros/chamber, data = mito_dat)
 Anova(Oligo_factors)
 summary (Oligo_factors)
 hist(mito_dat$oligo_corrected_pmol)
-
-
 
 
 #####Effects of treatments on mitochondrial function 
@@ -694,25 +799,25 @@ Basal_treatment_mod <- lm(basal_corrected_pmol ~ temp + hormone + sex + scale(Ad
 Anova(Basal_treatment_mod)
 summary(Basal_treatment_mod)
 check_model(Basal_treatment_mod)
-
 ###ADP - treatment effects; interaction ns and removed; sex p = 0.045 males higher than females
 ADP_treatment_mod <- lm(adp_corrected_pmol ~ temp + hormone + sex + scale(Adult_Age) + adult_oroboros/chamber, data = mito_dat)
 Anova(ADP_treatment_mod)
 summary(ADP_treatment_mod)
 check_model(ADP_treatment_mod)
-
 ##Oligo mito by treatment; interaction ns and removed; sex p = 0.008
 Oligo_treatment_mod <- lm(oligo_corrected_pmol ~ temp + hormone + sex + scale(Adult_Age) + adult_oroboros/chamber, data = mito_dat)
 Anova(Oligo_treatment_mod)
 summary(Oligo_treatment_mod)
 check_model(Oligo_treatment_mod)
-
 ##RCR calculated as state 3 (ADP)/ state 4(olgio)
 RCR_mod <- lm(RCR ~ temp + hormone + sex + scale(Adult_Age) + adult_oroboros/chamber, data = mito_dat)
 Anova(RCR_mod)
 summary (RCR_mod)
 check_model(RCR_mod)
 
+
+
+##################################################
 #####Effects of treatments on mitochondrial function 
 mito_dat <- mito_dat %>% 
   mutate(mass_basal =  basal_corrected_pmol / adult_mass_g,
@@ -723,18 +828,16 @@ mito_dat <- mito_dat %>%
 
 
 ###Basal - interaction removed ns and removed; sex p = 0.005 males higher than females
-Basal_treatment_mod <- lm(basal_corrected_pmol ~ temp + hormone + scale(adult_age) + sex + adult_mass_g + adult_oroboros/chamber, data = mito_dat)
+Basal_treatment_mod <- lmer(basal_corrected_pmol ~ temp + hormone + scale(adult_age) + sex + adult_mass_g +(1|clutch), data = mito_dat)
 Anova(Basal_treatment_mod)
-summary(Basal_treatment_mod)
 check_model(Basal_treatment_mod)
 Basal_treatment_mod_emm <- emmeans(Basal_treatment_mod, pairwise ~ sex)
 plot(Basal_treatment_mod_emm)
 Boxplot(mito_dat$mass_basal, mito_dat$sex, na.action = na.exclude)
 saveRDS(Basal_treatment_mod, "models/Basal_treatment_mod.RDS")
 
-
-###ADP - treatment effects; interaction ns and removed; sex p = 0.045 males higher than females
-ADP_treatment_mod <- lm(adp_corrected_pmol  ~ temp + hormone + sex + scale(adult_age) + adult_mass_g + adult_oroboros/chamber, data = mito_dat)
+###OXPHOS(ADP) - treatment effects;
+ADP_treatment_mod <- lmer(adp_corrected_pmol  ~temp + hormone + sex + scale(adult_age) + scale(adult_mass_g)  + (1|clutch), data = mito_dat)
 Anova(ADP_treatment_mod)
 summary(ADP_treatment_mod)
 check_model(ADP_treatment_mod)
@@ -742,8 +845,8 @@ ADP_treatment_mod_emm <- emmeans(ADP_treatment_mod, pairwise ~ sex)
 plot(ADP_treatment_mod_emm)
 saveRDS(ADP_treatment_mod, "models/ADP_treatment_mod.RDS")
 
-##Oligo mito by treatment
-Oligo_treatment_mod <- lm(oligo_corrected_pmol ~ temp + hormone + sex + scale(adult_age) + adult_mass_g + adult_oroboros/chamber, data = mito_dat)
+##LEAK (OLIGO) mito by treatment
+Oligo_treatment_mod <- lmer(oligo_corrected_pmol ~ temp + hormone + sex + scale(adult_age) + scale(adult_mass_g)  + (1|clutch), data = mito_dat)
 Anova(Oligo_treatment_mod)
 summary(Oligo_treatment_mod)
 check_model(Oligo_treatment_mod)
@@ -752,7 +855,7 @@ plot(Oligo_treatment_mod_emm)
 saveRDS(Oligo_treatment_mod, "models/Oligo_treatment_mod.RDS")
 
 ##RCR calculated as state 3 (ADP)/ state 4(olgio)
-RCR_mod <- lm(RCR ~ temp + hormone + sex + scale(adult_age) + adult_mass_g + adult_oroboros/chamber, data = mito_dat)
+RCR_mod <- lmer(RCR ~ temp + hormone + sex + scale(adult_age) + scale(adult_mass_g)  +(1|clutch), data = mito_dat)
 Anova(RCR_mod)
 summary (RCR_mod)
 check_model(RCR_mod)
@@ -790,7 +893,7 @@ mito_hormone <- mito_hormone %>%
   mutate(mass_RCR = mass_ADP / mass_oligo)
 
 ##Basal 
-Basal_hormone_mod <- lm(mass_basal ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + adult_oroboros/chamber, data = mito_hormone)
+Basal_hormone_mod <- lmer(mass_basal ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + cham_oro +(1|clutch), data = mito_hormone)
 Anova(Basal_hormone_mod)
 summary(Basal_hormone_mod)
 check_model(Basal_hormone_mod)
@@ -799,21 +902,21 @@ saveRDS(Basal_hormone_mod, 'models/Basal_hormone_mod.RDS')
 
 
 ###ADP -  T4 positive association with ADP mito 
-ADP_hormone_mod <- lm(mass_ADP ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + adult_oroboros/chamber, data = mito_hormone)
+ADP_hormone_mod <- lmer(mass_ADP ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + cham_oro +(1|clutch), data = mito_hormone)
 Anova(ADP_hormone_mod)
 summary(ADP_hormone_mod)
 check_model(ADP_hormone_mod)
 saveRDS(ADP_hormone_mod, 'models/ADP_hormone_mod.RDS')
 
 ##oligo - T4 near positive association
-Oligo_hormone_mod <- lm(mass_oligo ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + adult_oroboros/chamber, data = mito_hormone)
+Oligo_hormone_mod <- lmer(mass_oligo ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + cham_oro +(1|clutch), data = mito_hormone)
 Anova(Oligo_hormone_mod)
 summary(Oligo_hormone_mod)
 check_model(Oligo_hormone_mod)
 saveRDS(Oligo_hormone_mod, 'models/Oligo_hormone_mod.RDS')
 
 #RCR - 
-RCR_hormone_mod <- lm(mass_RCR ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + adult_oroboros/chamber, data = mito_hormone)
+RCR_hormone_mod <- lmer(mass_RCR ~ log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex + cham_oro +(1|clutch), data = mito_hormone)
 Anova(RCR_hormone_mod)
 summary (RCR_hormone_mod)
 check_model(RCR_hormone_mod)
@@ -821,44 +924,43 @@ saveRDS(RCR_hormone_mod, 'models/RCR_hormone_mod.RDS')
 
 
 ##########################################
-###Growth and body size and mito function 
-###Basal - postive association with basal and growth (p = 0.02)
+###Growth and body size and mito function  (cham_oro dropped for all)
+###Basal - 
 # mass
-Mass_basal <- lm(hatch_adult_MASS_growth ~ basal_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
+Mass_basal <- lmer(hatch_adult_MASS_growth ~ basal_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL)  +(1|clutch), data = mito_hormone)
 Anova(Mass_basal)
 summary(Mass_basal)
 check_model(Mass_basal)
 saveRDS(Mass_basal, "models/Mass_basal.RDS")
 # SVL
-SVL_basal <- lm(hatch_adult_SVL_growth~ basal_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
+SVL_basal <- lmer(hatch_adult_SVL_growth~ basal_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL)  +(1|clutch), data = mito_hormone)
 Anova(SVL_basal)
-summary(SVL_basal)
 check_model(SVL_basal)
 saveRDS(SVL_basal, "models/SVL_basal.RDS")
 
-##ADP 
+##OXPHOS (ADP) 
 # mass
-Mass_Growth_ADP <- lm(hatch_adult_MASS_growth ~ adp_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
+Mass_Growth_ADP <- lmer(hatch_adult_MASS_growth ~ adp_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL)  +(1|clutch), data = mito_hormone)
 Anova(Mass_Growth_ADP)
 summary(Mass_Growth_ADP)
 check_model(Mass_Growth_ADP)
 saveRDS(Mass_Growth_ADP, "models/Mass_Growth_ADP.RDS")
 #SVL
-SVL_Growth_ADP <- lm(hatch_adult_SVL_growth ~ adp_corrected_pmol + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex, data = mito_hormone)
+SVL_Growth_ADP <- lmer(hatch_adult_SVL_growth ~ adp_corrected_pmol + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex +(1|clutch), data = mito_hormone)
 Anova(SVL_Growth_ADP)
 summary(SVL_Growth_ADP)
 check_model(SVL_Growth_ADP)
 saveRDS(SVL_Growth_ADP, "models/SVL_Growth_ADP.RDS")
 
 
-###Oligo 
+###LEAK (OLIGO) 
 #mass
-Mass_Growth_Oligo <- lm(hatch_adult_MASS_growth ~ oligo_corrected_pmol + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex, data = mito_hormone)
+Mass_Growth_Oligo <- lmer(hatch_adult_MASS_growth ~ oligo_corrected_pmol + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + sex+(1|clutch), data = mito_hormone)
 Anova(Mass_Growth_Oligo)
 summary(Mass_Growth_Oligo)
 saveRDS(Mass_Growth_Oligo, "models/Mass_Growth_Oligo.RDS")
 #SVL
-SVL_Growth_Oligo <- lm(hatch_adult_SVL_growth ~ oligo_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
+SVL_Growth_Oligo <- lmer(hatch_adult_SVL_growth ~ oligo_corrected_pmol + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) +(1|clutch), data = mito_hormone)
 Anova(SVL_Growth_Oligo)
 summary(SVL_Growth_Oligo)
 saveRDS(SVL_Growth_Oligo, "models/SVL_Growth_Oligo.RDS")
@@ -866,12 +968,12 @@ saveRDS(SVL_Growth_Oligo, "models/SVL_Growth_Oligo.RDS")
 
 ###RCR
 #mass
-Mass_Growth_RCR <- lm (hatch_adult_MASS_growth~ RCR + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
+Mass_Growth_RCR <- lmer(hatch_adult_MASS_growth~ RCR + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) + +(1|clutch), data = mito_hormone)
 Anova(Mass_Growth_RCR)
 summary(Mass_Growth_RCR)
 saveRDS(Mass_Growth_RCR, "models/Mass_Growth_RCR.RDS")
 #SVL
-SVL_Growth_RCR <- lm (hatch_adult_SVL_growth ~ RCR + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL), data = mito_hormone)
+SVL_Growth_RCR <- lmer(hatch_adult_SVL_growth ~ RCR + sex + log(CORT_Final_Hormone_ng_mL) + log(T4_corrected_ng_mL) +(1|clutch), data = mito_hormone)
 Anova(SVL_Growth_RCR)
 summary(SVL_Growth_RCR)
 saveRDS(SVL_Growth_RCR, "models/SVL_Growth_RCR.RDS")
@@ -888,9 +990,9 @@ saveRDS(SVL_Growth_RCR, "models/SVL_Growth_RCR.RDS")
 
 ############# ############# ############# ############# ############# 
 ############# FINAL FIGURES  #############
-
+# Figure 1 is timeline
 ###############################################################
-####### Figure 1  Egg CORT
+####### Figure 2  Egg CORT (old figure 2)
 ###############################################################
 gam_yolk <- readRDS('models/yolk_hormone_mod.RDS')
 emm_gam <- emmeans (gam_yolk, pairwise ~ treatment)
@@ -930,16 +1032,17 @@ Figure_1<- ggplot() +
   geom_point(data = fig.1.emm.dat,
              aes(x = hormone, y = emmean, fill = hormone), 
              shape = 23, color = "black", size = 3) +
-  geom_jitter(data = data_fig_1_raw, 
-              aes(x = hormone,
-                  y = log(CORT_value), color = hormone), 
-              width = 0.1, alpha = 0.6, size = 2) +
+  #geom_jitter(data = data_fig_1_raw, 
+              #aes(x = hormone,
+                  #y = log(CORT_value), color = hormone), 
+              #width = 0.1, alpha = 0.6, size = 2) +
   geom_text(data = fig.1.emm.dat, aes(x = hormone, 
                                       y = emmean + SE + .01, label = paste("n =", n),
                                       fontface = "bold"), 
             vjust = -0.5, size = 4) +
   labs(y = "Log CORT", 
        x = "Corticosterone treatment") +
+  scale_y_continuous(limits = c(.5, 3.0), breaks = seq(0.5, 3.0, by = .5)) +
   #scale_y_continuous(limits = c(-., 3.3), breaks = seq(0.0, 3.0, by = 1.0)) +
   scale_fill_manual(values = c("control" = "white", 
                                "low" = "lightgreen", 
@@ -953,7 +1056,7 @@ Figure_1<- ggplot() +
         axis.title = element_text(size= 20), 
         legend.text = element_text(size= 20), 
         legend.title = element_text(size= 20),
-        legend.position = c(.8, .3), # Position legend in the top left corner
+        legend.position = c(.5, .5), # Position legend in the top left corner
         legend.justification = c(0, 1)) # Adjust the anchor point of the legend
 Figure_1
 
@@ -961,7 +1064,7 @@ Figure_1
 
 
 ###############################################################
-####### Figure 2  growth (MASS & SVL) one may go in SUPP
+####### Figure 3 (old figure 2)  growth (MASS & SVL) one may go in SUPP
 ###############################################################
 library(cowplot) # combines your plots into panels 
 cort_dat$hormone <- factor(cort_dat$hormone, levels = c("control", "low", "high"))
@@ -1914,7 +2017,7 @@ print(Figure_2_SVL)
 
 
 ############################################################################
-########################## Figure 3
+########################## Figure 4 (Old figure 3)
 ############################################################################
 # Reorder the factor levels 
 cort_dat$hormone <- factor(cort_dat$hormone, levels = c("control", "low", "high"))
@@ -1937,14 +2040,14 @@ fig.3.emm.dat <- left_join(sum.dat.emm, sum.dat, by = "hormone")
 
 # Plot
 Figure_3 <- ggplot() +
-  geom_jitter(data = cort_dat_raw, aes(x = hormone, 
-                                       y = log_adult_CORT_Final_Hormone_ng_mL, 
-                                       fill = hormone),
-              alpha = 0.3, 
-              width = 0.2, 
-              height = 0, 
-              shape = 21,  # Change shape to one that uses fill
-              color = "black") +
+  #geom_jitter(data = cort_dat_raw, aes(x = hormone, 
+                                       #y = log_adult_CORT_Final_Hormone_ng_mL, 
+                                       #fill = hormone),
+              #alpha = 0.3, 
+              #width = 0.2, 
+              #height = 0, 
+              #shape = 21,  # Change shape to one that uses fill
+              #color = "black") +
   geom_errorbar(data = fig.3.emm.dat, aes(x = hormone, ymin = emmean - SE, ymax = emmean + SE), 
                 width = 0.2, position = position_dodge(0.9)) +
   geom_text(data = fig.3.emm.dat, aes(x = hormone, y = emmean + SE + .01, label = paste("n =", n),
@@ -1952,6 +2055,7 @@ Figure_3 <- ggplot() +
             vjust = -0.5, size = 4) +
   geom_point(data = fig.3.emm.dat, aes(x = hormone, y = emmean, fill = hormone), 
              shape = 23, color = "black", size = 3) +
+  scale_y_continuous(limits = c(5, 5.5), breaks = seq(5, 5.5, by = .1)) +
   labs(y = "Log CORT", 
        x = "Corticosterone treatment") +
   theme_classic() +
@@ -1962,7 +2066,9 @@ Figure_3 <- ggplot() +
         legend.text = element_text(size = 14), 
         legend.title = element_text(size = 14),
         legend.position = c(0.02, 0.98), # Position legend in the top left corner
-        legend.justification = c(0, 1)) # Adjust the anchor point of the legend
+        legend.justification = c(0, 1), # Adjust the anchor point of the legend
+        legend.background = element_rect(fill = "transparent", color = NA), # Make the legend background transparent
+        legend.key = element_rect(fill = "transparent", color = NA))
 Figure_3
 
 
@@ -2160,7 +2266,7 @@ slope_female_rcr <- coef(RCR_female_mod)[2]
 # Plot
 Fig_4D <- ggplot(Fig4_dat, aes(x = adult_mass_g, y = RCR)) +
   geom_point(aes(color = sex, shape = sex), size = 3.5) +
-  geom_smooth(method = "lm", aes(color = sex), se = FALSE) +
+  #geom_smooth(method = "lm", aes(color = sex), se = FALSE) +
   scale_shape_manual(values = c("Male" = 16, "Female" = 17)) +
   scale_color_manual(values = c("Male" = "steelblue", "Female" = 'darkred')) +
   theme_classic() +
@@ -2223,7 +2329,7 @@ Figure_4
 
 
 ############################################################################
-########################## Figure5
+########################## Figure 6 (old figure 5)
 ############################################################################
 Fig5_dat <- mito_hormone %>%
   mutate(sex = recode_factor(sex, "M" = "Male", "F" = "Female"))
@@ -2280,14 +2386,10 @@ Figure_5
 
 #########
 # Final figures
-Figure_1 #1000x800 png
+Figure_1 #1000x800 png 
 Figure_2 #1100x1050
 Figure_2_SVL #1100x1050
 Figure_3 #1000x800
 Figure_4 #1300x1000
 Figure_5 #1000x800
-
-ggsave("Figure_4.png", Figure_4, width = 1000,
-       height = 1300,
-       units = "mm")
 
