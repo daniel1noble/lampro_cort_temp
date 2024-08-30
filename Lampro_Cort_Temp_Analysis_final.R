@@ -605,7 +605,7 @@ summary(cort_factors)
 
 ######## 1) treatments- how does cort vary across temp and hormone treatment; handling time not used because ns in model of CORT factors
 #cort_development_mod <- lm(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Adult_Age) +Plate_CORT_adult, data = cort_dat)
-cort_development_mod <- lmer(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Adult_Age) +Plate_CORT_adult + (1 | clutch), data = cort_dat)
+cort_development_mod <- lmer(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Adult_Age) + Plate_CORT_adult + (1 | clutch), data = cort_dat)
 check_model(cort_development_mod)
 Anova(cort_development_mod)
 summary(cort_development_mod)
@@ -615,6 +615,9 @@ plot(cort_development_mod_emm)
 # sex
 cort_development_sex_mod_emm <- emmeans(cort_development_mod, pairwise ~ sex)
 plot(cort_development_sex_mod_emm)
+#temperature
+cort_temp_mod_emm <- emmeans(cort_development_mod, pairwise ~ temp)
+plot(cort_temp_mod_emm)
 
 ###Visualize baseline CORT levels
 Boxplot(cort_dat$adult_CORT_Final_Hormone_ng_mL, cort_dat$hormone, na.action = na.exclude)
