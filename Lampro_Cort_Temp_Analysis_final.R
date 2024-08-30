@@ -22,9 +22,10 @@ CORT <- read.csv ('data/Yolk_hormone.csv') %>%
 #and the value was strange
 
 # data set up
-CORT$treatment <- as.factor(CORT$treatment)
+ CORT$treatment <- as.factor(CORT$treatment)
+     CORT$Plate <- as.factor(CORT$Plate)
 CORT$CORT_value <- as.numeric(CORT$finalCORT.pg.mg.)
-CORT$treatment <- factor(CORT$treatment, 
+ CORT$treatment <- factor(CORT$treatment, 
                          levels = c("C_Topical", "CORT_5pg_Topical", "CORT_10pg_Topical"))
 
 ##linear model 
