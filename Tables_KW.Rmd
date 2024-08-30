@@ -1,0 +1,197 @@
+---
+title: "Tables_Wild_2024"
+author: Kristoffer Wild
+date: "`r Sys.Date()`"
+output: 
+  word_document:
+    reference_docx: template.docx
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE, eval = T, echo = FALSE}
+knitr::opts_chunk$set(echo=TRUE, message=FALSE, warning=FALSE)
+options(digits = 2)
+rm(list=ls())
+sessionInfo()
+pacman::p_load(car, dplyr,ggplot2, flextable, lubridate, knitr, here, stringr, broom, tibble, tidyverse)
+```
+
+## Tables
+**Table S1** Model comparisons between main effects (temperature + hormone) and interaction model (temperature * hormone interaction) using AIC for the different response variables measured. Note that the AIC of models containing the interaction are subtracted from the AIC of models containing just the main effects. Positive values indicate main effects models had lower AIC and were therefore better supported. If models were within 2 AIC units of each other we simplified to the model with fewer parameters (i.e., main effects model). All models were fit using maximum likelihood for model selection. For details on the specific models fit for each response variable see the Statistical Analysis section.
+```{r}
+#| echo: false
+interaction_data <- read.csv('tables/interaction_table.csv') %>% 
+  dplyr::select(Variable, Delta_AIC) %>% 
+  mutate(across(where(is.numeric), round, 3))
+
+TblS1<-flextable(interaction_data) %>%
+  flextable::font(part = "all", fontname = "Times New Roman") %>%
+  set_table_properties(layout = "autofit") %>%
+  fix_border_issues(part = "body")
+
+knitr::knit_print(TblS1)
+```
+
+**Table S2**. Summary of GLMs testing the effects of baseline corticosterone levels on mitochondrial respiration (Basal, OXPHOS, leak, and RCR). Mitochondrial parameters were adjusted for individual mass, and CORT and T4 were log-transformed to meet assumptions for normality. Significant terms (p<0.05) are highlighted in bold. 
+```{r}
+#| echo: false
+
+Basal_treatment_mod <- readRDS('models/Basal_treatment_mod.RDS')
+ADP_treatment_mod <- readRDS('models/ADP_treatment_mod.RDS')
+Oligo_treatment_mod<- readRDS('models/Oligo_treatment_mod.RDS')
+RCR_mod <- readRDS('models/RCR_treatment_mod.RDS')
+
+# combinde data
+ANOVA_Basal_treatment_mod <- tidy(Anova(Basal_treatment_mod)) %>% 
+  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
+  mutate(across(where(is.numeric), round, 3)) %>% 
+  mutate(Test = 'Basal')
+ANOVA_ADP_treatment_mod <- tidy(Anova(ADP_treatment_mod))%>% 
+  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
+  mutate(across(where(is.numeric), round, 3))  %>% 
+  mutate(Test = 'OXPHOS')
+ANOVA_Oligo_treatment_mod <- tidy(Anova(Oligo_treatment_mod))%>% 
+  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
+  mutate(across(where(is.numeric), round, 3)) %>% 
+  mutate(Test = 'LEAK')
+ANOVA_RCR_mod <- tidy(Anova(RCR_mod))%>% 
+  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
+  mutate(across(where(is.numeric), round, 3)) %>% 
+  mutate(Test = 'RCR') 
+S2_mods <- rbind(ANOVA_Basal_treatment_mod,
+                 ANOVA_ADP_treatment_mod,
+                 ANOVA_Oligo_treatment_mod,
+                 ANOVA_RCR_mod) %>% 
+   arrange(Test, term)
+
+S2_mods <- S2_mods[,c(6, 1, 2, 3, 4, 5)]
+TblS2<-flextable(S2_mods) %>%
+  flextable::font(part = "all", fontname = "Times New Roman") %>%
+  hline(i=c(5,10, 15), j = 1:6, part="body") %>% 
+  set_table_properties(layout = "autofit") %>%
+  fix_border_issues(part = "body") %>%
+  bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
+  delete_columns(j = 'significant') %>% 
+  merge_v(j = "Test") %>% 
+   fix_border_issues(part = "body") 
+
+knitr::knit_print(TblS2)
+```
+
+\newpage
+**Table S3**. Summary of GLMs testing the effects of baseline corticosterone levels on mitochondrial respiration (Basal, OXPHOS, leak, and RCR). Mitochondrial parameters were adjusted for individual mass, and CORT and T4 were log-transformed to meet assumptions for normality. Finally, respirometer and respirometer chamber were accounted for in the model. Significant terms (p<0.05) are highlighted in bold.  
+```{r}
+#| echo: false
+Mass_basal <- Anova(readRDS('models/Mass_Growth_basal.RDS'))%>% 
+  tidy() %>% 
+  mutate(Test = 'Basal')
+Mass_Growth_ADP <- Anova(readRDS('models/Mass_Growth_ADP.RDS'))%>%
+  tidy() %>% 
+  mutate(Test = 'OXPHOS')
+Mass_Growth_Oligo <- Anova(readRDS('models/Mass_Growth_Oligo.RDS'))%>%
+  tidy() %>% 
+  mutate(Test = 'Leak')
+Mass_Growth_RCR <- Anova(readRDS('models/Mass_Growth_RCR.RDS'))%>%
+  tidy() %>% 
+  mutate(Test = 'RCR')
+
+
+#### Table
+Mass_table <- rbind(Mass_basal, Mass_Growth_ADP, Mass_Growth_Oligo, Mass_Growth_RCR)%>% 
+  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
+  mutate(across(where(is.numeric), round, 3)) %>% 
+  arrange(Test, term)
+
+
+# combine and rearrange
+Table_S3 <- Mass_table[,c(5, 1, 2, 3, 4, 6)]
+
+TblS3<-flextable(Table_S3) %>%
+  flextable::font(part = "all", fontname = "Times New Roman") %>%
+  hline(i=c(4, 8, 12, 16), j = 1:6, part="body") %>% 
+  bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
+  delete_columns(j = 'significant') %>%
+  merge_v(j = "Test") %>% 
+  set_table_properties(layout = "autofit") %>%
+  fix_border_issues(part = "body")
+
+knitr::knit_print(TblS3)
+```
+\newpage
+
+**Table S4** . Summary of GLMs testing the effects of mitochondrial respiration (basal, OXPHOS, leak, and RCR), sex, baseline corticosterone levels, and thyroxine levels on growth rate (change in mass). Corticosterone and thyroxine levels were log transformed prior to analyses. Significant terms (p<0.05) are highlighted in bold.
+```{r}
+#| echo: false
+SVL_basal <- Anova(readRDS('models/SVL_Growth_basal.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'BASAL')
+SVL_Growth_ADP <- Anova(readRDS('models/SVL_Growth_ADP.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'OXPHOS')
+SVL_Growth_Oligo <- Anova(readRDS('models/SVL_Growth_Oligo.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'Leak')
+SVL_Growth_RCR <- Anova(readRDS('models/SVL_Growth_RCR.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'RCR')
+
+
+# combine and rearrange
+SVL_Growth_ADP_table <- rbind(SVL_basal, SVL_Growth_ADP, SVL_Growth_Oligo, SVL_Growth_RCR)%>% 
+  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
+  mutate(across(where(is.numeric), round, 3)) %>% 
+  arrange(Test, term)
+
+Table_S4 <- SVL_Growth_ADP_table[,c(5, 1, 2, 3, 4, 6)]
+
+
+TblS4<-flextable(Table_S4) %>%
+  flextable::font(part = "all", fontname = "Times New Roman") %>%
+  hline(i=c(4, 8, 12, 16), j = 1:6, part="body") %>% 
+  bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
+  delete_columns(j = 'significant') %>%
+  merge_v(j = "Test") %>% 
+  set_table_properties(layout = "autofit") %>%
+  fix_border_issues(part = "body")
+
+knitr::knit_print(TblS4)
+```
+\newpage
+**Table S5** Summary of GLMs testing the effects of mitochondrial respiration (basal, OXPHOS, leak, and RCR) corrected for protein content, sex, baseline corticosterone levels, and thyroxine levels on growth rate (change in SVL). Corticosterone and thyroxine levels were log transformed prior to analyses. Significant terms are highlighted in bold.
+```{r}
+#| echo: false
+mito_basal <- Anova(readRDS('models/Basal_hormone_mod.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'BASAL')
+mito_ADP <- Anova(readRDS('models/ADP_hormone_mod.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'OXPHOS')
+mito_Oligo <- Anova(readRDS('models/Oligo_hormone_mod.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'Leak')
+mito_RCR <- Anova(readRDS('models/RCR_hormone_mod.RDS')) %>% 
+  tidy() %>% 
+  mutate(Test = 'RCR')
+
+
+# combine and rearrange
+mito_Growth_ADP_table <- rbind(mito_basal, mito_ADP, mito_Oligo, mito_RCR)%>% 
+  mutate(significant = ifelse(p.value < 0.05, TRUE, FALSE)) %>%
+  mutate(across(where(is.numeric), round, 3)) %>% 
+  arrange(Test, term)
+
+Table_S5 <- mito_Growth_ADP_table[,c(5, 1, 2, 3, 4,6)]
+
+
+TblS5<-flextable(Table_S5) %>%
+  flextable::font(part = "all", fontname = "Times New Roman") %>%
+  hline(i=c(3, 6, 9, 12), j = 1:6, part="body") %>% 
+  bold(i = ~ significant == TRUE, bold = TRUE, part = "body") %>% 
+  delete_columns(j = 'significant') %>%
+  merge_v(j = "Test") %>% 
+  set_table_properties(layout = "autofit") %>%
+  fix_border_issues(part = "body")
+
+knitr::knit_print(TblS5)
+```
