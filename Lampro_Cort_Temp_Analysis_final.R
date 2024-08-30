@@ -677,7 +677,7 @@ plot(T4_temp_hormone_sex_mod_emm)
 saveRDS(T4_temp_hormone_sex_mod, "models/T4_temp_hormone_sex_mod.RDS")
 
 # 2) SVL and associations with T4 and cort
-T4_SVL_mod <- lm(adult_SVL_mm  ~ log(adult_T4_corrected_ng_mL) + sex + scale(Adult_Age), data = t4_dat)
+T4_SVL_mod <- lmer(adult_SVL_mm  ~ log(adult_T4_corrected_ng_mL) + sex + scale(Adult_Age) + (1|clutch), data = t4_dat)
 check_model(T4_SVL_mod )
 summary(T4_SVL_mod )
 Anova(T4_SVL_mod )
@@ -855,8 +855,11 @@ plot(Oligo_treatment_mod_emm)
 saveRDS(Oligo_treatment_mod, "models/Oligo_treatment_mod.RDS")
 
 ##RCR calculated as state 3 (ADP)/ state 4(olgio)
+##### FIGURE 7 - KW!!!
 RCR_mod <- lmer(RCR ~ temp + hormone + sex + scale(adult_age) + scale(adult_mass_g)  +(1|clutch), data = mito_dat)
 Anova(RCR_mod)
+RCR_mod_mod_emm <- emmeans(RCR_mod, pairwise ~ temp)
+plot(RCR_mod_mod_emm)
 summary (RCR_mod)
 check_model(RCR_mod)
 saveRDS(RCR_mod, "models/RCR_mod.RDS")
