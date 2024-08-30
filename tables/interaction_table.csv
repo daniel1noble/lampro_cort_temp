@@ -1,0 +1,16 @@
+"","Variable","Delta_AIC"
+"1","Incubation time (days)",3.83106045672787
+"2","Hatchling Snout-vent Length (SVL) (mm)",3.58360517836724
+"3","Hatchling Mass (g)",3.4723942318991
+"4","Juvenile SVL (mm)",1.7456653226684
+"5","Adult SVL (mm)",0.76329625488853
+"6","Juvenile Mass (g)",3.00647855002592
+"7","Adult Mass (g)",2.58030011674126
+"8","Hatchling to Juvenile Growth SVL (mm)",2.2454864364463
+"9","Hatchling to Juvenile Growth Mass (g)",3.08266955937188
+"10","Hatchling to Adult Growth SVL (mm)",0.374059603516685
+"11","Hatchling to Adult Growth Mass (g)",2.96611189228793
+"12","Basal respiration (pmol/sec/ng)",3.77039351809692
+"13","OXPHOS respiration (pmol/sec/ng)",3.9703373765492
+"14","LEAK respiration (pmol/sec/ng)",3.21766151673545
+"15","Respiratory Control Ratio (RCR)",1.94842004203224
