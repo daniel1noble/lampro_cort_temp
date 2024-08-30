@@ -493,12 +493,15 @@ data_final <-  mutate(data_final, hormone = factor(hormone,
 # survival fisher test- filter out missing animals
 survival<- data_final %>% 
   filter(liz_status_db != "MISSING")
-###To get sample sizes
-survival_table <- table(survival$liz_status_db, survival$temp)
-survival_table <- table(survival$liz_status_db, survival$hormone)
-# analysis
-survival_day_hormone <- kruskal.test(liz_status_db ~ hormone, data = survival)
-survival_day_temp <- kruskal.test(liz_status_db ~ temp, data = survival)
+
+# Create contingency tables
+survival_table_temp <- table(survival$liz_status_db, survival$temp)
+survival_table_hormone <- table(survival$liz_status_db, survival$hormone)
+
+# Perform Fisher's Exact Test
+survival_day_temp <- fisher.test(survival_table_temp)
+survival_day_hormone <- fisher.test(survival_table_hormone)
+
 # save analysis
 saveRDS(survival_day_hormone, "models/survival_day_hormone.RDS")
 saveRDS(survival_day_temp, "models/survival_day_temp.RDS")
@@ -612,6 +615,7 @@ summary(cort_development_mod)
 ##hormone
 cort_development_mod_emm <- emmeans(cort_development_mod, pairwise ~ hormone)
 plot(cort_development_mod_emm)
+
 # sex
 cort_development_sex_mod_emm <- emmeans(cort_development_mod, pairwise ~ sex)
 plot(cort_development_sex_mod_emm)
