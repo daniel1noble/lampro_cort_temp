@@ -233,6 +233,7 @@ abline(ols_scaled_mass_mod)
 #################################################################################
 #################################################################################
 
+interaction_table  <- data.frame("Variable" = NA, "Delta_AIC" = NA)
 
 ################
 #### 1.	What are the effects of developmental treatments (temp, cort, interaction) on time to hatch?
@@ -247,6 +248,8 @@ hatch_dev_mod <- lmer(days_to_hatch ~ temp + hormone + (1 | clutch), data = data
 hatch_dev_mod_int_ml <- update(hatch_dev_mod_int, REML = FALSE)
 hatch_dev_mod_ml <- update(hatch_dev_mod, REML = FALSE)
 AIC(hatch_dev_mod_int_ml, hatch_dev_mod_ml) # go with hatch_dev_mod_ml
+interaction_table[1,1]  <- "Incubation time (days)"
+interaction_table[1,2] <- AIC(hatch_dev_mod_int_ml) - AIC(hatch_dev_mod_ml)
 Anova(hatch_dev_mod)
 summary(hatch_dev_mod)
 
@@ -278,6 +281,8 @@ SVL_hatch_mod_int <- lmer(hatch_svl_mm ~ temp + hormone +temp*hormone + (1 | clu
                           data = data_final)
 SVL_hatch_mod_int_ml <- update(SVL_hatch_mod_int, REML = FALSE)
 AIC(SVL_hatch_mod_ml, SVL_hatch_mod_int_ml) # go SVL_hatch_mod_ml 
+interaction_table[2,1]  <- "Hatchling Snout-vent Length (SVL) (mm)"
+interaction_table[2,2] <- AIC(SVL_hatch_mod_int_ml) - AIC(SVL_hatch_mod_ml)
 Anova(SVL_hatch_mod)
 # high hormone lower SVL
 SVL_hatch_mod_emm <- emmeans(SVL_hatch_mod, pairwise ~ hormone)
@@ -297,6 +302,8 @@ Mass_hatch_mod_int <- lmer(hatch_mass_g ~ temp + hormone + temp*hormone + (1 | c
 Mass_hatch_mod_int_ml <- update(Mass_hatch_mod_int, REML = FALSE)
 # AIC comparison
 AIC(Mass_hatch_mod_ml, Mass_hatch_mod_int_ml) # go with Mass_hatch_mod_ml
+interaction_table[3,1]  <- "Hatchling Mass (g)"
+interaction_table[3,2] <- AIC(Mass_hatch_mod_int_ml) - AIC(Mass_hatch_mod_ml)
 # model checks
 check_model(Mass_hatch_mod)
 Anova(Mass_hatch_mod)
@@ -329,7 +336,6 @@ scaled_mass_hatch_mod_emm <- emmeans(scaled_mass_hatch_mod, pairwise ~ temp)
 plot(scaled_mass_hatch_mod_emm)
 
 
-
 ################
 #### 3.	What are the effects of developmental treatments on juvenile body size and condition (at the 3 points measured after hatching)?
 #### Juv1_SVL: effect of temperature- cooler temps larger svl
@@ -353,7 +359,8 @@ SVL_Juv1_mod_int <- lmer(juv1_SVL_mm ~ temp + hormone + scale(Juvenile1_Age) + t
 SVL_Juv1_mod_int_ml <- update(SVL_Juv1_mod_int, REML = FALSE)
 
 AIC(SVL_Juv1_mod_ml, SVL_Juv1_mod_int)
-
+interaction_table[4,1]  <- "Juvenile SVL (mm)"
+interaction_table[4,2] <- AIC(SVL_Juv1_mod_int_ml) - AIC(SVL_Juv1_mod_ml)
 # effect on temperature and day of hatch on body size 
 Anova(SVL_Juv1_mod)
 summary(SVL_Juv1_mod)
@@ -374,6 +381,8 @@ SVL_adult_mod_int_ml <- update(SVL_adult_mod_int, REML = FALSE)
 
 # Compare models using AIC
 AIC(SVL_adult_mod_ml, SVL_adult_mod_int_ml)
+interaction_table[5,1]  <- "Adult SVL (mm)"
+interaction_table[5,2] <- AIC(SVL_adult_mod_int_ml) - AIC(SVL_adult_mod_ml)
 
 check_model(SVL_adult_mod)
 # effect of hormones and sex
@@ -407,6 +416,8 @@ Mass_Juv1_mod_int <- lmer(juv1_mass_g ~ temp + hormone + scale(Juvenile1_Age) + 
 Mass_Juv1_mod_int_ml <- update(Mass_Juv1_mod_int, REML = FALSE)
 
 AIC(Mass_Juv1_mod_ml, Mass_Juv1_mod_int)
+interaction_table[6,1]  <- "Juvenile Mass (g)"
+interaction_table[6,2] <- AIC(Mass_Juv1_mod_int_ml) - AIC(Mass_Juv1_mod_ml)
 
 check_model(Mass_Juv1_mod)
 # summary
@@ -432,6 +443,9 @@ Mass_adult_mod_int_ml <- update(Mass_adult_mod_int, REML = FALSE)
 
 # Compare models using AIC
 AIC(Mass_adult_mod_ml, Mass_adult_mod_int_ml)
+interaction_table[7,1]  <- "Adult Mass (g)"
+interaction_table[7,2] <- AIC(Mass_adult_mod_int_ml) - AIC(Mass_adult_mod_ml)
+
 check_model(Mass_adult_mod)
 Anova(Mass_adult_mod)
 summary(Mass_adult_mod)
@@ -520,6 +534,9 @@ hatch_juv1_SVL_growth_mod_int <- lmer(hatch_juv1_SVL_growth ~ hormone + temp + t
 hatch_juv1_SVL_growth_mod_int_ml <- update(hatch_juv1_SVL_growth_mod_int, REML = FALSE)
 # Compare models using AIC
 AIC(hatch_juv1_SVL_growth_mod_ml, hatch_juv1_SVL_growth_mod_int_ml)
+interaction_table[8,1]  <- "Hatchling to Juvenile Growth SVL (mm)"
+interaction_table[8,2] <- AIC(hatch_juv1_SVL_growth_mod_int_ml) - AIC(hatch_juv1_SVL_growth_mod_ml)
+
 Anova(hatch_juv1_SVL_growth_mod)
 summary(hatch_juv1_SVL_growth_mod)
 
@@ -534,6 +551,8 @@ hatch_juv1_mass_growth_mod_int <- lmer(hatch_juv1_mass_growth ~ hormone + temp +
 hatch_juv1_mass_growth_mod_int_ml <- update(hatch_juv1_mass_growth_mod_int, REML = FALSE)
 # Compare models using AIC
 AIC(hatch_juv1_mass_growth_mod_ml, hatch_juv1_mass_growth_mod_int_ml)
+interaction_table[9,1]  <- "Hatchling to Juvenile Growth Mass (g)"
+interaction_table[9,2] <- AIC(hatch_juv1_mass_growth_mod_int_ml) - AIC(hatch_juv1_mass_growth_mod_ml)
 
 Anova(hatch_juv1_mass_growth_mod)
 
@@ -561,7 +580,8 @@ hatch_adult_SVL_growth_mod_int <- lmer(hatch_adult_SVL_growth ~ hormone + temp +
 hatch_adult_SVL_growth_mod_int_ml <- update(hatch_adult_SVL_growth_mod_int, REML = FALSE)
 # Compare models using AIC
 AIC(hatch_adult_SVL_growth_mod_ml, hatch_adult_SVL_growth_mod_int_ml)
-
+interaction_table[10,1]  <- "Hatchling to Adult Growth SVL (mm)"
+interaction_table[10,2] <- AIC(hatch_adult_SVL_growth_mod_int_ml) - AIC(hatch_adult_SVL_growth_mod_ml)
 
 Anova(hatch_adult_SVL_growth_mod)
 summary(hatch_adult_SVL_growth_mod)
@@ -580,6 +600,8 @@ hatch_adult_MASS_growth_mod_int <- lmer(hatch_adult_MASS_growth ~ hormone + temp
 hatch_adult_MASS_growth_mod_int_ml <- update(hatch_adult_MASS_growth_mod_int, REML = FALSE)
 # Compare models using AIC
 AIC(hatch_adult_MASS_growth_mod_ml, hatch_adult_MASS_growth_mod_int_ml)
+interaction_table[11,1]  <- "Hatchling to Adult Growth Mass (g)"
+interaction_table[11,2] <- AIC(hatch_adult_MASS_growth_mod_int_ml) - AIC(hatch_adult_MASS_growth_mod_ml)
 
 Anova(hatch_adult_MASS_growth_mod)
 summary(hatch_adult_MASS_growth_mod)
@@ -775,6 +797,7 @@ mito_dat <- data_final %>%
 
 mito_dat$cham_oro <- with(mito_dat, interaction(adult_oroboros, chamber))
 
+##################### SANITY CHECKS BEFORE ANALYSIS #####################
 ###Checking factors that could affect oxygen consumption measurements - handling times, Oroboros, and chamber
 ###'chamber' is nested within Oroboros; there are three measurements of time (time to inject the drug, time to euthanize the animal
 ###'and time to collect liver, have opted to only use time to collect liver because it will incorporate all other time measurements and 
@@ -799,31 +822,7 @@ Oligo_factors <- lm (oligo_corrected_pmol ~ adult_liver_time_sec + adult_oroboro
 Anova(Oligo_factors)
 summary (Oligo_factors)
 hist(mito_dat$oligo_corrected_pmol)
-
-
-#####Effects of treatments on mitochondrial function 
-###Basal - interaction removed ns and removed; sex p = 0.005 males higher than females
-Basal_treatment_mod <- lm(basal_corrected_pmol ~ temp + hormone + sex + scale(Adult_Age) + adult_oroboros/chamber, data = mito_dat)
-Anova(Basal_treatment_mod)
-summary(Basal_treatment_mod)
-check_model(Basal_treatment_mod)
-###ADP - treatment effects; interaction ns and removed; sex p = 0.045 males higher than females
-ADP_treatment_mod <- lm(adp_corrected_pmol ~ temp + hormone + sex + scale(Adult_Age) + adult_oroboros/chamber, data = mito_dat)
-Anova(ADP_treatment_mod)
-summary(ADP_treatment_mod)
-check_model(ADP_treatment_mod)
-##Oligo mito by treatment; interaction ns and removed; sex p = 0.008
-Oligo_treatment_mod <- lm(oligo_corrected_pmol ~ temp + hormone + sex + scale(Adult_Age) + adult_oroboros/chamber, data = mito_dat)
-Anova(Oligo_treatment_mod)
-summary(Oligo_treatment_mod)
-check_model(Oligo_treatment_mod)
-##RCR calculated as state 3 (ADP)/ state 4(olgio)
-RCR_mod <- lm(RCR ~ temp + hormone + sex + scale(Adult_Age) + adult_oroboros/chamber, data = mito_dat)
-Anova(RCR_mod)
-summary (RCR_mod)
-check_model(RCR_mod)
-
-
+###########################################################
 
 ##################################################
 #####Effects of treatments on mitochondrial function 
@@ -835,9 +834,20 @@ mito_dat <- mito_dat %>%
   rename(adult_age = Adult_Age)
 
 
+
 ###Basal - interaction removed ns and removed; sex p = 0.005 males higher than females
-Basal_treatment_mod <- lmer(basal_corrected_pmol ~ temp + hormone + scale(adult_age) + sex + adult_mass_g +(1|clutch), data = mito_dat)
+Basal_treatment_mod_int <- lmer(basal_corrected_pmol ~ temp*hormone + scale(adult_age) + sex + scale(adult_mass_g) + (1|clutch), data = mito_dat)
+Basal_treatment_mod <- lmer(basal_corrected_pmol ~ temp + hormone + scale(adult_age) + sex + scale(adult_mass_g) + (1|clutch), data = mito_dat)
 Anova(Basal_treatment_mod)
+
+
+Basal_treatment_mod_int_ml <- update(Basal_treatment_mod_int, REML = FALSE)
+Basal_treatment_mod_ml <- update(Basal_treatment_mod, REML = FALSE)
+
+interaction_table[12,1]  <- "Basal respiration (pmol/sec/ng)"
+ interaction_table[12,2] <- AIC(Basal_treatment_mod_int_ml) - AIC(Basal_treatment_mod_ml)
+
+
 check_model(Basal_treatment_mod)
 Basal_treatment_mod_emm <- emmeans(Basal_treatment_mod, pairwise ~ sex)
 plot(Basal_treatment_mod_emm)
@@ -845,18 +855,36 @@ Boxplot(mito_dat$mass_basal, mito_dat$sex, na.action = na.exclude)
 saveRDS(Basal_treatment_mod, "models/Basal_treatment_mod.RDS")
 
 ###OXPHOS(ADP) - treatment effects;
+ADP_treatment_mod_int <- lmer(adp_corrected_pmol  ~temp*hormone + sex + scale(adult_age) + scale(adult_mass_g)  + (1|clutch), data = mito_dat)
 ADP_treatment_mod <- lmer(adp_corrected_pmol  ~temp + hormone + sex + scale(adult_age) + scale(adult_mass_g)  + (1|clutch), data = mito_dat)
 Anova(ADP_treatment_mod)
 summary(ADP_treatment_mod)
+
+
+ADP_treatment_mod_int_ml <- update(ADP_treatment_mod_int, REML = FALSE)
+ADP_treatment_mod_ml <- update(ADP_treatment_mod, REML = FALSE)
+
+interaction_table[13,1]  <- "OXPHOS respiration (pmol/sec/ng)"
+ interaction_table[13,2] <- AIC(ADP_treatment_mod_int_ml) - AIC(ADP_treatment_mod_ml)
+
 check_model(ADP_treatment_mod)
 ADP_treatment_mod_emm <- emmeans(ADP_treatment_mod, pairwise ~ sex)
 plot(ADP_treatment_mod_emm)
 saveRDS(ADP_treatment_mod, "models/ADP_treatment_mod.RDS")
 
 ##LEAK (OLIGO) mito by treatment
+Oligo_treatment_mod_int <- lmer(oligo_corrected_pmol ~ temp*hormone + sex + scale(adult_age) + scale(adult_mass_g)  + (1|clutch), data = mito_dat)
 Oligo_treatment_mod <- lmer(oligo_corrected_pmol ~ temp + hormone + sex + scale(adult_age) + scale(adult_mass_g)  + (1|clutch), data = mito_dat)
 Anova(Oligo_treatment_mod)
 summary(Oligo_treatment_mod)
+
+Oligo_treatment_mod_int_ml <- update(Oligo_treatment_mod_int, REML = FALSE)
+Oligo_treatment_mod_ml <- update(Oligo_treatment_mod, REML = FALSE)
+
+interaction_table[14,1]  <- "LEAK respiration (pmol/sec/ng)"
+ interaction_table[14,2] <- AIC(Oligo_treatment_mod_int_ml) - AIC(Oligo_treatment_mod_ml)
+
+
 check_model(Oligo_treatment_mod)
 Oligo_treatment_mod_emm <- emmeans(Oligo_treatment_mod, pairwise ~ sex)
 plot(Oligo_treatment_mod_emm)
@@ -864,13 +892,25 @@ saveRDS(Oligo_treatment_mod, "models/Oligo_treatment_mod.RDS")
 
 ##RCR calculated as state 3 (ADP)/ state 4(olgio)
 ##### FIGURE 7 - KW!!!
-RCR_mod <- lmer(RCR ~ temp + hormone + sex + scale(adult_age) + scale(adult_mass_g)  +(1|clutch), data = mito_dat)
+RCR_mod_int <- lmer(RCR ~ temp*hormone + sex + scale(adult_age) + scale(adult_mass_g)  +(1|clutch), data = mito_dat)
+    RCR_mod <- lmer(RCR ~ temp + hormone + sex + scale(adult_age) + scale(adult_mass_g)  +(1|clutch), data = mito_dat)
 Anova(RCR_mod)
 RCR_mod_mod_emm <- emmeans(RCR_mod, pairwise ~ temp)
 plot(RCR_mod_mod_emm)
 summary (RCR_mod)
+
+RCR_mod_int_ml <- update(RCR_mod_int, REML = FALSE)
+    RCR_mod_ml <- update(RCR_mod, REML = FALSE)
+
+interaction_table[15,1]  <- "Respiratory Control Ratio (RCR)"
+ interaction_table[15,2] <- AIC(RCR_mod_int_ml) - AIC(RCR_mod_ml)
+
 check_model(RCR_mod)
 saveRDS(RCR_mod, "models/RCR_mod.RDS")
+
+# Write supplemental table comparing models with and without interactions. Note, interaction model AIC always subtracted from AIC of main effects model. Used maximum likelihood estimation for all models.
+write.csv(interaction_table, "tables/interaction_table.csv")
+
 
 ###For models with hormone levels - need to filter n=7 data points from 
 ###samples with less than 7ul 
