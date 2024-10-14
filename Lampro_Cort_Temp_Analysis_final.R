@@ -631,6 +631,12 @@ summary(cort_factors)
 
 ######## 1) treatments- how does cort vary across temp and hormone treatment; handling time not used because ns in model of CORT factors
 #cort_development_mod <- lm(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Adult_Age) +Plate_CORT_adult, data = cort_dat)
+#### @KRISTOFFER ADD AFTER ONDI CHAT 14 OCTOBER
+cort_development_mod_post <- lmer(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Adult_Age) + adult_mass_g + Plate_CORT_adult + (1 | clutch), data = cort_dat)
+Anova(cort_development_mod_post)
+
+
+# model used in MS where 
 cort_development_mod <- lmer(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Adult_Age) + Plate_CORT_adult + (1 | clutch), data = cort_dat)
 check_model(cort_development_mod)
 Anova(cort_development_mod)
