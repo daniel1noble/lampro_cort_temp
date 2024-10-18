@@ -631,10 +631,6 @@ summary(cort_factors)
 
 ######## 1) treatments- how does cort vary across temp and hormone treatment; handling time not used because ns in model of CORT factors
 #cort_development_mod <- lm(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Adult_Age) +Plate_CORT_adult, data = cort_dat)
-#### !!!!KRISTOFFER ADD AFTER ONDI CHAT 14 OCTOBER
-cort_development_mod_ondi <- lmer(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp + adult_mass_g +  sex + scale(Adult_Age) + Plate_CORT_adult + (1 | clutch), data = cort_dat)
-Anova(cort_development_mod_post)
-
 
 # model used in MS where 
 cort_development_mod <- lmer(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp +  sex + scale(Adult_Age) + Plate_CORT_adult + (1 | clutch), data = cort_dat)
@@ -659,6 +655,13 @@ Boxplot(cort_dat$adult_CORT_Final_Hormone_ng_mL, cort_dat$hormone, na.action = n
 ##calculate residuals of plate ID and CORT levels
 cort_residuals <- lm(adult_CORT_Final_Hormone_ng_mL ~ Plate_CORT_adult, data = cort_dat, na.action=na.exclude) # fit the model for residuals
 cort_dat$cort_residuals <- residuals(cort_residuals, na.action=na.exclude) # Save the residual values
+
+
+#### Body size posthoc model for discussion point where body mass is included
+cort_development_mod_ondi <- lmer(log(adult_CORT_Final_Hormone_ng_mL) ~ hormone + temp + adult_mass_g +  sex + scale(Adult_Age) + Plate_CORT_adult + (1 | clutch), data = cort_dat)
+Anova(cort_development_mod_ondi)
+
+
 
 
 ####Body size and condition at juvenile 3 related to CORT levels; 'handling time not included because it did not affect baseline CORT levels as above)
