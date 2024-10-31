@@ -1685,54 +1685,45 @@ rcr.sum.dat <- mito_dat %>%
 fig.5.emm.dat <- left_join(rcr.sum.dat, rcr.sum.dat.emm, by = "temp")
 
 #### Final figure
+# Load the silhouette image
+library(grid)  # Required for annotation_custom and rasterGrob
+rep <- 'figures/bassiana.silhouette.png'
+silhouette_image <- png::readPNG(rep)  # Read the image
+silhouette_grob <- rasterGrob(silhouette_image, interpolate = TRUE)  # Create a raster object
+
+# Plot
 Figure_5 <- ggplot() +
-  #geom_jitter(data = cort_dat_raw, aes(x = hormone, 
-  #y = log_adult_CORT_Final_Hormone_ng_mL, 
-  #fill = hormone),
-  #alpha = 0.3, 
-  #width = 0.2, 
-  #height = 0, 
-  #shape = 21,  # Change shape to one that uses fill
-  #color = "black") +
-  geom_errorbar(data = fig.5.emm.dat, aes(x = temp, ymin = emmean - SE, ymax = emmean + SE), 
+  geom_jitter(data = rcr_raw, aes(x = temp, y = RCR, fill = temp),
+              alpha = 0.3, width = 0.2, height = 0, shape = 21,
+              color = "black") +
+  geom_errorbar(data = fig.5.emm.dat, aes(x = temp, ymin = emmean - SE, ymax = emmean + SE),
                 width = 0.2, position = position_dodge(0.9)) +
   geom_text(data = fig.5.emm.dat, aes(x = temp, y = emmean + SE + .01, label = paste("n =", n),
-                                       fontface = "bold"), 
+                                      fontface = "bold"),
             vjust = -0.5, size = 4) +
-  geom_point(data = fig.5.emm.dat, aes(x = temp, y = emmean, fill = temp), 
+  geom_point(data = fig.5.emm.dat, aes(x = temp, y = emmean, fill = temp),
              shape = 23, color = "black", size = 3) +
-  annotate("text", 
-           x = .99, 
-           y = 10.2, 
-           label = "A",  
-           size = 5, fontface = "bold") +
-  annotate("text", 
-           x = 1.99, 
-           y = 8.1, 
-           label = "B",  
-           size = 5, fontface = "bold") +
-  scale_y_continuous(limits = c(5.5, 10.3), breaks = seq(6, 10, by = 1)) +
-  labs(y = "RCR", 
-       x = "Temperature treatment",
-       fill = "temperature") +  # Change legend title here
-  annotate("text", 
-           x = 2.2, 
-           y = 10, 
-           label = paste0("Temperature treatment: P = ", RCR_mod_anova_CORT_Pvalue),  
+  annotate("text", x = .99, y = 11.1, label = "A", size = 5, fontface = "bold") +
+  annotate("text", x = 1.99, y = 8.8, label = "B", size = 5, fontface = "bold") +
+  scale_y_continuous(limits = c(3, 23), breaks = seq(4, 22, by = 2)) +
+  labs(y = "RCR", x = "Temperature treatment", fill = "temperature") +
+  annotate("text", x = 2.2, y = 21,
+           label = paste0("Temperature treatment: P = ", RCR_mod_anova_CORT_Pvalue),
            size = 4) +
+  annotation_custom(silhouette_grob, xmin = 1.8, xmax = 2.5, ymin = 15, ymax = 20) +  # Adjust position and size
   theme_classic() +
   scale_fill_manual(values = c("dodgerblue", "tomato2")) +
-  theme(axis.text.x = element_text(size = 14), 
+  theme(axis.text.x = element_text(size = 14),
         axis.text.y = element_text(size = 14),
-        axis.title = element_text(size = 14), 
-        legend.text = element_text(size = 14), 
+        axis.title = element_text(size = 14),
+        legend.text = element_text(size = 14),
         legend.title = element_text(size = 14),
-        legend.position = c(0.02, 0.98), # Position legend in the top left corner
-        legend.justification = c(0, 1), # Adjust the anchor point of the legend
-        legend.background = element_rect(fill = "transparent", color = NA), # Make the legend background transparent
+        legend.position = c(0.02, 0.98),
+        legend.justification = c(0, 1),
+        legend.background = element_rect(fill = "transparent", color = NA),
         legend.key = element_rect(fill = "transparent", color = NA))
 
-
+Figure_5
 ############################################################################
 ########################## Figure 6
 ############################################################################
