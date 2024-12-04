@@ -902,7 +902,7 @@ check_model(RCR_mod)
 saveRDS(RCR_mod, "models/RCR_treatment_mod.RDS")
 
 # Write supplemental table comparing models with and without interactions. Note, interaction model AIC always subtracted from AIC of main effects model. Used maximum likelihood estimation for all models.
-write.csv(interaction_table, "tables/interaction_table.csv")
+write.csv(interaction_table, "data/interaction_table.csv")
 
 
 ###For models with hormone levels - need to filter n=7 data points from 

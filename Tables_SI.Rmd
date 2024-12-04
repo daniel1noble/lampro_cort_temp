@@ -1,5 +1,5 @@
 ---
-title: "Tables_Wild_2024"
+title: "Tables_SI"
 author: Kristoffer Wild
 date: "`r Sys.Date()`"
 output: 
@@ -21,7 +21,7 @@ pacman::p_load(car, dplyr,ggplot2, flextable, lubridate, knitr, here, stringr, b
 **Table S1** Model comparisons between main effects (temperature + hormone) and interaction model (temperature * hormone interaction) using AIC for the different response variables measured. Note that the AIC of models containing the interaction are subtracted from the AIC of models containing just the main effects. Positive values indicate main effects models had lower AIC and were therefore better supported. If models were within 2 AIC units of each other we simplified to the model with fewer parameters (i.e., main effects model). All models were fit using maximum likelihood for model selection. For details on the specific models fit for each response variable see the Statistical Analysis section.
 ```{r}
 #| echo: false
-interaction_data <- read.csv('tables/interaction_table.csv') %>% 
+interaction_data <- read.csv('data/interaction_table.csv') %>% 
   dplyr::select(Variable, Delta_AIC) %>% 
   mutate(across(where(is.numeric), round, 3))
 
