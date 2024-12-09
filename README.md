@@ -1,5 +1,7 @@
 # From eggs to adulthood: sustained effects of early developmental temperature and corticosterone exposure on physiology and body size in an Australian lizard
 
+[![DOI](https://zenodo.org/badge/605066848.svg)](https://doi.org/10.5281/zenodo.11112407)
+
 # Citation
 This paper is now published and can be cited as follows:
 
